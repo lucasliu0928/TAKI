@@ -11,7 +11,7 @@ compute_calibration_func <-function(perf_table){
   #compute calibration Intercept and slope and plot
   pred_p <-   perf_table[,"pred_prob"]
   acutal <- as.numeric(as.vector(perf_table[,"Label"]))
-  res = val.prob(pred_p,acutal,m=100, cex=.5)
+  res = val.prob(pred_p,acutal,m=100, cex=.5,pl=FALSE)
   calib_res <- res[c("Intercept","Slope")]
   
   #Note: This is what val.prb actually doing
@@ -115,18 +115,14 @@ compute_IDI_NRI_func <-function(perf_dir,baseline_model_file,comprison_model_fil
 
 
 #read perforamnce table
-perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/TAKI_Project/Intermediate_Results/mortality"
+perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0210/mortality/"
 #perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/TAKI_Project/Intermediate_Results/make"
-outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/TAKI_Project/Intermediate_Results/mortality/"
+outdir <- perf_dir
 
 all_perf_files <- list.files(perf_dir,full.names = T)
-#when outcome == make
-#remove_RF_1feature_table <- which(grepl("max_kdigo_d03_norm.csv_pred_table_RF_UKY.csv|max_kdigo_d03_norm.csv_pred_table_RF_UTSW.csv",all_perf_files))
-#all_perf_files <- all_perf_files[-remove_RF_1feature_table]
+
 
 perf_table_list <- lapply(all_perf_files, read.csv, stringsAsFactors = F)
-
-
 
 File_perf <- list(NA)
 for (i in 1:length(perf_table_list)){ #for each file
@@ -134,32 +130,32 @@ for (i in 1:length(perf_table_list)){ #for each file
   curr_file <- gsub(perf_dir,"",all_perf_files[[i]])
   
   EachFold_perf_table <- as.data.frame(matrix(NA, nrow =10 ,ncol = 12))
-  rownames(EachFold_perf_table) <- paste0("Fold",seq(1,10))
+  rownames(EachFold_perf_table) <- paste0("Sample_Index",seq(1,10))
   colnames(EachFold_perf_table) <-c("AUC","Accuracy","Precision","Sensitivity","Specificity","PPV","NPV",
                                     "Calibration_Intercept","Calibration_Slope",
                                     "Taylor_Calibration_Intercept","Taylor_Calibration_Slope","F1")
-  for (v in 1:10){ #for each cross validation 
-    curr_v_tab <- curr_table[which(curr_table[,"TestFold"] == paste0("Fold",v)),]
+  for (s in 1:10){ #for each fold 
+    curr_v_tab <- curr_table[which(curr_table[,"TestFold"] == paste0("Fold",s)),]
     
     #calibration
     calib_res <- compute_calibration_func(curr_v_tab)
     my_calib_res <- calib_res[[1]]
     taylors_res <- c(calib_res[[2]],calib_res[[3]])
-    EachFold_perf_table[v,"Calibration_Intercept"] <- my_calib_res[1]
-    EachFold_perf_table[v,"Calibration_Slope"] <- my_calib_res[2]
-    EachFold_perf_table[v,"Taylor_Calibration_Intercept"] <- taylors_res[1]
-    EachFold_perf_table[v,"Taylor_Calibration_Slope"] <- taylors_res[2]
+    EachFold_perf_table[s,"Calibration_Intercept"] <- my_calib_res[1]
+    EachFold_perf_table[s,"Calibration_Slope"] <- my_calib_res[2]
+    EachFold_perf_table[s,"Taylor_Calibration_Intercept"] <- taylors_res[1]
+    EachFold_perf_table[s,"Taylor_Calibration_Slope"] <- taylors_res[2]
     
     #Other perforamnce:
     other_res <- compute_performance_func(curr_v_tab)
-    EachFold_perf_table[v,"AUC"] <- as.numeric(other_res[1])
-    EachFold_perf_table[v,"Accuracy"] <- other_res["Accuracy"]
-    EachFold_perf_table[v,"Precision"] <- other_res["Precision"]
-    EachFold_perf_table[v,"Sensitivity"] <- other_res["Sensitivity"]
-    EachFold_perf_table[v,"Specificity"] <- other_res["Specificity"]
-    EachFold_perf_table[v,"PPV"] <- other_res["Pos Pred Value"]
-    EachFold_perf_table[v,"NPV"] <- other_res["Neg Pred Value"]
-    EachFold_perf_table[v,"F1"] <- other_res["F1"]
+    EachFold_perf_table[s,"AUC"] <- as.numeric(other_res[1])
+    EachFold_perf_table[s,"Accuracy"] <- other_res["Accuracy"]
+    EachFold_perf_table[s,"Precision"] <- other_res["Precision"]
+    EachFold_perf_table[s,"Sensitivity"] <- other_res["Sensitivity"]
+    EachFold_perf_table[s,"Specificity"] <- other_res["Specificity"]
+    EachFold_perf_table[s,"PPV"] <- other_res["Pos Pred Value"]
+    EachFold_perf_table[s,"NPV"] <- other_res["Neg Pred Value"]
+    EachFold_perf_table[s,"F1"] <- other_res["F1"]
   }
   
   
