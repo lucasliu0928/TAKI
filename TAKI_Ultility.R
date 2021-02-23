@@ -87,7 +87,10 @@ get_pred_class_func <- function(predicted_prob){
 
 #XGboost functions
 #return traingined model and importnce matrix
-train_xgboost<-function(train_data_part,train_label,xgb_params,num_rounds,upsample_flag){
+train_xgboost<-function(data_part,train_label,xgb_params,num_rounds,upsample_flag){
+  # data_part <- train_data_part
+  # train_label <- sampled_train_data[,outcome_index]
+    
   #recode train label back to 0 and 1
   train_label <- as.character(train_label)
   train_label[which(train_label == "Y")] <- 1
@@ -100,7 +103,7 @@ train_xgboost<-function(train_data_part,train_label,xgb_params,num_rounds,upsamp
     train_label <- as.factor(train_label)
   }
   
-  train_matrix <- xgb.DMatrix(data = as.matrix(train_data_part), label = train_label)
+  train_matrix <- xgb.DMatrix(data = as.matrix(data_part), label = train_label)
   trained_model <- xgb.train(params = xgb_params,data = train_matrix,nrounds = num_rounds)
   importance_matrix = xgb.importance(model = trained_model)
   
@@ -118,11 +121,11 @@ predict_xgboost <- function(curr_model,test_data_part,test_label,pred_type){
 cv_func <- function(analysis_df,outcome_colname,model_name,validation_df,upsample_flag,N_sampling){
   # analysis_df <- feature_df
   # outcome_colname <- "MAKE"
-  # model_name <- "SVM"
+  # model_name <- "SVM_TOP"
   # validation_df <- UTSW_feature_df
   # upsample_flag <- 0
-  # N_sampling <- 5
-  # 
+  # N_sampling <- 2
+
   #Get folds indexes table 
   Idxes_fold_df <- create_fold_func(analysis_df)
   
@@ -153,8 +156,8 @@ cv_func <- function(analysis_df,outcome_colname,model_name,validation_df,upsampl
       seed_num <- s*i
       sampled_train_data <- Model_sampling_func(upsample_flag,curr_train_data,outcome_colname,seed_num)
       
-      #For data has one feature column
-      if (ncol(sampled_train_data) == 2){
+     
+      if (ncol(sampled_train_data) == 2){  #For data has one feature column
         train_data_part <- as.data.frame(sampled_train_data[,-outcome_index])
         colnames(train_data_part) <- colnames(sampled_train_data)[1]
       }else{
@@ -188,6 +191,39 @@ cv_func <- function(analysis_df,outcome_colname,model_name,validation_df,upsampl
         rownames(curr_importance_matrix) <- NULL
         curr_importance_matrix <- curr_importance_matrix[,c("Feature","Importance_Scaled0_100","Sample_Index")]
         
+      }else if (model_name == "SVM_TOP"){
+        model_svm  <- train(train_data_part, sampled_train_data[,outcome_index],method='svmPoly' , 
+                            trControl = trainControl("none", classProbs = TRUE),verbose=F) # Support Vector Machines
+        curr_model <- model_svm
+        import_res <- varImp(curr_model, scale = TRUE)
+        importance_matrix_SVM <- import_res$importance
+        importance_matrix_SVM$Sample_Index <- paste0("Sample",s)
+        importance_matrix_SVM$Feature <- rownames(importance_matrix_SVM)
+        colnames(importance_matrix_SVM)[1] <- "Importance_Scaled0_100"
+        rownames(importance_matrix_SVM) <- NULL
+        importance_matrix_SVM <- importance_matrix_SVM[,c("Feature","Importance_Scaled0_100","Sample_Index")]
+        
+        #model with top 25 features 
+        if (nrow(importance_matrix_SVM) >= 25){
+          top_features <- as.character(unlist(importance_matrix_SVM[1:25,"Feature"]))
+        }else{
+          top_features <- as.character(unlist(importance_matrix_SVM[1:nrow(importance_matrix_SVM),"Feature"]))
+        }
+        
+        new_train_part <- as.data.frame(train_data_part[,top_features])
+        colnames(new_train_part) <- top_features
+        model_svm  <- train(new_train_part, sampled_train_data[,outcome_index],method='svmPoly' , 
+                            trControl = trainControl("none", classProbs = TRUE),verbose=F) # Support Vector Machines
+        curr_model <- model_svm
+        import_res <- varImp(curr_model, scale = TRUE)
+        curr_importance_matrix <- import_res$importance
+        curr_importance_matrix$Sample_Index <- paste0("Sample",s)
+        curr_importance_matrix$Feature <- rownames(curr_importance_matrix)
+        colnames(curr_importance_matrix)[1] <- "Importance_Scaled0_100"
+        rownames(curr_importance_matrix) <- NULL
+        curr_importance_matrix <- curr_importance_matrix[,c("Feature","Importance_Scaled0_100","Sample_Index")]
+        
+        
       }else if (model_name == "RF"){
         model_rf <- train(train_data_part, sampled_train_data[,outcome_index], method='rf',
                           trControl = trainControl("none", classProbs = TRUE), verbose=F) # Random Forest
@@ -199,9 +235,89 @@ cv_func <- function(analysis_df,outcome_colname,model_name,validation_df,upsampl
         colnames(curr_importance_matrix)[1] <- "Importance_Scaled0_100"
         rownames(curr_importance_matrix) <- NULL
         curr_importance_matrix <- curr_importance_matrix[,c("Feature","Importance_Scaled0_100","Sample_Index")]
+      }else if (model_name == "RF_TOP"){
+        model_rf <- train(train_data_part, sampled_train_data[,outcome_index], method='rf',
+                          trControl = trainControl("none", classProbs = TRUE), verbose=F) # Random Forest
+        curr_model <- model_rf
+        import_res <- varImp(curr_model, scale = TRUE)
+        importance_matrix_RF <- import_res$importance
+        importance_matrix_RF$Sample_Index <- paste0("TestFold",i, "_Sample",s)
+        importance_matrix_RF$Feature <- rownames(importance_matrix_RF)
+        colnames(importance_matrix_RF)[1] <- "Importance_Scaled0_100"
+        rownames(importance_matrix_RF) <- NULL
+        importance_matrix_RF <- importance_matrix_RF[,c("Feature","Importance_Scaled0_100","Sample_Index")]
+        
+        #model with top 25 features 
+        if (nrow(importance_matrix_RF) >= 25){
+          top_features <- as.character(unlist(importance_matrix_RF[1:25,"Feature"]))
+        }else{
+          top_features <- as.character(unlist(importance_matrix_RF[1:nrow(importance_matrix_RF),"Feature"]))
+        }
+        
+        new_train_part <- as.data.frame(train_data_part[,top_features])
+        colnames(new_train_part) <- top_features
+        model_rf <- train(new_train_part, sampled_train_data[,outcome_index], method='rf',
+                          trControl = trainControl("none", classProbs = TRUE), verbose=F) # Random Forest
+        curr_model <- model_rf
+        import_res <- varImp(curr_model, scale = TRUE)
+        curr_importance_matrix <- import_res$importance
+        curr_importance_matrix$Sample_Index <- paste0("TestFold",i, "_Sample",s)
+        curr_importance_matrix$Feature <- rownames(curr_importance_matrix)
+        colnames(curr_importance_matrix)[1] <- "Importance_Scaled0_100"
+        rownames(curr_importance_matrix) <- NULL
+        curr_importance_matrix <- curr_importance_matrix[,c("Feature","Importance_Scaled0_100","Sample_Index")]
+        
       }else if (model_name == "LogReg"){
         model_logreg <- glm(as.formula(paste0(eval(outcome_colname) ,"~.")), data = sampled_train_data, family = binomial)
         curr_model <- model_logreg
+        curr_coef <- as.data.frame(curr_model$coefficients)
+        zero_coef_feautre <- rownames(curr_coef)[which(is.na(curr_coef$`curr_model$coefficients`) == T)]
+        library(reghelper)
+        beta_coef_res <- beta(model_logreg, skip = zero_coef_feautre)
+        beta_coef <- as.data.frame(beta_coef_res$coefficients)
+        m_idxes <- match(gsub(".z","",rownames(beta_coef)), rownames(curr_coef))
+        
+        curr_importance_matrix <- cbind(rownames(curr_coef),curr_coef)
+        curr_importance_matrix$Beta_Coef <- NA
+        curr_importance_matrix$Beta_Coef[m_idxes] <- beta_coef$Estimate
+        curr_importance_matrix$Sample_Index <- paste0("TestFold",i, "_Sample",s)
+        #remove intercept
+        inter_index <- which(rownames(curr_importance_matrix) == "(Intercept)")
+        curr_importance_matrix <- curr_importance_matrix[-inter_index,]
+        colnames(curr_importance_matrix) <- c("Feature","Coeff","Beta_Coef","Sample_Index")
+        rownames(curr_importance_matrix) <- NULL
+        
+      }else if (model_name == "LogReg_TOP"){
+        model_logreg <- glm(as.formula(paste0(eval(outcome_colname) ,"~.")), data = sampled_train_data, family = binomial)
+        curr_model <- model_logreg
+        curr_coef <- as.data.frame(curr_model$coefficients)
+        importance_matrix_LR <- cbind(rownames(curr_coef),curr_coef)
+        importance_matrix_LR$Sample_Index <- paste0("TestFold",i, "_Sample",s)
+        #remove intercept
+        inter_index <- which(rownames(importance_matrix_LR) == "(Intercept)")
+        importance_matrix_LR <- importance_matrix_LR[-inter_index,]
+        colnames(importance_matrix_LR) <- c("Feature","Coeff")
+        
+        #model with top 25 features 
+        if (nrow(importance_matrix_LR) >= 25){
+          top_features <- as.character(unlist(importance_matrix_LR[1:25,"Feature"]))
+        }else{
+          top_features <- as.character(unlist(importance_matrix_LR[1:nrow(importance_matrix_LR),"Feature"]))
+        }
+        new_sampled_train_data<- as.data.frame(sampled_train_data[,c(top_features,outcome_colname)])
+        colnames(new_sampled_train_data) <- c(top_features,outcome_colname)
+        
+        model_logreg <- glm(as.formula(paste0(eval(outcome_colname) ,"~.")), data = new_sampled_train_data, family = binomial)
+        curr_model <- model_logreg
+        curr_coef <- as.data.frame(curr_model$coefficients)
+        curr_importance_matrix <- cbind(rownames(curr_coef),curr_coef)
+        curr_importance_matrix$Sample_Index <- paste0("TestFold",i, "_Sample",s)
+        #remove intercept
+        inter_index <- which(rownames(curr_importance_matrix) == "(Intercept)")
+        curr_importance_matrix <- curr_importance_matrix[-inter_index,]
+        colnames(curr_importance_matrix) <- c("Feature","Coeff")
+        rownames(curr_importance_matrix) <- NULL
+        
       }else if (model_name == "XGB"){
         #first find feature importanance 
         num_rounds<- 10
@@ -221,32 +337,41 @@ cv_func <- function(analysis_df,outcome_colname,model_name,validation_df,upsampl
         model_xgb <- xgb_res[[1]] #model with all features
         importance_matrix_xgb <- xgb_res[[2]]
         
-        #model with top 10 features 
-        if (nrow(importance_matrix_xgb) >= 10){
-          top_features <- as.character(unlist(importance_matrix_xgb[1:10,"Feature"]))
+        #model with top 25 features 
+        if (nrow(importance_matrix_xgb) >= 25){
+          top_features <- as.character(unlist(importance_matrix_xgb[1:25,"Feature"]))
         }else{
           top_features <- as.character(unlist(importance_matrix_xgb[1:nrow(importance_matrix_xgb),"Feature"]))
         }
         new_train_part <- as.data.frame(train_data_part[,top_features])
-        colnames(new_train_part) <- colnames(train_data_part[,top_features])
+        colnames(new_train_part) <- top_features
         model_top_xgb_res <- train_xgboost(new_train_part,sampled_train_data[,outcome_index],xgb_params,num_rounds,upsample_flag)
         model_top_xgb <- model_top_xgb_res[[1]] #model with top features
-        importance_matrix_xgb_top <- xgb_res[[2]]
+        importance_matrix_xgb_top <- model_top_xgb_res[[2]]
         curr_model <- model_top_xgb
         curr_importance_matrix <- importance_matrix_xgb_top
         curr_importance_matrix$Sample_Index <- paste0("TestFold",i, "_Sample",s)
       }
       
-      if (model_name == "XGB" | model_name == "XGB_TOP" | model_name == "SVM"| model_name == "RF"){
-        sampling_importance_matrix_list[[s]] <- curr_importance_matrix
-      }
+      sampling_importance_matrix_list[[s]] <- curr_importance_matrix
       
       #prediction probabiliy of test data and validation data
-      if (model_name =="SVM" | model_name =="RF" ){
+      if (model_name =="SVM" | model_name =="RF"){
         pred_res <- predict(curr_model, newdata = test_data_part,type = "prob")  
         pred_prob <- pred_res[,"Y"] #use the prob for Y or 1
         
         pred_res <- predict(curr_model, newdata = val_data_part,type = "prob")  
+        pred_prob_validation <- pred_res[,"Y"] #use the prob for Y or 1
+        
+      }else if ( model_name =="SVM_TOP" | model_name =="RF_TOP"){
+        new_test_data_part <- as.data.frame(test_data_part[,top_features])
+        colnames(new_test_data_part) <- top_features
+        pred_res <- predict(curr_model, newdata = new_test_data_part,type = "prob")  
+        pred_prob <- pred_res[,"Y"] #use the prob for Y or 1
+        
+        new_val_data_part <- as.data.frame(val_data_part[,top_features])
+        colnames(new_val_data_part) <- top_features
+        pred_res <- predict(curr_model, newdata = new_val_data_part,type = "prob")  
         pred_prob_validation <- pred_res[,"Y"] #use the prob for Y or 1
         
       }else if (model_name == "XGB"){
@@ -258,12 +383,22 @@ cv_func <- function(analysis_df,outcome_colname,model_name,validation_df,upsampl
       }else if (model_name == "XGB_TOP"){
         #convert to xgboost format 
         new_test_data_part <- as.data.frame(test_data_part[,top_features])
-        colnames(new_test_data_part) <- colnames(test_data_part[,top_features])
+        colnames(new_test_data_part) <- top_features
         pred_prob <- predict_xgboost(curr_model,new_test_data_part,curr_test_data[,outcome_colname],"prob")
         new_val_data_part <- as.data.frame(val_data_part[,top_features])
         colnames(new_val_data_part) <- colnames(val_data_part[,top_features])
         pred_prob_validation <- predict_xgboost(curr_model,new_val_data_part,validation_df[,outcome_colname],"prob")
         
+      }else if (model_name == "LogReg_TOP"){
+        new_test_data <- as.data.frame(curr_test_data[,c(top_features,outcome_colname)])
+        colnames(new_test_data) <- c(top_features,outcome_colname)
+        pred_res <- predict(curr_model, new_test_data, type='response')  #do not need exclude col name from test here, it will not use it for prediciton
+        pred_prob <- as.numeric(pred_res)
+        
+        new_validation_df <- as.data.frame(validation_df[,c(top_features,outcome_colname)])
+        colnames(new_validation_df) <- c(top_features,outcome_colname)
+        pred_res <- predict(curr_model, new_validation_df, type='response')  #do not need exclude col name from test here, it will not use it for prediciton
+        pred_prob_validation <- as.numeric(pred_res)
       }else {
         pred_res <- predict(curr_model, curr_test_data, type='response')  #do not need exclude col name from test here, it will not use it for prediciton
         pred_prob <- as.numeric(pred_res)
