@@ -6,6 +6,37 @@ library(openxlsx)
 library(dplyr)
 library(caTools)
 
+#Data repreocess
+#1.Generate one score for SOFA and APACHE by taking the sum of SOFA/APACHE component
+sum_score_func <- function(analysis_df,score_name){
+  #Get score sum
+  score_col_index <- which(grepl(score_name,colnames(analysis_df))) #find corresponding columns
+  score_SUM <- rowSums(analysis_df[,score_col_index]) #take the row sum
+  
+  #get Id
+  IDs <- analysis_df[,"STUDY_PATIENT_ID"]
+  
+  #return dataframe
+  score_df <- cbind.data.frame(IDs,score_SUM)
+  colnames(score_df) <- c("STUDY_PATIENT_ID",paste0(score_name,"_SUM"))
+  return(score_df)
+}
+
+
+min_max_func <- function(feautre_col){
+  normed_col <- (feautre_col-min(feautre_col,na.rm = T))/(max(feautre_col,na.rm = T)-min(feautre_col,na.rm = T))
+  return(normed_col)
+}
+
+
+change_feature_name_func <- function(input_df,tochange_colname,target_name){
+  col_idx <- which(colnames(input_df) == tochange_colname)
+  colnames(input_df)[col_idx] <- target_name
+  return(input_df)
+}
+
+
+#####
 code_Label_YN_func <- function(input_df,label_colname){
   #Recode label as Y for 1, N for 0, cuz for caret package, we cannot use 1 or 0 for outcome
   
