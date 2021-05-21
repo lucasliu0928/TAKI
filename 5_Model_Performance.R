@@ -2,126 +2,18 @@ library(rms)
 library(PredictABEL)
 library(pROC) #can also use this one for delong's methods
 library(Rmisc)
-
-
-#compute calibration slope and Intercept
-compute_calibration_func <-function(perf_table){
-  #perf_table <- curr_table
-  
-  #compute calibration Intercept and slope and plot
-  pred_p <-   perf_table[,"pred_prob"]
-  acutal <- as.numeric(as.vector(perf_table[,"Label"]))
-  res = val.prob(pred_p,acutal,m=100, cex=.5,pl=FALSE)
-  calib_res <- res[c("Intercept","Slope")]
-  
-  #Note: This is what val.prb actually doing
-  #glm(acutal ~ log(pred_p/(1-pred_p)),family="binomial")
-  
-  #another way mentioned in Taylor's email:
-  #Slope: Mean Model Output for All With Positive Outcome / Mean Model Output for All With Negative Outcome>
-  #Intercept: Mean model output for all patients with a negative result for the outcome.
-  all_pos_output <- perf_table[which(perf_table[,"Label"]==1),"pred_prob"]
-  all_neg_output <- perf_table[which(perf_table[,"Label"]==0),"pred_prob"]
-  possible_slope <- mean(all_pos_output)/mean(all_neg_output)
-  possible_Intercept <- mean(all_neg_output)
-  
-  return(list(calib_res,possible_Intercept,possible_slope))
-}
-
-#Compute AUC, ACC, Precision, Sensitivity and...
-compute_performance_func <- function(prediction_table){
-  #prediction_table <- curr_v_tab
-  prediction_table[,"pred_class"] <- as.factor(prediction_table[,"pred_class"])
-  prediction_table[,"Label"] <- as.factor(prediction_table[,"Label"])
-  
-  pred_prob <- prediction_table[,"pred_prob"]
-  pred_label <- prediction_table[,"pred_class"]
-  actual_label <- prediction_table[,"Label"]
-  
-  #ROC AUC
-  AUC_res <- roc(actual_label, pred_prob,direction = "<",ci =T, auc= T, quiet=TRUE) # control:0, case:1
-  AUC <- as.numeric(AUC_res$auc)
-  
-  #By default, this function uses 2000 bootstraps to calculate a 95% confidence interval.
-  AUC_95CI <- c(as.numeric(ci.auc(actual_label,pred_prob,direction = "<", quiet=TRUE))[1],as.numeric(ci.auc(actual_label,pred_prob,direction = "<"))[3])
-  
-  cm <- confusionMatrix(pred_label, actual_label, positive = "1", dnn = c("Prediction", "Reference"), mode="everything")
-  ACC <- cm$overall[1]
-  #NOte: Use Exact binomial testto compute CI for accuracy, first value is #number of sucess, #number of failure
-  ##Note: Following uses binom.test(c(4883,1283),conf.level = 0.95) 
-  ACC_95CI <- cm$overall[c("AccuracyLower","AccuracyUpper")] #
-  Precision <- cm$byClass["Precision"]
-  Sensitivity <- cm$byClass["Sensitivity"]
-  Specificity  <- cm$byClass["Specificity"]
-  PPV <- cm$byClass["Pos Pred Value"]
-  NPV <- cm$byClass["Neg Pred Value"]
-  F1_Score <- cm$byClass["F1"]
-  perf_vec <- c(AUC,AUC_95CI,ACC,ACC_95CI,Precision,Sensitivity,Specificity,PPV,NPV,F1_Score)
-  return(perf_vec)
-}
-
-#Compute report mean and CI for all folds
-perf_Mean_CI_Folds_func <-function(Fold_perf_table){
-  #Fold_perf_table <- EachFold_perf_table
-  
-  mean_CI_perf <- as.data.frame(matrix(NA,nrow = ncol(Fold_perf_table),ncol = 1))
-  colnames(mean_CI_perf) <- "Mean_(95CI)"
-  rownames(mean_CI_perf) <-  colnames(Fold_perf_table)
-  for (j in 1:ncol(Fold_perf_table)){
-    curr_CI <- CI(Fold_perf_table[,j], ci=0.95)
-    curr_CI <- as.numeric(round(curr_CI,2))
-    mean_CI_perf[j,1] <- paste0(curr_CI[2], "(",curr_CI[3],"-",curr_CI[1],")")
-  }
-  return(mean_CI_perf)
-}
-
-compute_AUC_diff_func <-function(perf_dir,baseline_model_file,comprison_model_file1){
-  baseline_df <- read.csv(paste0(perf_dir,"/",baseline_model_file),stringsAsFactors = F)
-  comp_df <- read.csv(paste0(perf_dir,"/",comprison_model_file1),stringsAsFactors = F)
-  
-  #Combine comparison models
-  model_comp_df <- cbind.data.frame(baseline_df[,"Label"],
-                                    baseline_df[,"pred_prob"],
-                                    comp_df[,"pred_prob"])
-  colnames(model_comp_df) <- c("Label","pred_prob_bl","pred_prob1")
-  #AUC difference
-  roc_bl <- roc(model_comp_df$Label, model_comp_df$pred_prob_bl)
-  roc_1 <- roc(model_comp_df$Label, model_comp_df$pred_prob1)
-  test_res <- roc.test(roc_bl,roc_1,method = "delong")
-  pval <- test_res$p.value
-  return(pval)
-}
-
-## compute reclassification measures
-compute_IDI_NRI_func <-function(perf_dir,baseline_model_file,comprison_model_file1){
-  baseline_df <- read.csv(paste0(perf_dir,"/",baseline_model_file),stringsAsFactors = F)
-  comp_df <- read.csv(paste0(perf_dir,"/",comprison_model_file1),stringsAsFactors = F)
-  
-  #Combine comparison models
-  model_comp_df <- cbind.data.frame(baseline_df[,"Label"],
-                                    baseline_df[,"pred_prob"],
-                                    comp_df[,"pred_prob"])
-  colnames(model_comp_df) <- c("Label","pred_prob_bl","pred_prob1")
-  
-  predRisk1 <- model_comp_df$pred_prob_bl
-  predRisk2 <- model_comp_df$pred_prob1
-  cutoff <- c(0,.5,1)
-  #NRI = P(up|event)−P(down|event) + P(down|nonevent)−P(up|nonevent)
-  res <- reclassification(data=model_comp_df, cOutcome=1, predrisk1=predRisk1, predrisk2=predRisk2, cutoff)
-  
-  
-  return(res)
-}
-
+library(caret)
+source("TAKI_Ultility.R")
+################################################################################################
+##########   Mortality final performance
+################################################################################################
 
 #read perforamnce table
-#perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0427/mortality/"
-perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0427/make/"
-outdir <- perf_dir
+perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0512/mortality/"
+outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0512/motality_final_perf2/"
 
+#read all perf files except the final all perf file
 all_perf_files <- list.files(perf_dir,full.names = T)
-#all_perf_files <- all_perf_files[-which(grepl("Final_ALLperf.csv",all_perf_files)==T)]
-
 perf_table_list <- lapply(all_perf_files, read.csv, stringsAsFactors = F)
 ########
 File_perf <- list(NA)
@@ -166,87 +58,160 @@ for (i in 1:length(perf_table_list)){ #for each file
 }
 
 Final_perf <- do.call(cbind,File_perf)
-write.csv(Final_perf, paste0(outdir , "Final_ALLperf.csv"))
+#write.csv(Final_perf, paste0(outdir , "Final_ALLperf.csv"))
 
-
-####################################################
-#compare models with IDI, NRI and AUC difference
-####################################################
-colnames(Final_perf) <- gsub("xbg","Xgb",colnames(Final_perf))
-colnames(Final_perf) <- colnames(Final_perf)[-which(grepl("Xgb_top",colnames(Final_perf)))]
+#################################################################################################
+#1. Seperate output the performance by ML methods
+#2. For each method, each cohort, compare with baseline AUC diff
+#################################################################################################
+method_name_list <- c("Logreg","RF","SVM","Xgb") # "Logreg","RF","SVM","Xgb"
+for (i in 1:length(method_name_list)){
+  current_method <- method_name_list[i]
+  current_perf_indxes <- which(grepl(current_method,colnames(Final_perf)) == T)
+  curr_perf <- Final_perf[,current_perf_indxes]
+  
+  exp_names <- colnames(curr_perf)
+  
+  AUC_diff_df <- as.data.frame(matrix(NA, nrow = 4 ,ncol = length(exp_names)))
+  rownames(AUC_diff_df) <- c("AUC_DIFF_withAPACHE","P_value_withAPACHE","AUC_DIFF_withSOFA","P_value_withSOFA")
+  colnames(AUC_diff_df) <- exp_names
+  
+  for (j in 1:length(exp_names)){
+    curr_exp_names <- exp_names[j]
+    strings_names <- unlist(strsplit(curr_exp_names,split = "_"))
+    curr_cohort <- strings_names[length(strings_names)]
+    curr_feature_name <- paste0(strings_names[2:3],collapse = "_")
+    
+    if (curr_feature_name != "APACHE_SUM" & curr_feature_name!="SOFA_SUM"){
+      diffres <- compare_AUC_func(curr_cohort,curr_perf,"APACHE_SUM",curr_feature_name,current_method,perf_dir)
+      exact_diff <- round(diffres[[1]],3)
+      p_value <-   round(diffres[[2]],3)
       
-#Compute AUC difference and get p value
-method_name <- "Logreg"
-model_names <- colnames(Final_perf)[which(grepl(method_name,colnames(Final_perf)))]
-UK_model_names <- model_names[which(grepl("UTSW",model_names))]
-baseline1_name <- UK_model_names[which(grepl("SOFA",UK_model_names))]
-baseline2_name <- UK_model_names[which(grepl("APACHE",UK_model_names))]
-other_names <- UK_model_names[which(grepl(paste0("clinical_model_",method_name,"_UTSW"),UK_model_names))]
+      diffres <- compare_AUC_func(curr_cohort,curr_perf,"SOFA_SUM",curr_feature_name,current_method,perf_dir)
+      exact_diff2 <- round(diffres[[1]],3)
+      p_value2 <-   round(diffres[[2]],3)
+      AUC_diff_df[,j] <- c(exact_diff,p_value,exact_diff2,p_value2)
+    }
+  
+  }
 
-baseline1_AUC_idx <- which(grepl(baseline1_name,colnames(Final_perf))==T)
-baselin1_AUC <- as.numeric(unlist(strsplit(Final_perf[1,baseline1_AUC_idx], split = "\\("))[1])
-baseline2_AUC_idx <- which(grepl(baseline2_name,colnames(Final_perf))==T)
-baselin2_AUC <- as.numeric(unlist(strsplit(Final_perf[1,baseline2_AUC_idx], split = "\\("))[1])
-other_AUC_idx <- which(colnames(Final_perf) %in% other_names)
-other_AUC1 <- as.numeric(unlist(strsplit(Final_perf[1,other_AUC_idx], split = "\\("))[1])
-diff1 <- other_AUC1-baselin1_AUC
-diff2 <- other_AUC1-baselin2_AUC
-AUC_comp_df <- cbind.data.frame(baselin1_AUC,baselin2_AUC,other_AUC1,diff1,diff2)
-diff1
-diff2
+  sep_final_perf <- rbind(curr_perf,AUC_diff_df)
 
-#1. For mortality
-baseline_model_file  <- "SOFA_SUM_pred_table_Logreg_UKY.csv"
-baseline_model_file2  <- "APACHE_SUM_pred_table_Logreg_UKY.csv"
-comprison_model_file1 <- "clinical_model_pred_table_Logreg_UKY.csv" 
-comprison_model_file2 <- "clinical_model_wTrajectory_pred_table_Logreg_UKY.csv" 
-
-pvalue1 <- compute_AUC_diff_func(perf_dir,baseline_model_file,comprison_model_file1)
-pvalue2 <- compute_AUC_diff_func(perf_dir,baseline_model_file,comprison_model_file2)
-pvalue1
-pvalue2
-pvalue1 <- compute_AUC_diff_func(perf_dir,baseline_model_file2,comprison_model_file1)
-pvalue2 <- compute_AUC_diff_func(perf_dir,baseline_model_file2,comprison_model_file2)
-pvalue1
-pvalue2
-
-reclass_res <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file1)
-reclass_res <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file2)
+  reorder_names <- c ("AUC" ,"AUC_DIFF_withSOFA",           
+                      "P_value_withSOFA","AUC_DIFF_withAPACHE","P_value_withAPACHE",
+                      "Accuracy" ,"Precision",                 
+                      "Sensitivity" , "Specificity","F1",
+                      "PPV", "NPV","Calibration_Intercept","Calibration_Slope",           
+                      "Taylor_Calibration_Intercept","Taylor_Calibration_Slope")
+  sep_final_perf <- sep_final_perf[match(reorder_names,rownames(sep_final_perf)),]
+  write.csv(sep_final_perf, paste0(outdir , current_method,"_Final_perf.csv"))
+}
 
 
-#UTSW
-baseline_model_file  <- "SOFA_SUM_pred_table_Logreg_UTSW.csv"
-comprison_model_file1 <- "clinical_model_pred_table_Logreg_UTSW.csv" 
-comprison_model_file2 <- "clinical_model_wTrajectory_pred_table_Logreg_UTSW.csv" 
+################################################################################################
+##########   MAKE final performance
+################################################################################################
+#read perforamnce table
+perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0512/make/"
+outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0512/make_final_perf2/"
 
-pvalue1 <- compute_AUC_diff_func(perf_dir,baseline_model_file,comprison_model_file1)
-pvalue2 <- compute_AUC_diff_func(perf_dir,baseline_model_file,comprison_model_file2)
-pvalue1
-pvalue2
-reclass_res <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file1)
-reclass_res <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file2)
+#read all perf files except the final all perf file
+all_perf_files <- list.files(perf_dir,full.names = T)
+perf_table_list <- lapply(all_perf_files, read.csv, stringsAsFactors = F)
+########
+File_perf <- list(NA)
+for (i in 1:length(perf_table_list)){ #for each file
+  curr_table <- perf_table_list[[i]]
+  curr_file <- gsub(perf_dir,"",all_perf_files[[i]])
+  
+  EachFold_perf_table <- as.data.frame(matrix(NA, nrow =10 ,ncol = 12))
+  rownames(EachFold_perf_table) <- paste0("Fold",seq(1,10))
+  colnames(EachFold_perf_table) <-c("AUC","Accuracy","Precision","Sensitivity","Specificity","PPV","NPV",
+                                    "Calibration_Intercept","Calibration_Slope",
+                                    "Taylor_Calibration_Intercept","Taylor_Calibration_Slope","F1")
+  for (s in 1:10){ #for each fold 
+    curr_v_tab <- curr_table[which(curr_table[,"TestFold"] == paste0("Fold",s)),]
+    
+    #calibration
+    calib_res <- compute_calibration_func(curr_v_tab)
+    my_calib_res <- calib_res[[1]]
+    taylors_res <- c(calib_res[[2]],calib_res[[3]])
+    EachFold_perf_table[s,"Calibration_Intercept"] <- my_calib_res[1]
+    EachFold_perf_table[s,"Calibration_Slope"] <- my_calib_res[2]
+    EachFold_perf_table[s,"Taylor_Calibration_Intercept"] <- taylors_res[1]
+    EachFold_perf_table[s,"Taylor_Calibration_Slope"] <- taylors_res[2]
+    
+    #Other perforamnce:
+    other_res <- compute_performance_func(curr_v_tab)
+    EachFold_perf_table[s,"AUC"] <- as.numeric(other_res[1])
+    EachFold_perf_table[s,"Accuracy"] <- other_res["Accuracy"]
+    EachFold_perf_table[s,"Precision"] <- other_res["Precision"]
+    EachFold_perf_table[s,"Sensitivity"] <- other_res["Sensitivity"]
+    EachFold_perf_table[s,"Specificity"] <- other_res["Specificity"]
+    EachFold_perf_table[s,"PPV"] <- other_res["Pos Pred Value"]
+    EachFold_perf_table[s,"NPV"] <- other_res["Neg Pred Value"]
+    EachFold_perf_table[s,"F1"] <- other_res["F1"]
+  }
+  
+  
+  
+  curr_File_perf <- perf_Mean_CI_Folds_func(EachFold_perf_table)
+  colnames(curr_File_perf) <- gsub("/|.csv|_pred_table","",curr_file)
+  File_perf[[i]] <- curr_File_perf
+}
 
-#2. For MAKE
-baseline_model_file  <- "max_kdigo_d03_norm.csv_pred_table_Logreg_UKY.csv"
-comprison_model_file1 <- "clinical_model_pred_table_Logreg_UKY.csv" 
-comprison_model_file2 <- "clinical_model_make_wTrajectory_norm.csv_pred_table_Logreg_UKY.csv" 
+Final_perf <- do.call(cbind,File_perf)
 
-pvalue1 <- compute_AUC_diff_func(perf_dir,baseline_model_file,comprison_model_file1)
-pvalue2 <- compute_AUC_diff_func(perf_dir,baseline_model_file,comprison_model_file2)
-pvalue1
-pvalue2
-reclass_res <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file1)
-reclass_res <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file2)
+#################################################################################################
+#1. Seperate output the performance by ML methods
+#2. For each method, each cohort, compare with baseline AUC diff
+#################################################################################################
+method_name_list <- c("Logreg","RF","SVM","Xgb") # "Logreg","RF","SVM","Xgb"
+for (i in 1:length(method_name_list)){
+  current_method <- method_name_list[i]
+  current_perf_indxes <- which(grepl(current_method,colnames(Final_perf)) == T)
+  curr_perf <- Final_perf[,current_perf_indxes]
+  
+  exp_names <- colnames(curr_perf)
+  
+  AUC_diff_df <- as.data.frame(matrix(NA, nrow = 2 ,ncol = length(exp_names)))
+  rownames(AUC_diff_df) <- c("AUC_DIFF_withKdigo","P_value_withKdigo")
+  colnames(AUC_diff_df) <- exp_names
+  
+  for (j in 1:length(exp_names)){
+    curr_exp_names <- exp_names[j]
+    strings_names <- unlist(strsplit(curr_exp_names,split = "_"))
+    curr_cohort <- strings_names[length(strings_names)]
+    if(grepl("selected_features_norm_option1",curr_exp_names) == T){
+      curr_feature_name <- "selected_features_norm_option1"
+    }else if (grepl("selected_features_norm_option2",curr_exp_names) == T){
+      curr_feature_name <- "selected_features_norm_option2"
+    }else if (grepl("selected_features_norm_option3",curr_exp_names) == T){
+      curr_feature_name <- "selected_features_norm_option3"
+      
+    }else{
+      curr_feature_name <- paste0(strings_names[2:3],collapse = "_")
+      
+    }
+    if (curr_feature_name != "max_kdigo"){
+      diffres <- compare_AUC_func(curr_cohort,curr_perf,"max_kdigo",curr_feature_name,current_method,perf_dir)
+      exact_diff <- round(diffres[[1]],3)
+      p_value <-   round(diffres[[2]],3)
+    
+      AUC_diff_df[,j] <- c(exact_diff,p_value)
+    }
+    
+  }
+  
+  sep_final_perf <- rbind(curr_perf,AUC_diff_df)
 
-
-#UTSW
-baseline_model_file  <- "max_kdigo_d03_norm.csv_pred_table_Logreg_UTSW.csv"
-comprison_model_file1 <- "clinical_model_pred_table_Logreg_UTSW.csv" 
-comprison_model_file2 <- "clinical_model_make_wTrajectory_norm.csv_pred_table_Logreg_UTSW.csv" 
-
-pvalue1 <- compute_AUC_diff_func(perf_dir,baseline_model_file,comprison_model_file1)
-pvalue2 <- compute_AUC_diff_func(perf_dir,baseline_model_file,comprison_model_file2)
-pvalue1
-pvalue2
-reclass_res <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file1)
-reclass_res <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file2)
+  
+  reorder_names <- c ("AUC" ,
+                      "AUC_DIFF_withKdigo","P_value_withKdigo",
+                      "Accuracy" ,"Precision",                 
+                      "Sensitivity" , "Specificity","F1",
+                      "PPV", "NPV","Calibration_Intercept","Calibration_Slope",           
+                      "Taylor_Calibration_Intercept","Taylor_Calibration_Slope")
+  sep_final_perf <- sep_final_perf[match(reorder_names,rownames(sep_final_perf)),]
+  write.csv(sep_final_perf, paste0(outdir , current_method,"_Final_perf.csv"))
+}
