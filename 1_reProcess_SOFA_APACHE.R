@@ -22,15 +22,15 @@ UK_feature_df <- read.csv(paste0(UK_data_dir,"sofa_apache.csv"),stringsAsFactors
 UK_SOFA_SUM <- sum_score_func(UK_feature_df,"SOFA")
 UK_APACHE_SUM <- sum_score_func(UK_feature_df,"APACHE")
 
-write.csv(UK_SOFA_SUM,paste0(UK_outdir,"SOFA_SUM.csv"),row.names = F)
-write.csv(UK_APACHE_SUM,paste0(UK_outdir,"APACHE_SUM.csv"),row.names = F)
+#write.csv(UK_SOFA_SUM,paste0(UK_outdir,"SOFA_SUM.csv"),row.names = F)
+#write.csv(UK_APACHE_SUM,paste0(UK_outdir,"APACHE_SUM.csv"),row.names = F)
 
 
 #3.#Min_Max_Norm
 UK_SOFA_SUM[,"SOFA_SUM"] <- min_max_func(UK_SOFA_SUM[,"SOFA_SUM"])
 UK_APACHE_SUM[,"APACHE_SUM"] <- min_max_func(UK_APACHE_SUM[,"APACHE_SUM"])
-write.csv(UK_SOFA_SUM,paste0(UK_outdir,"SOFA_SUM_norm.csv"),row.names = F)
-write.csv(UK_APACHE_SUM,paste0(UK_outdir,"APACHE_SUM_norm.csv"),row.names = F)
+write.csv(UK_SOFA_SUM,paste0(UK_outdir,"Mortality_SOFA_SUM_norm.csv"),row.names = F)
+write.csv(UK_APACHE_SUM,paste0(UK_outdir,"Mortality_APACHE_SUM_norm.csv"),row.names = F)
 
 
 #II.UTSW
@@ -42,13 +42,13 @@ UTSW_feature_df <- read.csv(paste0(UTSW_data_dir,"sofa_apache.csv"),stringsAsFac
 UTSW_SOFA_SUM <- sum_score_func(UTSW_feature_df,"SOFA")
 UTSW_APACHE_SUM <- sum_score_func(UTSW_feature_df,"APACHE")
 
-write.csv(UTSW_SOFA_SUM,paste0(UTSW_outdir,"SOFA_SUM.csv"),row.names = F)
-write.csv(UTSW_APACHE_SUM,paste0(UTSW_outdir,"APACHE_SUM.csv"),row.names = F)
+#write.csv(UTSW_SOFA_SUM,paste0(UTSW_outdir,"SOFA_SUM.csv"),row.names = F)
+#write.csv(UTSW_APACHE_SUM,paste0(UTSW_outdir,"APACHE_SUM.csv"),row.names = F)
 
 
 #2.#Min_Max_Norm
 UTSW_SOFA_SUM[,"SOFA_SUM"] <- min_max_func(UTSW_SOFA_SUM[,"SOFA_SUM"])
 UTSW_APACHE_SUM[,"APACHE_SUM"] <- min_max_func(UTSW_APACHE_SUM[,"APACHE_SUM"])
-write.csv(UTSW_SOFA_SUM,paste0(UTSW_outdir,"SOFA_SUM_norm.csv"),row.names = F)
-write.csv(UTSW_APACHE_SUM,paste0(UTSW_outdir,"APACHE_SUM_norm.csv"),row.names = F)
+write.csv(UTSW_SOFA_SUM,paste0(UTSW_outdir,"Mortality_SOFA_SUM_norm.csv"),row.names = F)
+write.csv(UTSW_APACHE_SUM,paste0(UTSW_outdir,"Mortality_APACHE_SUM_norm.csv"),row.names = F)
 
