@@ -102,18 +102,27 @@ UTSW_outdir<-  paste0(out_dir,"utsw/")
 #1. Load clinical_model_mortality_norm.csv
 feature_ClinicalModel_UK <- read.csv(paste0(UK_data_dir,"clinical_model_mortality_norm.csv"),stringsAsFactors = F)
 updated_feature_ClinicalModel_UK <- update_clinicalmodel_mortality_func(feature_ClinicalModel_UK)
-write.csv(updated_feature_ClinicalModel_UK,paste0(UK_outdir,"updated_clinical_model_mortality_norm.csv"),row.names = F)
+write.csv(updated_feature_ClinicalModel_UK,paste0(UK_outdir,"Mortality_clinical_model_norm.csv"),row.names = F)
 
 #2. Load clinical_model_mortality_wTrajectory_norm.csv
 feature_Clinical_withTraj_UK <- read.csv(paste0(UK_data_dir,"clinical_model_mortality_wTrajectory_norm.csv"),stringsAsFactors = F)
 updated_feature_Clinical_withTraj_UK <- update_clinical_withTraj_mortality_func(feature_Clinical_withTraj_UK)
-write.csv(updated_feature_Clinical_withTraj_UK,paste0(UK_outdir,"updated_clinical_model_mortality_wTrajectory_norm.csv"),row.names = F)
+write.csv(updated_feature_Clinical_withTraj_UK,paste0(UK_outdir,"Mortality_clinical_model_wTrajectory_norm.csv"),row.names = F)
 
 #3. Selected features from note "Feature_Importance0222_031221_jan.docx"
-selected_feature_names <- c("LastKDIGO_D14","MaxKDIGO_D03","unPlannedAdmission","Age",
-                            "Bilirubin_D1_HIGH","FluidOverload","Septic","MechHemodynamicSupport",
-                            "MechanicalVentilation","PH_D1_LOW","Vasopress_exp","PLATELETS_D1_LOW")
-selected_feature_df_UK <- updated_feature_Clinical_withTraj_UK[,c("STUDY_PATIENT_ID",selected_feature_names)]
+mortality_selected_feature_names <- c("LastKDIGO_D03",
+                            "MaxKDIGO_D03",
+                            "unPlannedAdmission",
+                            "Age",
+                            "Bilirubin_D1_HIGH",
+                            "FluidOverload",
+                            "Septic",
+                            "MechHemodynamicSupport",
+                            "MechanicalVentilation",
+                            "PH_D1_LOW",
+                            "Vasopress_exp",
+                            "PLATELETS_D1_LOW")
+selected_feature_df_UK <- updated_feature_Clinical_withTraj_UK[,c("STUDY_PATIENT_ID",mortality_selected_feature_names)]
 write.csv(selected_feature_df_UK,paste0(UK_outdir,"Mortality_selected_features_norm.csv"),row.names = F)
 
 
@@ -123,18 +132,15 @@ write.csv(selected_feature_df_UK,paste0(UK_outdir,"Mortality_selected_features_n
 #1. Load clinical_model_mortality_norm.csv
 feature_ClinicalModel_UTSW <- read.csv(paste0(UTSW_data_dir,"clinical_model_mortality_norm.csv"),stringsAsFactors = F)
 updated_feature_ClinicalModel_UTSW <- update_clinicalmodel_mortality_func(feature_ClinicalModel_UTSW)
-write.csv(updated_feature_ClinicalModel_UTSW,paste0(UTSW_outdir,"updated_clinical_model_mortality_norm.csv"),row.names = F)
+write.csv(updated_feature_ClinicalModel_UTSW,paste0(UTSW_outdir,"Mortality_clinical_model_norm.csv"),row.names = F)
 
 #2. Load clinical_model_mortality_wTrajectory_norm.csv
 feature_Clinical_withTraj_UTSW <- read.csv(paste0(UTSW_data_dir,"clinical_model_mortality_wTrajectory_norm.csv"),stringsAsFactors = F)
 updated_feature_Clinical_withTraj_UTSW <- update_clinical_withTraj_mortality_func(feature_Clinical_withTraj_UTSW)
-write.csv(updated_feature_Clinical_withTraj_UTSW,paste0(UTSW_outdir,"updated_clinical_model_mortality_wTrajectory_norm.csv"),row.names = F)
+write.csv(updated_feature_Clinical_withTraj_UTSW,paste0(UTSW_outdir,"Mortality_clinical_model_wTrajectory_norm.csv"),row.names = F)
 
 #3. Selected features from note "Feature_Importance0222_031221_jan.docx"
-selected_feature_names <- c("LastKDIGO_D14","MaxKDIGO_D03","unPlannedAdmission","Age",
-                            "Bilirubin_D1_HIGH","FluidOverload","Septic","MechHemodynamicSupport",
-                            "MechanicalVentilation","PH_D1_LOW","Vasopress_exp","PLATELETS_D1_LOW")
-selected_feature_df_UTSW <- updated_feature_Clinical_withTraj_UTSW[,c("STUDY_PATIENT_ID",selected_feature_names)]
+selected_feature_df_UTSW <- updated_feature_Clinical_withTraj_UTSW[,c("STUDY_PATIENT_ID",mortality_selected_feature_names)]
 write.csv(selected_feature_df_UTSW,paste0(UTSW_outdir,"Mortality_selected_features_norm.csv"),row.names = F)
 
 
@@ -151,31 +157,45 @@ write.csv(selected_feature_df_UTSW,paste0(UTSW_outdir,"Mortality_selected_featur
 #1. Load clinical_model_make_norm.csv
 feature_ClinicalModel_UK2 <- read.csv(paste0(UK_data_dir,"clinical_model_make_norm.csv"),stringsAsFactors = F)
 updated_feature_ClinicalModel_UK2 <- update_clinicalmodel_MAKE_func(feature_ClinicalModel_UK2)
-write.csv(updated_feature_ClinicalModel_UK2,paste0(UK_outdir,"updated_clinical_model_make_norm.csv"),row.names = F)
+write.csv(updated_feature_ClinicalModel_UK2,paste0(UK_outdir,"MAKE_clinical_model_norm.csv"),row.names = F)
 
 #2. Load clinical_model_make_wTrajectory_norm.csv
 feature_Clinical_withTraj_UK2 <- read.csv(paste0(UK_data_dir,"clinical_model_make_wTrajectory_norm.csv"),stringsAsFactors = F)
 updated_feature_Clinical_withTraj_UK2 <- update_clinical_withTraj_MAKE_func(feature_Clinical_withTraj_UK2)
-write.csv(updated_feature_Clinical_withTraj_UK2,paste0(UK_outdir,"updated_clinical_model_make_wTrajectory_norm.csv"),row.names = F)
+write.csv(updated_feature_Clinical_withTraj_UK2,paste0(UK_outdir,"MAKE_clinical_model_wTrajectory_norm.csv"),row.names = F)
 
 #3. Selected features from note "Feature_Importance0222_031221_jan.docx"
-#option1
-selected_feature_names_option1 <- c("LastKDIGO_D14","MaxKDIGO_D03","unPlannedAdmission","Age",
-                            "Bilirubin_D1_HIGH","FluidOverload","Septic","MechanicalVentilation",
-                            "Urine_output","HEMOGLOBIN_D1_LOW","PLATELETS_D1_LOW","PH_D1_LOW")
-selected_feature_df_UK_option1 <- updated_feature_Clinical_withTraj_UK2[,c("STUDY_PATIENT_ID",selected_feature_names_option1)]
-write.csv(selected_feature_df_UK_option1,paste0(UK_outdir,"MAKE_selected_features_norm_option1_withPH.csv.csv"),row.names = F)
+MAKE_selected_feature_names <- c("LastKDIGO_D03",
+                                 "MaxKDIGO_D03",
+                                 "unPlannedAdmission",
+                                 "Age",
+                                 "Bilirubin_D1_HIGH",
+                                 "FluidOverload",
+                                 "Septic",
+                                 "MechanicalVentilation",
+                                 "Urine_output",
+                                 "HEMOGLOBIN_D1_LOW",
+                                 "PLATELETS_D1_LOW")
+selected_feature_names_option1 <- c(MAKE_selected_feature_names,"PH_D1_LOW")
+selected_feature_names_option2 <- c(MAKE_selected_feature_names,"MechHemodynamicSupport")
+selected_feature_names_option3 <- c(MAKE_selected_feature_names,"PH_D1_LOW","MechHemodynamicSupport")
 
-#option2
-selected_feature_names_option2 <- c("LastKDIGO_D14","MaxKDIGO_D03","unPlannedAdmission","Age",
-                                    "Bilirubin_D1_HIGH","FluidOverload","Septic","MechanicalVentilation",
-                                    "Urine_output","HEMOGLOBIN_D1_LOW","PLATELETS_D1_LOW","MechHemodynamicSupport")
-#Get MechHemodynamicSupport from mortality file
+#Add MechHemodynamicSupport to the df
 matchedId_order <- match(feature_ClinicalModel_UK[,"STUDY_PATIENT_ID"], updated_feature_Clinical_withTraj_UK2[,"STUDY_PATIENT_ID"])
 updated_feature_Clinical_withTraj_UK2$MechHemodynamicSupport <- feature_ClinicalModel_UK[matchedId_order,"MechHemodynamicSupport"]
 
+#option1 with PH
+selected_feature_df_UK_option1 <- updated_feature_Clinical_withTraj_UK2[,c("STUDY_PATIENT_ID",selected_feature_names_option1)]
+write.csv(selected_feature_df_UK_option1,paste0(UK_outdir,"MAKE_selected_features_norm_option1_withPH.csv.csv"),row.names = F)
+
+#option2 with MechHemodynamicSupport 
 selected_feature_df_UK_option2 <- updated_feature_Clinical_withTraj_UK2[,c("STUDY_PATIENT_ID",selected_feature_names_option2)]
 write.csv(selected_feature_df_UK_option2,paste0(UK_outdir,"MAKE_selected_features_norm_option2_withMechHemoSup.csv"),row.names = F)
+
+#option3: both PH and MechHemodynamicSupport
+selected_feature_df_UK_option3 <- updated_feature_Clinical_withTraj_UK2[,c("STUDY_PATIENT_ID",selected_feature_names_option3)]
+write.csv(selected_feature_df_UK_option3,paste0(UK_outdir,"MAKE_selected_features_norm_option3_withPH_And_MechHemoSup.csv"),row.names = F)
+
 
 
 ##############################################################################################
@@ -184,30 +204,28 @@ write.csv(selected_feature_df_UK_option2,paste0(UK_outdir,"MAKE_selected_feature
 #1. Load clinical_model_make_norm.csv
 feature_ClinicalModel_UTSW2 <- read.csv(paste0(UTSW_data_dir,"clinical_model_make_norm.csv"),stringsAsFactors = F)
 updated_feature_ClinicalModel_UTSW2 <- update_clinicalmodel_MAKE_func(feature_ClinicalModel_UTSW2)
-write.csv(updated_feature_ClinicalModel_UTSW2,paste0(UTSW_outdir,"updated_clinical_model_make_norm.csv"),row.names = F)
+write.csv(updated_feature_ClinicalModel_UTSW2,paste0(UTSW_outdir,"MAKE_clinical_model_norm.csv"),row.names = F)
 
 #2. Load clinical_model_make_wTrajectory_norm.csv
 feature_Clinical_withTraj_UTSW2 <- read.csv(paste0(UTSW_data_dir,"clinical_model_make_wTrajectory_norm.csv"),stringsAsFactors = F)
 updated_feature_Clinical_withTraj_UTSW2 <- update_clinical_withTraj_MAKE_func(feature_Clinical_withTraj_UTSW2)
-write.csv(updated_feature_Clinical_withTraj_UTSW2,paste0(UTSW_outdir,"updated_clinical_model_make_wTrajectory_norm.csv"),row.names = F)
+write.csv(updated_feature_Clinical_withTraj_UTSW2,paste0(UTSW_outdir,"MAKE_clinical_model_wTrajectory_norm.csv"),row.names = F)
 
-#3. Selected features from note "Feature_Importance0222_031221_jan.docx"
+#Add MechHemodynamicSupport to the df
+matchedId_order <- match(feature_ClinicalModel_UTSW[,"STUDY_PATIENT_ID"], updated_feature_Clinical_withTraj_UTSW2[,"STUDY_PATIENT_ID"])
+updated_feature_Clinical_withTraj_UTSW2$MechHemodynamicSupport <- feature_ClinicalModel_UTSW[matchedId_order,"MechHemodynamicSupport"]
+
+
 #option1
-selected_feature_names_option1 <- c("LastKDIGO_D14","MaxKDIGO_D03","unPlannedAdmission","Age",
-                                    "Bilirubin_D1_HIGH","FluidOverload","Septic","MechanicalVentilation",
-                                    "Urine_output","HEMOGLOBIN_D1_LOW","PLATELETS_D1_LOW","PH_D1_LOW")
 selected_feature_df_UTSW_option1 <- updated_feature_Clinical_withTraj_UTSW2[,c("STUDY_PATIENT_ID",selected_feature_names_option1)]
 write.csv(selected_feature_df_UTSW_option1,paste0(UTSW_outdir,"MAKE_selected_features_norm_option1_withPH.csv.csv"),row.names = F)
 
 #option2
-selected_feature_names_option2 <- c("LastKDIGO_D14","MaxKDIGO_D03","unPlannedAdmission","Age",
-                                    "Bilirubin_D1_HIGH","FluidOverload","Septic","MechanicalVentilation",
-                                    "Urine_output","HEMOGLOBIN_D1_LOW","PLATELETS_D1_LOW","MechHemodynamicSupport")
-#Get MechHemodynamicSupport from mortality file
-matchedId_order <- match(feature_ClinicalModel_UTSW[,"STUDY_PATIENT_ID"], updated_feature_Clinical_withTraj_UTSW2[,"STUDY_PATIENT_ID"])
-updated_feature_Clinical_withTraj_UTSW2$MechHemodynamicSupport <- feature_ClinicalModel_UTSW[matchedId_order,"MechHemodynamicSupport"]
-
 selected_feature_df_UTSW_option2 <- updated_feature_Clinical_withTraj_UTSW2[,c("STUDY_PATIENT_ID",selected_feature_names_option2)]
 write.csv(selected_feature_df_UTSW_option2,paste0(UTSW_outdir,"MAKE_selected_features_norm_option2_withMechHemoSup.csv"),row.names = F)
 
+
+#option3
+selected_feature_df_UTSW_option3 <- updated_feature_Clinical_withTraj_UTSW2[,c("STUDY_PATIENT_ID",selected_feature_names_option3)]
+write.csv(selected_feature_df_UTSW_option3,paste0(UTSW_outdir,"MAKE_selected_features_norm_option3_withPH_And_MechHemoSup.csv"),row.names = F)
 
