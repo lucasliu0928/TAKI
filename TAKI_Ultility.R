@@ -149,17 +149,14 @@ predict_xgboost <- function(curr_model,test_data_part,test_label,pred_type){
   return(predicted_prob)
 }
 
-cv_func <- function(analysis_df,outcome_colname,model_name,validation_df,upsample_flag,N_sampling){
+cv_func <- function(analysis_df,Idxes_fold_df,outcome_colname,model_name,validation_df,upsample_flag,N_sampling){
   # analysis_df <- feature_df
-  # outcome_colname <- "MAKE"
-  # model_name <- "SVM_TOP"
+  # outcome_colname <- "died_inp"
+  # model_name <- "SVM"
   # validation_df <- UTSW_feature_df
   # upsample_flag <- 0
-  # N_sampling <- 2
+  # N_sampling <- 10
 
-  #Get folds indexes table 
-  Idxes_fold_df <- create_fold_func(analysis_df)
-  
   #code factor as Y for 1, and N for 0, for caret package, we cannot use 1 or 0 for outcome
   #For UK df
   analysis_df <- code_Label_YN_func(analysis_df,outcome_colname)
@@ -211,7 +208,7 @@ cv_func <- function(analysis_df,outcome_colname,model_name,validation_df,upsampl
       
       #Model
       if (model_name == "SVM"){
-        model_svm  <- train(train_data_part, sampled_train_data[,outcome_index],method='svmPoly' , 
+        model_svm  <- train(train_data_part, sampled_train_data[,outcome_index],method='svmRadial' , 
                             trControl = trainControl("none", classProbs = TRUE),verbose=F) # Support Vector Machines
         curr_model <- model_svm
         import_res <- varImp(curr_model, scale = TRUE)
@@ -470,4 +467,127 @@ cv_func <- function(analysis_df,outcome_colname,model_name,validation_df,upsampl
   final_mportance_matrix<- do.call(rbind,All_sampling_importance_matrix_perFold)
   
   return(list(final_pred,final_pred_validation,final_mportance_matrix))
+}
+
+
+
+
+##Performance functions
+#compute calibration slope and Intercept
+compute_calibration_func <-function(perf_table){
+  #perf_table <- curr_table
+  
+  #compute calibration Intercept and slope and plot
+  pred_p <-   perf_table[,"pred_prob"]
+  acutal <- as.numeric(as.vector(perf_table[,"Label"]))
+  res = val.prob(pred_p,acutal, pl=FALSE)
+  calib_res <- res[c("Intercept","Slope")]
+  
+  #Note: This is what val.prb actually doing
+  #check <- glm(acutal ~ log(pred_p/(1-pred_p)),family="binomial")
+  #check$coefficients
+  
+  #another way mentioned in Taylor's email:
+  #Slope: Mean Model Output for All With Positive Outcome / Mean Model Output for All With Negative Outcome>
+  #Intercept: Mean model output for all patients with a negative result for the outcome.
+  all_pos_output <- perf_table[which(perf_table[,"Label"]==1),"pred_prob"]
+  all_neg_output <- perf_table[which(perf_table[,"Label"]==0),"pred_prob"]
+  possible_slope <- mean(all_pos_output)/mean(all_neg_output)
+  possible_Intercept <- mean(all_neg_output)
+  
+  return(list(calib_res,possible_Intercept,possible_slope))
+}
+
+#Compute AUC, ACC, Precision, Sensitivity and...
+compute_performance_func <- function(prediction_table){
+  #prediction_table <- curr_v_tab
+  prediction_table[,"pred_class"] <- as.factor(prediction_table[,"pred_class"])
+  prediction_table[,"Label"] <- as.factor(prediction_table[,"Label"])
+  
+  pred_prob <- prediction_table[,"pred_prob"]
+  pred_label <- prediction_table[,"pred_class"]
+  actual_label <- prediction_table[,"Label"]
+  
+  #ROC AUC
+  AUC_res <- roc(actual_label, pred_prob,direction = "<",ci =T, auc= T, quiet=TRUE) # control:0, case:1
+  AUC <- as.numeric(AUC_res$auc)
+  
+  #By default, this function uses 2000 bootstraps to calculate a 95% confidence interval.
+  AUC_95CI <- c(as.numeric(ci.auc(actual_label,pred_prob,direction = "<", quiet=TRUE))[1],as.numeric(ci.auc(actual_label,pred_prob,direction = "<"))[3])
+  
+  cm <- confusionMatrix(pred_label, actual_label, positive = "1", dnn = c("Prediction", "Reference"), mode="everything")
+  ACC <- cm$overall[1]
+  #NOte: Use Exact binomial testto compute CI for accuracy, first value is #number of sucess, #number of failure
+  ##Note: Following uses binom.test(c(4883,1283),conf.level = 0.95) 
+  ACC_95CI <- cm$overall[c("AccuracyLower","AccuracyUpper")] #
+  Precision <- cm$byClass["Precision"]
+  Sensitivity <- cm$byClass["Sensitivity"]
+  Specificity  <- cm$byClass["Specificity"]
+  PPV <- cm$byClass["Pos Pred Value"]
+  NPV <- cm$byClass["Neg Pred Value"]
+  F1_Score <- cm$byClass["F1"]
+  perf_vec <- c(AUC,AUC_95CI,ACC,ACC_95CI,Precision,Sensitivity,Specificity,PPV,NPV,F1_Score)
+  return(perf_vec)
+}
+
+#Compute report mean and CI for all folds
+perf_Mean_CI_Folds_func <-function(Fold_perf_table){
+  #Fold_perf_table <- EachFold_perf_table
+  
+  mean_CI_perf <- as.data.frame(matrix(NA,nrow = ncol(Fold_perf_table),ncol = 1))
+  colnames(mean_CI_perf) <- "Mean_(95CI)"
+  rownames(mean_CI_perf) <-  colnames(Fold_perf_table)
+  for (j in 1:ncol(Fold_perf_table)){
+    curr_CI <- CI(Fold_perf_table[,j], ci=0.95)
+    curr_CI <- as.numeric(round(curr_CI,2))
+    mean_CI_perf[j,1] <- paste0(curr_CI[2], "(",curr_CI[3],"-",curr_CI[1],")")
+  }
+  return(mean_CI_perf)
+}
+
+Test_AUC_diff_func <-function(perf_dir,baseline_model_file,comprison_model_file1){
+  baseline_df <- read.csv(paste0(perf_dir,"/",baseline_model_file),stringsAsFactors = F)
+  comp_df <- read.csv(paste0(perf_dir,"/",comprison_model_file1),stringsAsFactors = F)
+  
+  #Combine comparison models
+  model_comp_df <- cbind.data.frame(baseline_df[,"Label"],
+                                    baseline_df[,"pred_prob"],
+                                    comp_df[,"pred_prob"])
+  colnames(model_comp_df) <- c("Label","pred_prob_bl","pred_prob1")
+  #AUC difference
+  roc_bl <- roc(model_comp_df$Label, model_comp_df$pred_prob_bl)
+  roc_1 <- roc(model_comp_df$Label, model_comp_df$pred_prob1)
+  test_res <- roc.test(roc_bl,roc_1,method = "delong")
+  pval <- test_res$p.value
+  return(pval)
+}
+
+compare_AUC_func <- function(cohort_name,curr_perf,baseline_name,tocompare_modelname,method_name,perf_dir){
+  # cohort_name <- "UKY"
+  # baseline_name <- "max_kdigo"
+  # tocompare_modelname <- curr_feature_name
+  # method_name <- current_method
+  
+  #1.Compute exact diff  
+  auc_idx <- which(grepl("AUC",rownames(curr_perf)) == T)  
+  
+  cohort_indxes <-  which(grepl(cohort_name,colnames(curr_perf)) == T)  
+  cohort_perf<- curr_perf[,cohort_indxes]
+  baseline_idx <- which(grepl(baseline_name,colnames(cohort_perf)) == T)  
+  comparemodel_idx <- which(grepl(tocompare_modelname,colnames(cohort_perf)) == T)  
+  baseline_AUC <- as.numeric(unlist(strsplit(cohort_perf[auc_idx,baseline_idx],"\\("))[1])
+  compModel_AUC <- as.numeric(unlist(strsplit(cohort_perf[auc_idx,comparemodel_idx],"\\("))[1])
+  exact_diffs <- compModel_AUC-baseline_AUC
+  
+  #2. diff test
+  all_perf_files <- list.files(perf_dir)
+  cohort_files <- all_perf_files[which(grepl(cohort_name,all_perf_files)==T)]
+  methodcohort_files <- cohort_files[which(grepl(method_name,cohort_files)==T)]
+  
+  baseline_model_file  <- methodcohort_files[which(grepl(baseline_name,methodcohort_files)==T)]
+  comprison_model_file <- methodcohort_files[which(grepl(tocompare_modelname,methodcohort_files)==T)]
+  
+  pvalue <- Test_AUC_diff_func(perf_dir,baseline_model_file,comprison_model_file)
+  
+  return(list(exact_diffs,pvalue))
 }
