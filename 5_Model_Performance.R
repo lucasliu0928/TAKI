@@ -4,6 +4,18 @@ library(pROC) #can also use this one for delong's methods
 library(Rmisc)
 library(caret)
 source("TAKI_Ultility.R")
+
+compute_ROCAUC_bootstrap_CI <- function(pred_table){
+  roc <- roc(pred_table[,"pred_class"], pred_table[,"Label"])
+  CI_AUC <- ci.auc(roc, conf.level=0.95, method=c("bootstrap"), boot.n = 2000, boot.stratified = TRUE, reuse.auc=TRUE,
+                   progress = getOption("pROCProgress")$name, parallel=FALSE)
+  roc_auc_andCI <- CI_AUC
+  res <- t(data.frame(roc_auc_andCI))
+  colnames(res) <- c("CI_P2_5","AUC","CI_P97_5")
+  rownames(res) <- NULL
+  return(res)
+}    
+
 ################################################################################################
 ##########   Mortality final performance
 ################################################################################################
@@ -111,9 +123,12 @@ for (i in 1:length(method_name_list)){
 ################################################################################################
 ##########   MAKE final performance
 ################################################################################################
+                             
+
+
 #read perforamnce table
-perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0512/make/"
-outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0512/make_final_perf2/"
+perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0523/make/"
+outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0523/make_final_perf2/"
 
 #read all perf files except the final all perf file
 all_perf_files <- list.files(perf_dir,full.names = T)
@@ -123,15 +138,49 @@ File_perf <- list(NA)
 for (i in 1:length(perf_table_list)){ #for each file
   curr_table <- perf_table_list[[i]]
   curr_file <- gsub(perf_dir,"",all_perf_files[[i]])
-  
+
   EachFold_perf_table <- as.data.frame(matrix(NA, nrow =10 ,ncol = 12))
   rownames(EachFold_perf_table) <- paste0("Fold",seq(1,10))
   colnames(EachFold_perf_table) <-c("AUC","Accuracy","Precision","Sensitivity","Specificity","PPV","NPV",
                                     "Calibration_Intercept","Calibration_Slope",
                                     "Taylor_Calibration_Intercept","Taylor_Calibration_Slope","F1")
-  for (s in 1:10){ #for each fold 
-    curr_v_tab <- curr_table[which(curr_table[,"TestFold"] == paste0("Fold",s)),]
+
+  AUC_perf_tb <- as.data.frame(matrix(NA, nrow =10 ,ncol = 3))
+  rownames(AUC_perf_tb) <- paste0("DownSample",seq(1,10))
+  colnames(AUC_perf_tb) <- c("")
+  for (s in 1:10){ #for each down sampling
+    #if uky
+    curr_v_tab <- curr_table[which(curr_table[,"TrainingSample_Index"] == paste0("S",1)),]
+    curr_AUC <- compute_ROCAUC_bootstrap_CI(curr_v_tab)
     
+
+    
+    #calibration
+    calib_res <- compute_calibration_func(curr_v_tab)
+    my_calib_res <- calib_res[[1]]
+    taylors_res <- c(calib_res[[2]],calib_res[[3]])
+    EachFold_perf_table[s,"Calibration_Intercept"] <- my_calib_res[1]
+    EachFold_perf_table[s,"Calibration_Slope"] <- my_calib_res[2]
+    EachFold_perf_table[s,"Taylor_Calibration_Intercept"] <- taylors_res[1]
+    EachFold_perf_table[s,"Taylor_Calibration_Slope"] <- taylors_res[2]
+    
+    #Other perforamnce:
+    other_res <- compute_performance_func(curr_v_tab)
+    EachFold_perf_table[s,"AUC"] <- as.numeric(other_res[1])
+    EachFold_perf_table[s,"Accuracy"] <- other_res["Accuracy"]
+    EachFold_perf_table[s,"Precision"] <- other_res["Precision"]
+    EachFold_perf_table[s,"Sensitivity"] <- other_res["Sensitivity"]
+    EachFold_perf_table[s,"Specificity"] <- other_res["Specificity"]
+    EachFold_perf_table[s,"PPV"] <- other_res["Pos Pred Value"]
+    EachFold_perf_table[s,"NPV"] <- other_res["Neg Pred Value"]
+    EachFold_perf_table[s,"F1"] <- other_res["F1"]
+    
+  }
+  
+  for (s in 1:10){ #for each fold 
+    #if utsw
+    curr_v_tab <- curr_table[which(curr_table[,"TestFold"] == paste0("Fold",s) & 
+                                   curr_table[,"TrainingSample_Index"] == paste0("S",1)),]
     #calibration
     calib_res <- compute_calibration_func(curr_v_tab)
     my_calib_res <- calib_res[[1]]
