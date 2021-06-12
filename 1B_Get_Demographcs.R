@@ -3,8 +3,7 @@ source("TAKI_Ultility.R")
 
 #Raw data dir
 raw_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UKY/raw_csv_files/"
-outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/TAKI_Feature/rawData_processed/uky/"
-
+outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/"
 ##########################################################################################
 #Load Raw Data
 ##########################################################################################
@@ -17,7 +16,7 @@ raw_DOB_df <- read.csv(paste0(raw_dir,"DOB.csv"),stringsAsFactors = F)
 raw_DOB_df <- raw_DOB_df[!duplicated(raw_DOB_df[,c("STUDY_PATIENT_ID","DOB")]),] ##remove duplicate rows
 
 #3. Corrected Time df for analysis ID
-All_time_df <-read.csv(paste0(outdir,"All_Timeinfo_df.csv"),stringsAsFactors = F)
+All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
 
 ##########################################################################################
 #anlaysis Id for pts has corrected HOSP ADMISSION time
@@ -42,7 +41,7 @@ for (i in 1:nrow(raw_DOB_df)){
   
   curr_idxes <- which(All_time_df[,"STUDY_PATIENT_ID"] == curr_id)
   if (length(curr_idxes) > 0){
-    curr_hosp_start <- All_time_df[curr_idxes,"HOSP_ADMIT_DATE"]
+    curr_hosp_start <- All_time_df[curr_idxes,"Updated_HOSP_ADMIT_DATE"]
     raw_DOB_df[i,"AGE"] <-  as.numeric(difftime(ymd_hms(curr_hosp_start) , ymd_hms(curr_DOB),units = "days"))/365
   }
   
