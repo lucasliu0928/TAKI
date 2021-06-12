@@ -3,13 +3,12 @@ source("TAKI_Ultility.R")
 
 #Raw data dir
 raw_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UKY/raw_csv_files/"
-outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/TAKI_Feature/rawData_processed/uky/"
+outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/"
 
 
 ##########################################################################################
 #Load Raw Data
 ##########################################################################################
-
 #6.Load CLINICAL_VITALS 
 raw_Vitals_df <- read.csv(paste0(raw_dir,"CLINICAL_VITALS.csv"),stringsAsFactors = F)
 
@@ -32,6 +31,9 @@ raw_ELIXHAUSER_df <- read.csv(paste0(raw_dir,"ELIXHAUSER_SCORE.csv"),stringsAsFa
 
 #12. Load raw DIAGNOSIS data
 raw_DIAGNOSIS_df <- read.csv(paste0(raw_dir,"DIAGNOSIS.csv"),stringsAsFactors = F)
+sepsis_check_df <- raw_DIAGNOSIS_df[which(grepl("sepsis",raw_DIAGNOSIS_df[,"DIAGNOSIS_DESC"],ignore.case = T) ==T),]
+unique_sepsis_df <- as.data.frame(unique(sepsis_check_df$DIAGNOSIS_DESC))
+write.csv(unique_sepsis_df,paste0(outdir,"sepsis_TAKI_UKY.csv"))
 
 #13.ORGANSUPP_VENT
 raw_ORGANSUPP_VENT_df <- read.csv(paste0(raw_dir,"ORGANSUPP_VENT.csv"),stringsAsFactors = F)
@@ -47,6 +49,7 @@ raw_ORGANSUPP_VAD_df <- read.csv(paste0(raw_dir,"ORGANSUPP_VAD.csv"),stringsAsFa
 
 #17.MEDICATIONS_INDX
 raw_MEDICATIONS_df <- read.csv(paste0(raw_dir,"MEDICATIONS_INDX.csv"),stringsAsFactors = F)
+
 
 #18.IO
 raw_IO_df <- read.csv(paste0(raw_dir,"IO_TOTALS.csv"),stringsAsFactors = F)
