@@ -5,7 +5,343 @@ library(ggplot2)
 library(openxlsx)
 library(dplyr)
 library(caTools)
-#Extract Raw data functions
+##############  Time correction functions ############## 
+reformat_10char_dates_func <- function(date_to_modify){
+  date_to_modify <- as.character(date_to_modify)
+  if (nchar(date_to_modify) == 10){
+    updated_date <- paste(date_to_modify, "00:00:00")
+  }else{
+    updated_date <- as.character(date_to_modify)
+  }
+  return(updated_date)
+}
+
+check_NA_dates_func <- function(dates_tocheck){
+  if (is.na(dates_tocheck) ==F){
+    HAS_Dates <- 1
+  }else {
+    HAS_Dates <- 0
+  }
+  return(HAS_Dates)
+}
+
+#Check if time duration 1 is within time duration 2  with extend hours 
+check_T1_in_T2<-function(T1_Start,T1_End,T2_Start,T2_End,event_name1,event_name2,hours_to_extend){
+  if(ymd_hms(T1_Start) >= (ymd_hms(T2_Start) - hours(hours_to_extend)) &  
+     ymd_hms(T1_End)   <= (ymd_hms(T2_End)   + hours(hours_to_extend))){
+    t1_in_t2_flag<-paste(event_name1,"in",event_name2)
+  }else{
+    t1_in_t2_flag<-paste(event_name1,"not in",event_name2)
+  }
+  return(t1_in_t2_flag)
+}
+
+#check if two event has any overlapped time
+check_overlapTime_betweenTwoEvents <- function(T1_Start,T1_End,T2_Start,T2_End,event_name1,event_name2){
+  intCRRT<-interval(ymd_hms(T1_Start),ymd_hms(T1_End))
+  intHD<-interval(ymd_hms(T2_Start),ymd_hms(T2_End))
+  
+  if(int_overlaps(intCRRT, intHD)==T){
+    overlap_flag <- paste(event_name1,"and", event_name2, "overlap") 
+    
+  }else{
+    overlap_flag<- paste(event_name1,"and", event_name2, "not overlapped") 
+  }
+  
+  
+  return(overlap_flag)
+  
+}
+
+#Check if pateints has dates
+check_has_dates <- function(Time_df){
+  IDs_toCheck <- Time_df[,"STUDY_PATIENT_ID"]
+  
+  has_dates_df <- as.data.frame(matrix(NA, nrow = length(IDs_toCheck) ,ncol = 5))
+  colnames(has_dates_df) <- c("STUDY_PATIENT_ID", "HAS_CRRT","HAS_HD","HAS_ICU","HAS_HOSP")
+  
+  for (p in 1:length(IDs_toCheck)){
+    if(p %% 1000==0) {
+      # Print on the screen some message
+      cat(paste0("iteration: ", p, "\n"))
+    }
+    curr_id <- IDs_toCheck[p]
+    curr_time_df  <- Time_df[which(Time_df[,"STUDY_PATIENT_ID"] == curr_id),]
+    
+    CRRT_Start <- curr_time_df[ ,"CRRT_START_DATE"]
+    CRRT_End <- curr_time_df[ ,"CRRT_STOP_DATE"]
+    HD_Start <- curr_time_df[ ,"HD_START_DATE"]
+    HD_End <- curr_time_df[ ,"HD_STOP_DATE"]
+    ICU_Start <- curr_time_df[ ,"First_ICU_ADMIT_DATE"]
+    ICU_End <- curr_time_df[ ,"First_ICU_DISCHARGE_DATE"]
+    
+    HOSP_Start <- curr_time_df[,"HOSP_ADMIT_DATE"]
+    HOSP_End <- curr_time_df[,"HOSP_DISCHARGE_DATE"]
+    
+    #check if pts has these dates
+    has_dates_df[p, "STUDY_PATIENT_ID"] <- curr_id
+    has_dates_df[p, "HAS_CRRT"] <- check_NA_dates_func(CRRT_Start)
+    has_dates_df[p, "HAS_HD"] <- check_NA_dates_func(HD_Start)
+    has_dates_df[p, "HAS_ICU"] <- check_NA_dates_func(ICU_Start)
+    has_dates_df[p, "HAS_HOSP"] <- check_NA_dates_func(HOSP_Start)
+  }
+  return(has_dates_df)
+}
+
+#check if pateint has valid dates
+check_valid_dates <- function(Time_df,hours_toextend){
+  IDs_toCheck <- Time_df[,"STUDY_PATIENT_ID"]
+  
+  valids_dates_df <- as.data.frame(matrix(NA, nrow = length(IDs_toCheck) ,ncol = 6))
+  colnames(valids_dates_df) <- c("STUDY_PATIENT_ID", "HD_inHOSP","CRRT_inHOSP","ICU_inHOSP","CRRT_inICU","CRRT_HD_Overlap")
+  
+  for (p in 1:length(IDs_toCheck)){
+    if(p %% 1000==0) {
+      # Print on the screen some message
+      cat(paste0("iteration: ", p, "\n"))
+    }
+    curr_id <- IDs_toCheck[p]
+    valids_dates_df[p, "STUDY_PATIENT_ID"] <- curr_id
+    curr_time_df  <- Time_df[which(Time_df[,"STUDY_PATIENT_ID"] == curr_id),]
+    
+    CRRT_Start <- curr_time_df[ ,"CRRT_START_DATE"]
+    CRRT_End <- curr_time_df[ ,"CRRT_STOP_DATE"]
+    HD_Start <- curr_time_df[ ,"HD_START_DATE"]
+    HD_End <- curr_time_df[ ,"HD_STOP_DATE"]
+    ICU_Start <- curr_time_df[ ,"First_ICU_ADMIT_DATE"]
+    ICU_End <- curr_time_df[ ,"First_ICU_DISCHARGE_DATE"]
+    HOSP_Start <- curr_time_df[,"HOSP_ADMIT_DATE"]
+    HOSP_End <- curr_time_df[,"HOSP_DISCHARGE_DATE"]
+    
+    #If HD in HOSP
+    if (is.na(HD_Start) ==F & is.na(HOSP_Start)==F){
+      valids_dates_df[p, "HD_inHOSP"] <- check_T1_in_T2(HD_Start,HD_End,HOSP_Start,HOSP_End,"HD","HOSP",hours_toextend)
+    }else {
+      valids_dates_df[p, "HD_inHOSP"] <- NA
+    }
+    #If CRRT in HOSP
+    if (is.na(CRRT_Start) ==F & is.na(HOSP_Start)==F){
+      valids_dates_df[p, "CRRT_inHOSP"] <- check_T1_in_T2(CRRT_Start,CRRT_End,HOSP_Start,HOSP_End,"CRRT","HOSP",hours_toextend)
+    }else {
+      valids_dates_df[p, "CRRT_inHOSP"] <- NA
+    }
+    #If ICU in HOSP
+    if (is.na(ICU_Start) ==F & is.na(HOSP_Start)==F){
+      valids_dates_df[p, "ICU_inHOSP"] <- check_T1_in_T2(ICU_Start,ICU_End,HOSP_Start,HOSP_End,"ICU","HOSP",hours_toextend)
+    }else {
+      valids_dates_df[p, "ICU_inHOSP"] <- NA
+    }
+    
+    #If CRRT in ICU
+    if (is.na(CRRT_Start) ==F & is.na(ICU_Start)==F){
+      valids_dates_df[p, "CRRT_inICU"] <- check_T1_in_T2(CRRT_Start,CRRT_End,ICU_Start,ICU_End,"CRRT","ICU",hours_toextend)
+    }else {
+      valids_dates_df[p, "CRRT_inICU"] <- NA
+    }
+    
+    #IF CRRT and HD overlap
+    if (is.na(CRRT_Start) ==F & is.na(HD_Start)==F){
+      valids_dates_df[p, "CRRT_HD_Overlap"] <- check_overlapTime_betweenTwoEvents(CRRT_Start,CRRT_End,HD_Start,HD_End,"CRRT","HD")
+    }else {
+      valids_dates_df[p, "CRRT_HD_Overlap"]
+    }
+    
+  }
+  
+  return(valids_dates_df)
+}
+
+#correct CRRT and Hd overlappes, 
+correct_overlap_CRRTHD <- function(CRRT_Start,CRRT_End,HD_Start,HD_End){
+  # CRRT_Start <- curr_CRRT_Start
+  # CRRT_End <- curr_CRRT_End
+  # HD_Start <- curr_HD_Start
+  # HD_End <- curr_HD_End
+  
+  #First check if ther is any  overlap 
+  #Cuz there might no be overlap even if the following conditions are met 
+  #for example : cond 4: with CRRT_START 12-10, CRRT_End 12-24, HD_START 12-28, HD_End 12-30
+  overlap_flag <- check_overlapTime_betweenTwoEvents(CRRT_Start,CRRT_End,HD_Start,HD_End,"CRRT","HD")
+  
+  if (overlap_flag == "CRRT and HD overlap"){
+    #convert to time objects
+    CRRT_Start <- ymd_hms(CRRT_Start)
+    CRRT_End <- ymd_hms(CRRT_End)
+    HD_Start <- ymd_hms(HD_Start)
+    HD_End <- ymd_hms(HD_End)
+    
+    #Compute event duration
+    CRRT_duration<-CRRT_End-CRRT_Start
+    HD_duration<-HD_End-HD_Start
+    
+    
+    if (CRRT_Start == HD_Start & CRRT_End < HD_End){ #1. If CRRT Start = HD_Start and CRRT_End < HD_End
+      status_flag <- "Cond1"
+      if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
+        updated_CRRT_End <- NA
+        updated_CRRT_Start <- NA 
+        updated_HD_Start <- HD_Start #no change
+        updated_HD_End <- HD_End #no change
+      }else{ #CRRT dominates , remove overlap part of HD
+        updated_HD_Start <- CRRT_End + days(1)
+        updated_HD_End <- HD_End #no change
+        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_End <- CRRT_End #no change
+      }
+    }else if (CRRT_Start == HD_Start & CRRT_End == HD_End){#2. If CRRT Start = HD_Start and CRRT_End = HD_End
+      status_flag <- "Cond2"
+      if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
+        updated_CRRT_End <- NA
+        updated_CRRT_Start <- NA 
+        updated_HD_Start <- HD_Start #no change
+        updated_HD_End <- HD_End #no change
+      }else{ #CRRT dominates , remove overlap part of HD
+        updated_HD_Start <- NA
+        updated_HD_End <- NA
+        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_End <- CRRT_End #no change
+      }
+    }else if (CRRT_Start == HD_Start & CRRT_End > HD_End){#3. If CRRT Start = HD_Start and CRRT_End > HD_End
+      status_flag <- "Cond3"
+      if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
+        updated_CRRT_Start <- HD_End +days(1)
+        updated_CRRT_End <- CRRT_End #no change
+        updated_HD_Start <- HD_Start #no change
+        updated_HD_End <- HD_End #no change
+      }else{ #CRRT dominates , remove overlap part of HD
+        updated_HD_Start <- NA
+        updated_HD_End <- NA
+        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_End <- CRRT_End #no change
+      }
+    }else if (CRRT_Start < HD_Start & CRRT_End < HD_End){#4. If CRRT Start < HD_Start and CRRT_End < HD_End
+      status_flag <- "Cond4"
+      if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
+        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_End <- HD_Start - days(1) 
+        updated_HD_Start <- HD_Start #no change
+        updated_HD_End <- HD_End #no change
+      }else{ #CRRT dominates , remove overlap part of HD
+        updated_HD_Start <- CRRT_End + days(1)
+        updated_HD_End <- HD_End #no change
+        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_End <- CRRT_End #no change
+      }
+    }else if (CRRT_Start < HD_Start & CRRT_End == HD_End){#5. If CRRT Start < HD_Start and CRRT_End = HD_End
+      status_flag <- "Cond5"
+      if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
+        updated_CRRT_End <- HD_Start - days(1) 
+        updated_CRRT_Start <- CRRT_Start #no change
+        updated_HD_Start <- HD_Start #no change
+        updated_HD_End <- HD_End #no change
+      }else{ #CRRT dominates , remove overlap part of HD
+        updated_HD_Start <- NA
+        updated_HD_End <- NA
+        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_End <- CRRT_End #no change
+      }
+    }else if (CRRT_Start < HD_Start & CRRT_End > HD_End){#6. If CRRT Start < HD_Start and CRRT_End > HD_End
+      status_flag <- "Cond6"
+      if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
+        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_End <- HD_Start - days(1) 
+        updated_HD_Start <- HD_Start #no change
+        updated_HD_End <- HD_End #no change
+      }else{ #CRRT dominates , remove overlap part of HD
+        updated_HD_Start <- NA
+        updated_HD_End <- NA
+        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_End <- CRRT_End #no change
+      }
+    }else if (CRRT_Start > HD_Start & CRRT_End < HD_End){#7. If CRRT Start > HD_Start and CRRT_End < HD_End
+      status_flag <- "Cond7"
+      if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
+        updated_CRRT_Start <- NA
+        updated_CRRT_End <- NA
+        updated_HD_Start <- HD_Start #no change
+        updated_HD_End <- HD_End #no change
+      }else{ #CRRT dominates , remove overlap part of HD
+        updated_HD_Start <- HD_Start
+        updated_HD_End <- CRRT_Start - days(1)
+        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_End <- CRRT_End #no change
+      }
+    }else if (CRRT_Start > HD_Start & CRRT_End == HD_End){#8. If CRRT Start > HD_Start and CRRT_End = HD_End
+      status_flag <- "Cond8"
+      if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
+        updated_CRRT_Start <- NA
+        updated_CRRT_End <- NA
+        updated_HD_Start <- HD_Start #no change
+        updated_HD_End <- HD_End #no change
+      }else{ #CRRT dominates , remove overlap part of HD
+        updated_HD_Start <- HD_Start
+        updated_HD_End <- CRRT_Start - days(1)
+        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_End <- CRRT_End #no change
+      }
+    }else if (CRRT_Start > HD_Start & CRRT_End > HD_End){#9. If CRRT Start > HD_Start and CRRT_End > HD_End
+      status_flag <- "Cond9"
+      if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
+        updated_CRRT_Start <- HD_End + days(1)
+        updated_CRRT_End <- CRRT_End
+        updated_HD_Start <- HD_Start #no change
+        updated_HD_End <- HD_End #no change
+      }else{ #CRRT dominates , remove overlap part of HD
+        updated_HD_Start <- HD_Start
+        updated_HD_End <- CRRT_Start - days(1)
+        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_End <- CRRT_End #no change
+      }
+    }
+    
+    updated_df <- cbind.data.frame(updated_CRRT_Start, updated_CRRT_End,updated_HD_Start,updated_HD_End,status_flag)
+  }else{
+    status_flag <- "No Overlap"
+    updated_df <- cbind.data.frame(CRRT_Start, CRRT_End,HD_Start,HD_End,status_flag)
+  }
+  
+  #reformat cuz NA produced by above steps
+  for (j in 1:(ncol(updated_df) - 1)){
+    if (is.na(updated_df[,j]) == F){
+      updated_df[,j] <- reformat_10char_dates_func(updated_df[,j])
+    }
+  }
+  
+  return(updated_df)
+}
+
+check_T1start_T2start_status <- function(t1_time,t2_time){
+  cond1 <-  ymd_hms(t1_time) < ymd_hms(t2_time)
+  cond2 <-  ymd_hms(t1_time) >= (ymd_hms(t2_time) - days(1))
+  
+  if (ymd_hms(t1_time) < (ymd_hms(t2_time) - days(1))){ #T1 starts more than 24 hours before T2, need to exclude
+    res <- "T1 starts 24h before T2 starts"
+  }else if (cond1 & cond2){  #T1 starts before T2 Start but less than/equals 24 hours, need to correct
+    res <- "T1 starts before T2 starts But Less Than/equals 24h"
+  }else if (ymd_hms(t1_time) >= ymd_hms(t2_time)){ #T1 Starts after T2, keep original
+    res <- "T1 starts after/at T2 Start"
+  }
+  return(res)
+
+}
+
+
+check_T1end_T2end_status <- function(t1_time,t2_time){
+  cond1 <-  ymd_hms(t1_time) > ymd_hms(t2_time)
+  cond2 <-  ymd_hms(t1_time) <= (ymd_hms(t2_time) + days(1))
+  
+  if (ymd_hms(t1_time) > (ymd_hms(t2_time) + days(1))){ #T1 ends more than 24 hours after T2 ends
+    res <- "T1 ends 24h after T2 ends"
+  }else if (cond1 & cond2){  #T1 ends after T2 Start but less than/equals 24 hours
+    res <- "T1 ends after T2 ends But Less Than/equals 24h"
+  }else if (ymd_hms(t1_time) <= ymd_hms(t2_time)){ #T1 ends before/at T2
+    res <- "T1 ends before/at T2 ends"
+  }
+  return(res)
+  
+}
+
+############## Extract Raw data functions ############## 
 get_raw_var_values_1option_func <- function(analysis_df,analysis_ID,feature_name,colname_1st_choice){
   #analysis_df <- raw_Vitals_df
   #analysis_ID <- analysis_ID
@@ -132,6 +468,50 @@ get_ICUD0_D3_dates_func <- function(icu_start,icu_end){
   return(ICU_D0D3_df)
 }
 
+
+get_ICUD0_D4_dates_func <- function(icu_start,icu_end){
+  ICU_D0D4_df <- as.data.frame(matrix(NA, nrow = 5, ncol = 3))
+  colnames(ICU_D0D4_df) <- c("Day","Day_start","Day_End")
+  ICU_D0D4_df$Day <- seq(0,4)
+  for (i in 1:5){
+    if (i == 1){
+      if (nchar(as.character(icu_start)) == 10){
+        ICU_D0D4_df[i, "Day_start"] <- paste(as.character(icu_start),"00:00:00")
+      }else{    
+        ICU_D0D4_df[i, "Day_start"] <- as.character(icu_start)
+      }
+      ICU_D0D4_df[i, "Day_End"]   <- as.character(get_sameDay_lasttime_func(icu_start))
+    }else{
+      ICU_D0D4_df[i, "Day_start"] <- paste(as.character(ymd_hms(ICU_D0D4_df[i-1, "Day_End"]) + seconds(1)),"00:00:00")
+      ICU_D0D4_df[i, "Day_End"]   <- as.character(get_sameDay_lasttime_func(ymd_hms(ICU_D0D4_df[i, "Day_start"])))
+    }
+  }
+  
+  #Fiter out the start time after ICU end
+  idx_startAfterICUend <- which(ymd_hms(ICU_D0D4_df[,"Day_start"]) >= icu_end)
+  ICU_D0D4_df[idx_startAfterICUend,c("Day_start","Day_End")] <- NA
+  
+  #If Day start before ICU end, but Day end after ICU end, Set Day_end as ICU end time
+  idx_endAfterICUend <- which(ymd_hms(ICU_D0D4_df[,"Day_End"]) > icu_end)
+  ICU_D0D4_df[idx_endAfterICUend,"Day_End"] <- as.character(icu_end)
+  
+  
+  ICU_D0D4_df[,"Hours_InOneDay"] <- round(as.numeric(difftime(ICU_D0D4_df[, "Day_End"] ,ICU_D0D4_df[, "Day_start"] ,units = "hours")),2)
+  
+  #Reformat Add 00:00:00
+  aval_n <- length(which(is.na(ICU_D0D4_df[,"Day_start"])==F))
+  for (i in 1:aval_n){
+    curr_start <- ICU_D0D4_df[i,"Day_start"]
+    if (nchar(curr_start) == 10){
+      ICU_D0D4_df[i,"Day_start"] <- paste(ICU_D0D4_df[i,"Day_start"],"00:00:00")
+    }
+    curr_end <- ICU_D0D4_df[i,"Day_End"]
+    if (nchar(curr_end) == 10){
+      ICU_D0D4_df[i,"Day_End"] <- paste(ICU_D0D4_df[i,"Day_End"],"00:00:00")
+    }
+  }
+  return(ICU_D0D4_df)
+}
 
 #get Scr df in window
 get_value_df_inWindow_func <- function(pt_df,window_start, window_end,time_col){
@@ -267,23 +647,24 @@ get_KDIGO_Score_forScrdf_func <- function(bl_scr,scr_data){
 }
 
 #update if each time step is in RRT duration, if so, update the KDIGO score to 4
-update_KDIGO_df_forRRT_func<- function(KIDGO_df,CRRT_start,CRRT_end,HD_start,HD_end){
+#'@ADDED jun09 21: 48 hours extention of RRT end (If curr time is within 48 hours after RRT, it counted as 4)
+update_KDIGO_df_forRRT_func<- function(KIDGO_df,CRRT_start,CRRT_end,HD_start,HD_end,extend_hours){
   for (i in 1:nrow(KIDGO_df)){
     curr_time <- ymd_hms(KIDGO_df[i,"Scr_Time"])
     
     if (is.na(CRRT_start) == F & is.na(HD_start) == T){ #if has CRRT , no HD
-      cond1 <- (curr_time >= CRRT_start & curr_time <= CRRT_end) #if in CRRT
+      cond1 <- (curr_time >= CRRT_start & curr_time <= (CRRT_end + hours(extend_hours))) #if in CRRT
       if (cond1 == T){ 
         KIDGO_df[i,"KDIGO"] <- 4
       }
     } else if (is.na(CRRT_start) == T & is.na(HD_start) == F){ #if has HD , no CRRT
-      cond2 <- (curr_time >= HD_start & curr_time <= HD_end) #if in HD
+      cond2 <- (curr_time >= HD_start & curr_time <= (HD_end + hours(extend_hours))) #if in HD
       if (cond2 == T){
         KIDGO_df[i,"KDIGO"] <- 4
       }
-    }else if (is.na(CRRT_start) == F & is.na(HD_start) == F){ #if has both
-      cond1 <- (curr_time >= CRRT_start & curr_time <= CRRT_end) #if in CRRT
-      cond2 <- (curr_time >= HD_start & curr_time <= HD_end) #if in HD
+    }else if (is.na(CRRT_start) == F & is.na(HD_start) == F){ #if has both info, check both
+      cond1 <- (curr_time >= CRRT_start & curr_time <= (CRRT_end + hours(extend_hours))) #if in CRRT
+      cond2 <- (curr_time >= HD_start & curr_time <= (HD_end + hours(extend_hours))) #if in HD
       if (cond1 == T | cond2 == T){
         KIDGO_df[i,"KDIGO"] <- 4
       }
@@ -305,12 +686,11 @@ compute_EGFR_inWindow_func2 <- function(time_window_start,time_window_expansion,
   # time_data <- All_time_df
   # demo_info_df <- All_RACE_GENDER_df
   # Outpt_Scr_df <- All_OutptSCr_df
-  #   
-  colname_time <- strsplit(as.character(time_window_start),split = " ")[[1]][1]
-  output_col_name <- c("STUDY_PATIENT_ID",paste0("EGFR_",colname_time),"n_Scr_afterICU","n_Scr_AfterICU_BeforeTW")
-  n_Scr_afterICU <- NA
-  n_Scr_AfterICU_BeforeTW <- NA
-  EGFR_inWindow <-NA
+
+
+  EGFR_inWindow_df <- as.data.frame(matrix(NA, nrow = length(Analysis_Ids), ncol = 5))
+  colnames(EGFR_inWindow_df) <- c("STUDY_PATIENT_ID","EGFR_120d","n_Scr_afterICU","n_Scr_AfterICU_Before120d","N_SCr_USED")
+
   scr_used_df_list <- list()
   for (p in 1:length(Analysis_Ids)){
     if (p %% 500 == 0){
@@ -318,11 +698,12 @@ compute_EGFR_inWindow_func2 <- function(time_window_start,time_window_expansion,
     }
     
     curr_id <- Analysis_Ids[p]
+    EGFR_inWindow_df[p, "STUDY_PATIENT_ID"] <- curr_id
     
     #time data
     curr_pt_time_data <- time_data[which(time_data[,"STUDY_PATIENT_ID"]==curr_id),]
-    curr_ICU_START <-  ymd_hms(curr_pt_time_data[,"First_ICU_ADMIT_DATE"])
-    curr_ICU_STOP  <-  ymd_hms(curr_pt_time_data[,"First_ICU_DISCHARGE_DATE"])
+    curr_ICU_START <-  ymd_hms(curr_pt_time_data[,"Updated_ICU_ADMIT_DATE"])
+    curr_ICU_STOP  <-  ymd_hms(curr_pt_time_data[,"Updated_ICU_DISCHARGE_DATE"])
     
     #demo data
     curr_pt_demo_data <- demo_info_df[which(demo_info_df[,"STUDY_PATIENT_ID"]==curr_id),]
@@ -335,38 +716,42 @@ compute_EGFR_inWindow_func2 <- function(time_window_start,time_window_expansion,
     
     #outpatient Scr after ICU 
     curr_outpt_scr_afterICU_df  <- curr_outpt_Scr_df[which(ymd_hms(curr_outpt_Scr_df[,"SCR_ENTERED"]) > curr_ICU_STOP),]
-    n_Scr_afterICU[p] <- nrow(curr_outpt_scr_afterICU_df)
+    EGFR_inWindow_df[p, "n_Scr_afterICU"]  <- nrow(curr_outpt_scr_afterICU_df)
 
     #outpatient Scr after ICU but before time_window_start (120 days)
     curr_ICU_STOP_plusTWdays <- curr_ICU_STOP + time_window_start
     curr_afterICU_beforeTW_data <- curr_outpt_scr_afterICU_df[curr_outpt_scr_afterICU_df[,"SCR_ENTERED"] > curr_ICU_STOP & 
-                                                              curr_outpt_scr_afterICU_df[,"SCR_ENTERED"] <= curr_ICU_STOP_plusTWdays,]
-    n_Scr_AfterICU_BeforeTW[p] <- nrow(curr_afterICU_beforeTW_data)
-    
+                                                              curr_outpt_scr_afterICU_df[,"SCR_ENTERED"] < curr_ICU_STOP_plusTWdays,]
+    EGFR_inWindow_df[p, "n_Scr_AfterICU_Before120d"] <- nrow(curr_afterICU_beforeTW_data)
 
     #must have demo data to compute egfr
     if (is.na(curr_age)== T | is.na(curr_gender)== T |is.na(curr_race)== T ){
-      EGFR_inWindow[p] <- NA
+      EGFR_inWindow_df[p, "EGFR_120d"] <- NA
     }else{
       #must have at least 1 outpts data in window
-      if(n_Scr_AfterICU_BeforeTW[p] == 0 ){ 
-        EGFR_inWindow[p] <- NA
-      }else{
-        #if there are outpts values in this window
+      if(EGFR_inWindow_df[p, "n_Scr_AfterICU_Before120d"] == 0 ){ 
+        EGFR_inWindow_df[p, "EGFR_120d"] <- NA
+      }else { #if there are outpts values in this window
+        #make sure to add dates when no 00:00:00 so we can use ymd_hms in next step
+        for (t_i in nrow(curr_afterICU_beforeTW_data)){
+          curr_afterICU_beforeTW_data[t_i, "SCR_ENTERED"] <- reformat_10char_dates_func(curr_afterICU_beforeTW_data[t_i, "SCR_ENTERED"])
+        }
+        #reformat time cols to ymd_hms
+        curr_afterICU_beforeTW_data[,"SCR_ENTERED"] <- ymd_hms(curr_afterICU_beforeTW_data[,"SCR_ENTERED"])
+        #reordered by time 
         ordered_outpts_data <- curr_afterICU_beforeTW_data[order(curr_afterICU_beforeTW_data[,"SCR_ENTERED"]),]
+        
         #outpatient data after ICU dischrage cloest to ICU discharge +TW days
         cloest_idx <- nrow(ordered_outpts_data) #the last one since it is ordered
         cloest_time <- ordered_outpts_data[cloest_idx,"SCR_ENTERED"]
         cloest_scr_value <- ordered_outpts_data[cloest_idx,"SCR_VALUE"]
         
-        if (nchar(cloest_time) == 10){
-          cloest_time_minus30days <- ymd(cloest_time) - time_window_expansion
-        }else {
-          cloest_time_minus30days <- ymd_hms(cloest_time) - time_window_expansion
-        }
+        #cloest time - 30 days
+        cloest_time_minus30days <- cloest_time - time_window_expansion
+   
         #check if there is any value 30 days before cloest_time
         days30_before_idxes <- which(ordered_outpts_data[,"SCR_ENTERED"] > cloest_time_minus30days & 
-                                       ordered_outpts_data[,"SCR_ENTERED"] < cloest_time)
+                                     ordered_outpts_data[,"SCR_ENTERED"] < cloest_time)
         cloest_time_idx <- which(ordered_outpts_data[,"SCR_ENTERED"] == cloest_time)
         
         if(length(days30_before_idxes) > 0 ){ 
@@ -378,9 +763,10 @@ compute_EGFR_inWindow_func2 <- function(time_window_start,time_window_expansion,
           scr_used_df <- ordered_outpts_data[cloest_time_idx,c("STUDY_PATIENT_ID","SCR_VALUE","SCR_ENTERED")]
           
         }
-        
-        EGFR_inWindow[p] <- MDRD_equation(final_scr_value,curr_age,curr_gender,curr_race)
-        #EGFR_inWindow[p] <- EPI_equation(final_scr_value,curr_age,curr_gender,curr_race)
+        EGFR_inWindow_df[p, "N_SCr_USED"] <- nrow(scr_used_df)
+          
+        EGFR_inWindow_df[p, "EGFR_120d"] <- MDRD_equation(final_scr_value,curr_age,curr_gender,curr_race)
+        #EGFR_inWindow_df[p, "EGFR_120d"] <- EPI_equation(final_scr_value,curr_age,curr_gender,curr_race)
         
         scr_used_df_list[[p]] <- scr_used_df
       }
@@ -390,9 +776,7 @@ compute_EGFR_inWindow_func2 <- function(time_window_start,time_window_expansion,
     
   }
   
-  EGFR_inWindow_df <- cbind.data.frame(Analysis_Ids,EGFR_inWindow,n_Scr_afterICU,n_Scr_AfterICU_BeforeTW)
-  colnames(EGFR_inWindow_df) <- output_col_name
-  
+
   all_scr_used_df <- do.call(rbind,scr_used_df_list)
   return(list(EGFR_inWindow_df,all_scr_used_df))
 }
