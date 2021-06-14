@@ -51,7 +51,7 @@ for (i in 1:length(analysis_ID)){
 
 }
 
-
+table(Death_ICU_D0toD4_df$Death_ICU_D0toD4)
 ##########################################################################################
 #3. Death or alive in Hospital
 ##########################################################################################
@@ -81,12 +81,13 @@ for (i in 1:length(analysis_ID)){
   
 }
 
+table(Death_inHOSP$Death_inHOSP)
 
 ##########################################################################################
-#4. Death or alive within 120 days post ICU discharge
+#4. Death or alive within 120 days post ICU discharge + Death after ICU admit 
 ##########################################################################################
 Death_ICU120_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 2))
-colnames(Death_ICU120_df) <- c("STUDY_PATIENT_ID","Death_ICU120")
+colnames(Death_ICU120_df) <- c("STUDY_PATIENT_ID","Death_ICUStartTo120")
 for (i in 1:length(analysis_ID)){
   if (i %% 1000 ==0){print(i)}
   
@@ -103,16 +104,17 @@ for (i in 1:length(analysis_ID)){
   ICU_120_time <- curr_icu_end + days(120)
   
   if (is.na(curr_decease_date) == T){ #no death date
-    Death_ICU120_df[i,"Death_ICU120"] <- 0
+    Death_ICU120_df[i,"Death_ICUStartTo120"] <- 0
   }else {
-    if (curr_decease_date > curr_icu_end  & curr_decease_date <= ICU_120_time ){
-      Death_ICU120_df[i,"Death_ICU120"] <- 1
+    if (curr_decease_date > curr_icu_start  & curr_decease_date <= ICU_120_time){
+      Death_ICU120_df[i,"Death_ICUStartTo120"] <- 1
     }else{
-      Death_ICU120_df[i,"Death_ICU120"] <- 0
+      Death_ICU120_df[i,"Death_ICUStartTo120"] <- 0
     }
   }
   
 }
+
 
 ##########################################################################################
 ###Combine above 3 dataframe
@@ -122,5 +124,5 @@ identical(Death_ICU_D0toD4_df$STUDY_PATIENT_ID,Death_inHOSP$STUDY_PATIENT_ID)
 identical(Death_ICU_D0toD4_df$STUDY_PATIENT_ID,Death_ICU120_df$STUDY_PATIENT_ID)
 
 comb_death_df <- cbind(Death_ICU_D0toD4_df,Death_inHOSP,Death_ICU120_df)
-
+comb_death_df <- comb_death_df[,-c(3,5)]
 write.csv(comb_death_df,paste0(outdir,"All_Mortality.csv"),row.names=FALSE)
