@@ -9,14 +9,7 @@ outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/"
 ##########################################################################################
 #Load Raw Data
 ##########################################################################################
-#6.Load CLINICAL_VITALS 
-raw_Vitals_df <- read.csv(paste0(raw_dir,"CLINICAL_VITALS.csv"),stringsAsFactors = F)
 
-
-
-#7.Load raw data
-raw_LAB1_df <- read.csv(paste0(raw_dir,"LABS_SET1.csv"),stringsAsFactors = F)
-raw_LAB2_df <- read.csv(paste0(raw_dir,"LABS_SET2.csv"),stringsAsFactors = F)
 
 #8.Load raw data
 raw_BLOOD_GAS_df <- read.csv(paste0(raw_dir,"BLOOD_GAS.csv"),stringsAsFactors = F)
@@ -83,91 +76,6 @@ All_time_df <-read.csv(paste0(outdir,"All_Timeinfo_df.csv"),stringsAsFactors = F
 ##########################################################################################
 analysis_ID <- unique(All_time_df[,"STUDY_PATIENT_ID"])
 
-
-##########################################################################################
-#3. Load UK raw Clinical Vital data 
-#'@NOTE: Only has D1 value
-#Features to extract :  1. Temperature D1 High/Low
-#                       2. MAP D1 High/Low
-#                       3. Heart Rate D1 High/Low
-##########################################################################################
-#Get features
-MAP_d1_Low <- get_raw_var_values_2options_func(raw_Vitals_df,analysis_ID,"MAP_D1_LOW","ART_MEAN_D1_LOW_VALUE","CUFF_MEAN_D1_LOW_VALUE")
-MAP_d1_High <- get_raw_var_values_2options_func(raw_Vitals_df,analysis_ID,"MAP_D1_HIGH","ART_MEAN_D1_HIGH_VALUE","CUFF_MEAN_D1_HIGH_VALUE")
-Temp_d1_Low <- get_raw_var_values_1option_func(raw_Vitals_df,analysis_ID,"Temperature_D1_LOW","TEMPERATURE_D1_LOW_VALUE")
-Temp_d1_High <- get_raw_var_values_1option_func(raw_Vitals_df,analysis_ID,"Temperature_D1_HIGH","TEMPERATURE_D1_HIGH_VALUE")
-#Convert to celsius
-Temp_d1_Low[,"Temperature_D1_LOW"] <- (Temp_d1_Low[,"Temperature_D1_LOW"] -32)*(5/9)
-Temp_d1_High[,"Temperature_D1_HIGH"] <- (Temp_d1_High[,"Temperature_D1_HIGH"] -32)*(5/9)
-
-HR_d1_Low <- get_raw_var_values_1option_func(raw_Vitals_df,analysis_ID,"HR_D1_LOW","HEART_RATE_D1_LOW_VALUE")
-HR_d1_High <- get_raw_var_values_1option_func(raw_Vitals_df,analysis_ID,"HR_D1_HIGH","HEART_RATE_D1_HIGH_VALUE")
-
-All_Vital_df <- cbind(MAP_d1_Low,MAP_d1_High,Temp_d1_Low,Temp_d1_High,HR_d1_Low,HR_d1_High)
-All_Vital_df <- All_Vital_df[,-c(3,5,7,9,11)] #remove duplicated columns
-write.csv(All_Vital_df,paste0(outdir,"All_Vital_df.csv"))
-
-
-##########################################################################################
-#Load UK raw LABS_SET1
-#Features to extract :  1. Bilirubin D1 High
-#                       2. Platelets D1 Low
-#                       3. Sodium D1 High/Low
-#                       4. Potassium D1 High/Low
-#                       5. Hematocrit D1 High/Low
-#                       6. Hemoglobin D1 High/Low
-#                       7. WBC D1 High/Low
-#                       8. BUN D0-D3 High (Take the max of d0 to d3 high)
-#                       9. Bicarbonate D1 High/Low
-#Load UK raw LABS_SET2
-#Features to extract :  1. Albumin (NOT SURE is high or low and on which day)
-#                       2. Lactate (NOT SURE is high or low and on which day)
-##########################################################################################
-raw_LAB1_df$BUN_D0TOD3_HIGH_VALUE <- NA
-for (i in 1:nrow(raw_LAB1_df)){
-  curr_df <-  raw_LAB1_df[i,c("BUN_D0_HIGH_VALUE","BUN_D1_HIGH_VALUE","BUN_D2_HIGH_VALUE","BUN_D3_HIGH_VALUE")]
-  if (all(is.na(curr_df)==F)){  #if at least one not NA
-    curr_max <- max(curr_df, na.rm = T)
-  }else{ #if all NA
-    curr_max <- NA
-  }
-  raw_LAB1_df$BUN_D0TOD3_HIGH_VALUE[i] <- curr_max
-}
-
-#Get features
-Bilirubin_d1_High <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"Bilirubin_D1_HIGH","BILIRUBIN_D1_HIGH_VALUE")
-
-PLATELETS_d1_Low <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"Platelets_D1_LOW","PLATELETS_D1_LOW_VALUE")
-
-SODIUM_d1_Low <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"Sodium_D1_LOW","SODIUM_D1_LOW_VALUE")
-SODIUM_d1_High <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"Sodium_D1_HIGH","SODIUM_D1_HIGH_VALUE")
-
-Potassium_d1_Low <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"Potassium_D1_LOW","POTASSIUM_D1_LOW_VALUE")
-Potassium_d1_High <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"Potassium_D1_HIGH","POTASSIUM_D1_HIGH_VALUE")
-
-Hematocrit_d1_Low <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"Hematocrit_D1_LOW","HEMATOCRIT_D1_LOW_VALUE")
-Hematocrit_d1_High <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"Hematocrit_D1_HIGH","HEMATOCRIT_D1_HIGH_VALUE")
-
-Hemoglobin_d1_Low <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"Hemoglobin_D1_LOW","HEMOGLOBIN_D1_LOW_VALUE")
-Hemoglobin_d1_High <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"Hemoglobin_D1_HIGH","HEMOGLOBIN_D1_HIGH_VALUE")
-
-WBC_d1_Low <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"WBC_D1_LOW","WBC_D1_LOW_VALUE")
-WBC_d1_High <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"WBC_D1_HIGH","WBC_D1_HIGH_VALUE")
-
-BUN_d0tod3_High <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"BUN_D0TOD3_HIGH","BUN_D0TOD3_HIGH_VALUE")
-
-CO2_d1_Low <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"Bicarbonate_D1_LOW","CO2_D1_LOW_VALUE")
-CO2_d1_High <- get_raw_var_values_1option_func(raw_LAB1_df,analysis_ID,"Bicarbonate_D1_HIGH","CO2_D1_HIGH_VALUE")
-
-Albumin <- get_raw_var_values_1option_func(raw_LAB2_df,analysis_ID,"Albumin","ALBUMIN_VALUE")
-Lactate <- get_raw_var_values_1option_func(raw_LAB2_df,analysis_ID,"Lactate","LACTATE_SYRINGE_ION_VALUE")
-
-All_LAB_df <- cbind(Bilirubin_d1_High,PLATELETS_d1_Low,SODIUM_d1_Low,SODIUM_d1_High,
-                    Potassium_d1_Low,Potassium_d1_High,Hematocrit_d1_Low,Hematocrit_d1_High,
-                    Hemoglobin_d1_Low,Hemoglobin_d1_High,WBC_d1_Low,WBC_d1_High,BUN_d0tod3_High,
-                    CO2_d1_Low,CO2_d1_High,Albumin,Lactate)
-All_LAB_df <- All_LAB_df[,-seq(3,33,2)] #remove duplicated columns
-write.csv(All_LAB_df,paste0(outdir,"All_LAB_df.csv"))
 
 
 ##########################################################################################
