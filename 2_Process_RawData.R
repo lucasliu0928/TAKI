@@ -28,6 +28,10 @@ sepsis_check_df <- raw_DIAGNOSIS_df[which(grepl("sepsis",raw_DIAGNOSIS_df[,"DIAG
 unique_sepsis_df <- as.data.frame(unique(sepsis_check_df$DIAGNOSIS_DESC))
 write.csv(unique_sepsis_df,paste0(outdir,"sepsis_TAKI_UKY.csv"))
 
+#septic
+#check <- raw_DIAGNOSIS_df[which(grepl("sepsis",raw_DIAGNOSIS_df$DIAGNOSIS_DESC,ignore.case = T)),]
+
+
 #13.ORGANSUPP_VENT
 raw_ORGANSUPP_VENT_df <- read.csv(paste0(raw_dir,"ORGANSUPP_VENT.csv"),stringsAsFactors = F)
 
@@ -151,8 +155,6 @@ write.csv(ELIXHAUSER_df,paste0(outdir,"All_ELIXHAUSER_df.csv"))
 DIAGNOSIS_df  <- raw_DIAGNOSIS_df[which(raw_DIAGNOSIS_df[,"STUDY_PATIENT_ID"] %in% analysis_ID),]
 write.csv(DIAGNOSIS_df,paste0(outdir,"All_DIAGNOSIS_df.csv"))
 
-#septic
-#check <- raw_DIAGNOSIS_df[which(grepl("sepsis",raw_DIAGNOSIS_df$DIAGNOSIS_DESC,ignore.case = T)),]
 
 
 ##########################################################################################
