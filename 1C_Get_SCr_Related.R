@@ -24,7 +24,6 @@ All_RACE_GENDER_df <-read.csv(paste0(outdir,"All_RACE_GENDER_AGE_df.csv"),string
 ##########################################################################################
 analysis_ID <- unique(All_time_df[,"STUDY_PATIENT_ID"])
 
-
 ##########################################################################################
 #Features to extract :
 #1.Baseline Scr (The outpatient sCr value closest to 1 day before hospital admission up to 1 year. 
@@ -219,7 +218,6 @@ for (p in 1:length(analysis_ID)){
 write.csv(Baseline_EGFR_df,paste0(outdir,"Baseline_EGFR.csv"),row.names=FALSE)
 
 
-#'@TODO
 ##########################################################################################
 #Get all Outpatient Scr df
 ##########################################################################################
