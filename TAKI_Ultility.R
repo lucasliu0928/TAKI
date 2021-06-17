@@ -513,6 +513,25 @@ get_ICUD0_D4_dates_func <- function(icu_start,icu_end){
   return(ICU_D0D4_df)
 }
 
+
+#exclude the values if patient does not in ICU for that day
+#e.g, the pt ICU duration includes D0, D1, so BUND3 value should be exclude. cuz BUND3 refers to ICU start + 3days
+remove_featureValue <- function(analysis_df,ICU_D0toD3_df){
+  for (i in 1:nrow(analysis_df)){
+    if (i %% 1000 == 0){print(i)}
+    curr_id <- analysis_df[i,"STUDY_PATIENT_ID"]
+    curr_ICU_days <- ICU_D0toD3_df[which(ICU_D0toD3_df[,"STUDY_PATIENT_ID"] == curr_id),"ICU_Stays_inDays"]
+    curr_ICU_days <- unlist(strsplit(curr_ICU_days,split = "$$",fixed = T))
+    search_string <- paste0(c(curr_ICU_days,"STUDY_PATIENT_ID"),collapse = "|") #columns of ID and corresponding Day feature
+    colIndxes_toexclude <- which(grepl(search_string,colnames(analysis_df)) == F)
+    if (length(colIndxes_toexclude) > 0 ){
+      analysis_df[i,colIndxes_toexclude] <- NA
+    }
+  }
+  return(analysis_df)
+}
+
+
 #get Scr df in window
 get_value_df_inWindow_func <- function(pt_df,window_start, window_end,time_col){
   inWindow_idxes <- which(ymd_hms(pt_df[,time_col]) >= window_start & 
