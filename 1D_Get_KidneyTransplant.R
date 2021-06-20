@@ -17,6 +17,13 @@ KIDT_df <- KIDT_df[which(grepl("kid",KIDT_df[,"SURGERY_DESCRIPTION"],ignore.case
 KIDT_df <- KIDT_df[which(grepl("trans",KIDT_df[,"SURGERY_DESCRIPTION"],ignore.case = T) == T),]
 KIDT_df <- KIDT_df[!duplicated(KIDT_df$STUDY_PATIENT_ID),] #some pts get kt and then rejection two labels used for refering kidney transplant
 
+#3. DIAGNOSIS df
+raw_DIAGNOSIS_df <- read.csv(paste0(raw_dir,"DIAGNOSIS.csv"),stringsAsFactors = F)
+search_codes<- c("Z94.0","V42.0" , "996.81", "Z48.22", "T86.12", "T86.11", "T86.10")
+KIDT_df2 <- raw_DIAGNOSIS_df[which(raw_DIAGNOSIS_df[,"ICD_CODE"] %in% search_codes),]
+unique(raw_DIAGNOSIS_df$DIAGNOSIS_TYPE)
+table(KIDT_df2$ICD_CODE)
+
 ##########################################################################################
 #2. Analysis Id for pts has corrected HOSP ADMISSION time
 ##########################################################################################
