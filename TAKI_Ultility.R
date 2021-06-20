@@ -593,7 +593,7 @@ MDRD_equation<-function(Scr,age,gender,race){
   
   #if qualities the tfollowing 2, updated a and b
   if(race=="BLACK/AFR AMERI"){
-    b<-1.210
+    b<-1.212
   }
   if(gender=="F"){
     a<-0.742
