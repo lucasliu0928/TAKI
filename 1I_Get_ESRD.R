@@ -200,5 +200,10 @@ usrds1_status1_onRRT48_df <- ESRD_Comb[which(ESRD_Comb[,"ESRD_DURING_AND_AFTER_H
                                                ESRD_Comb[,"onRRT_Last48h"]==1),]
 nrow(usrds1_status1_onRRT48_df)
 
+#TODO
+############################################################################################################
+#6. Final before/AT status
+#USE USRDs first, then if patient not in USRDS, use status table
+############################################################################################################
 #write.csv(ESRD_Comb,paste0(outdir,"ESRD.csv"),row.names=FALSE)
 
