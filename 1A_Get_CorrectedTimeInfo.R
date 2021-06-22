@@ -1,36 +1,6 @@
 library(lubridate)
 source("TAKI_Ultility.R")
 
-get_one_ICU_admission_func <- function(one_hosp_df){
-  # 1. If less than 12 hours between ICU admissions, combine them 
-  # 2. otherwise, use the 1st ICU admission
-  
-  #reorder by ICU admit data
-  reordered_one_hosp_df <- one_hosp_df[order(one_hosp_df[,"ICU_ADMIT_DATE"],decreasing = FALSE),]
-  #compute time between current ICU and the previous ICU
-  reordered_one_hosp_df$time_between_current_to_prev <- NA
-  for (i in 2:nrow(reordered_one_hosp_df)){
-    curr_ICU_ad_time <- reordered_one_hosp_df[i,"ICU_ADMIT_DATE"]
-    prev_ICU_dc_time <-  reordered_one_hosp_df[i-1,"ICU_DISCHARGE_DATE"]
-    reordered_one_hosp_df[i,"time_between_current_to_prev"] <- as.numeric(difftime(curr_ICU_ad_time,prev_ICU_dc_time,units = "hours"))
-  }
-  
-  #Check all ICU between times starting from the 2nd ICU, if between time < 12,
-  #then update the ICU end as the later time
-  #If no one < 12, then just get the 1st ICU
-  First_ICU_Start <- reordered_one_hosp_df[1,"ICU_ADMIT_DATE"]
-  First_ICU_End   <- reordered_one_hosp_df[1,"ICU_DISCHARGE_DATE"]
-  for (i in 2:nrow(reordered_one_hosp_df)){
-    curr_between_time <- reordered_one_hosp_df[i,"time_between_current_to_prev"]
-    if (curr_between_time < 12){
-      First_ICU_End <- reordered_one_hosp_df[i,"ICU_DISCHARGE_DATE"]
-    }
-  }
-  
-  return(list(First_ICU_Start,First_ICU_End))
-}
-
-
 #Raw data dir
 raw_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UKY/raw_csv_files/"
 outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/"
@@ -212,7 +182,6 @@ table(has_date_df$HAS_HD)
 
 ##########################################################################################
 #'Time correction for overlapped CRRT and HD dates for patients has both dates
-#'@TODO:  Check function conditions
 ##########################################################################################
 has_bothRRT_idxes <- which(has_date_df$HAS_CRRT == 1 & has_date_df$HAS_HD == 1)
 has_bothRRT_IDs <- has_date_df[has_bothRRT_idxes, "STUDY_PATIENT_ID"]
@@ -277,9 +246,7 @@ for (i in 1:nrow(TimeInfo_df)){
 
 
 #Drop old columns
-drop_idxes <- which(colnames(TimeInfo_df) %in% c("CRRT_START_DATE","CRRT_STOP_DATE", 
-                                                  "HD_START_DATE", "HD_STOP_DATE"))
-TimeInfo_df <- TimeInfo_df[,-drop_idxes]
+TimeInfo_df <- TimeInfo_df[,-which(colnames(TimeInfo_df) %in% c("CRRT_START_DATE","CRRT_STOP_DATE","HD_START_DATE", "HD_STOP_DATE"))]
 
 
 
@@ -355,8 +322,7 @@ exclude_idxes_all <- unique(c(toexclude_idxes1,toexclude_idxes2))
 TimeInfo_df <- TimeInfo_df[-exclude_idxes_all,]
 
 #Drop old columns
-drop_idxes <- which(colnames(TimeInfo_df) %in% c("First_ICU_ADMIT_DATE","First_ICU_DISCHARGE_DATE","Overlap_Flag","Correction_Flag_Start","Correction_Flag_End"))
-TimeInfo_df <- TimeInfo_df[,-drop_idxes]
+TimeInfo_df <- TimeInfo_df[,-which(colnames(TimeInfo_df) %in% c("First_ICU_ADMIT_DATE","First_ICU_DISCHARGE_DATE","Overlap_Flag","Correction_Flag_Start","Correction_Flag_End"))]
 
 ##2. Corretion of HOSP to cover ICU/HD/CRRT
 TimeInfo_df$Updated_HOSP_ADMIT_DATE <- NA
@@ -424,9 +390,7 @@ exclude_idxes_all <- unique(c(toexclude_idxes1,toexclude_idxes2))
 TimeInfo_df <- TimeInfo_df[-exclude_idxes_all,]
 
 #Drop old columns
-drop_idxes <- which(colnames(TimeInfo_df) %in% c("HOSP_ADMIT_DATE","HOSP_DISCHARGE_DATE", 
-                                                 "Correction_Flag_Start","Correction_Flag_End"))
-TimeInfo_df <- TimeInfo_df[,-drop_idxes]
+TimeInfo_df <- TimeInfo_df[,-which(colnames(TimeInfo_df) %in% c("HOSP_ADMIT_DATE","HOSP_DISCHARGE_DATE", "Correction_Flag_Start","Correction_Flag_End"))]
 
 ##########################################################################################
 # Add decease date IN TimeInfo_df
@@ -451,19 +415,108 @@ for (i in 1: nrow(TimeInfo_df)){
 exclude_idxes <- which(mdy(TimeInfo_df$DECEASED_DATE) < ymd_hms(TimeInfo_df$Updated_HOSP_ADMIT_DATE))
 updated_TimeInfo_df <- TimeInfo_df[-exclude_idxes,]
 
-write.csv(updated_TimeInfo_df,paste0(outdir,"All_Corrected_Timeinfo.csv"),row.names = F)
 
 
 ##########################################################################################
-#Check if patients has Valid ICU, HOSP,RRT dates after correction 
+#Check valid date after correction
 ##########################################################################################
-check_df <- TimeInfo_df
+#1.Check if patients has if ICU/CRRT/HD in HOSP, and if CRRT in ICU after correction 
+check_df <- updated_TimeInfo_df
 colnames(check_df)[which(colnames(check_df) %in% c("Updated_CRRT_Start","Updated_CRRT_End",
                                                    "Updated_HD_Start","Updated_HD_End","Updated_ICU_ADMIT_DATE",
                                                    "Updated_ICU_DISCHARGE_DATE",
                                                    "Updated_HOSP_ADMIT_DATE","Updated_HOSP_DISCHARGE_DATE"))] <- c("CRRT_START_DATE","CRRT_STOP_DATE","HD_START_DATE","HD_STOP_DATE",
                                                                                                                    "First_ICU_ADMIT_DATE","First_ICU_DISCHARGE_DATE","HOSP_ADMIT_DATE","HOSP_DISCHARGE_DATE")
 valid_dates_df <- check_valid_dates(check_df,0)
+table(valid_dates_df$CRRT_inICU)
+table(valid_dates_df$CRRT_inHOSP)
+table(valid_dates_df$HD_inHOSP)
+table(valid_dates_df$ICU_inHOSP)
+table(valid_dates_df$CRRT_HD_Overlap)
 
+
+#2.check if ICU/RRT/HOSP end > start
+which(check_df$Updated_CRRT_Start >= check_df$Updated_CRRT_End)
+which(check_df$Updated_HD_Start >= check_df$Updated_HD_End)
+which(check_df$Updated_ICU_ADMIT_DATE >= check_df$Updated_ICU_DISCHARGE_DATE)
+which(check_df$Updated_HOSP_ADMIT_DATE >= check_df$Updated_HOSP_DISCHARGE_DATE)
+
+write.csv(updated_TimeInfo_df,paste0(outdir,"All_Corrected_Timeinfo_V1.csv"),row.names = F)
+
+
+##########################################################################################
+#### Add 1. D0-D3 start and end time, (This is used only for exclusion criterion death in D0-D3, where D3 can be not outside ICU)
+####     2. D0-D3 Start actual hours for each day, and actual days in D0,D1,D2,D3 (This will be used for features and other criterion related to the features)
+
+#### D0 Start  == ICU start,      D0 End == the same day of D0 start at 23:59:59
+#### D1 Start  == D0 end + 1 sec, D1 End == the same day of D1 start at 23:59:59
+#### D2 Start  == D1 end + 1 sec, D2 End == the same day of D2 start at 23:59:59
+#### D3 Start  == D2 end + 1 sec, D3 End == the same day of D3 start at 23:59:59
+#'@NOTE: D1 or D2 or D3 can be no in ICU, if the duration of ICU is less than certain hours
+##########################################################################################
+updated_TimeInfo_df$D0_Start <- NA
+updated_TimeInfo_df$D0_End <-  NA
+updated_TimeInfo_df$D1_Start <- NA
+updated_TimeInfo_df$D1_End <- NA
+updated_TimeInfo_df$D2_Start <- NA
+updated_TimeInfo_df$D2_End <- NA
+updated_TimeInfo_df$D3_Start <- NA
+updated_TimeInfo_df$D3_End <-NA
+
+updated_TimeInfo_df$Actual_D0_Start <- NA
+updated_TimeInfo_df$Actual_D0_End <-  NA
+updated_TimeInfo_df$Actual_D1_Start <- NA
+updated_TimeInfo_df$Actual_D1_End <- NA
+updated_TimeInfo_df$Actual_D2_Start <- NA
+updated_TimeInfo_df$Actual_D2_End <- NA
+updated_TimeInfo_df$Actual_D3_Start <- NA
+updated_TimeInfo_df$Actual_D3_End <-NA
+updated_TimeInfo_df$Actual_D0_ICUHours <- NA
+updated_TimeInfo_df$Actual_D1_ICUHours <- NA
+updated_TimeInfo_df$Actual_D2_ICUHours <- NA
+updated_TimeInfo_df$Actual_D3_ICUHours <- NA
+updated_TimeInfo_df$Actual_ICU_Stays <- NA
+for (i in 1:nrow(updated_TimeInfo_df)){
+  if (i %% 1000 ==0){print(i)}
+  
+  #Time info
+  curr_time_df <- updated_TimeInfo_df[i,]
+  curr_icu_start <- ymd_hms(curr_time_df[,"Updated_ICU_ADMIT_DATE"])
+  curr_icu_end   <- ymd_hms(curr_time_df[,"Updated_ICU_DISCHARGE_DATE"])
+  
+  #Get ICU D0 to D3 start and end time
+  curr_D0D3_df <- get_D0toD3_dates_func(curr_icu_start,curr_icu_end)
+  
+  updated_TimeInfo_df$D0_Start[i] <- curr_D0D3_df[which(curr_D0D3_df[,"Day"] == 0 ),"Day_start"]
+  updated_TimeInfo_df$D0_End[i]   <- curr_D0D3_df[which(curr_D0D3_df[,"Day"] == 0 ),"Day_End"]
+  updated_TimeInfo_df$D1_Start[i] <- curr_D0D3_df[which(curr_D0D3_df[,"Day"] == 1 ),"Day_start"]
+  updated_TimeInfo_df$D1_End[i]   <- curr_D0D3_df[which(curr_D0D3_df[,"Day"] == 1 ),"Day_End"]
+  updated_TimeInfo_df$D2_Start[i] <- curr_D0D3_df[which(curr_D0D3_df[,"Day"] == 2 ),"Day_start"]
+  updated_TimeInfo_df$D2_End[i]   <- curr_D0D3_df[which(curr_D0D3_df[,"Day"] == 2 ),"Day_End"]
+  updated_TimeInfo_df$D3_Start[i] <- curr_D0D3_df[which(curr_D0D3_df[,"Day"] == 3 ),"Day_start"]
+  updated_TimeInfo_df$D3_End[i]   <- curr_D0D3_df[which(curr_D0D3_df[,"Day"] == 3 ),"Day_End"]
+  
+  #Get the actual hours for each day 
+  curr_filtered_D0D3_df <- compute_actualhours_EachDay(curr_D0D3_df,curr_icu_end)
+  updated_TimeInfo_df$Actual_D0_Start[i] <- curr_filtered_D0D3_df[which(curr_filtered_D0D3_df[,"Day"] == 0 ),"Day_start"]
+  updated_TimeInfo_df$Actual_D0_End[i]   <- curr_filtered_D0D3_df[which(curr_filtered_D0D3_df[,"Day"] == 0 ),"Day_End"]
+  updated_TimeInfo_df$Actual_D1_Start[i] <- curr_filtered_D0D3_df[which(curr_filtered_D0D3_df[,"Day"] == 1 ),"Day_start"]
+  updated_TimeInfo_df$Actual_D1_End[i]   <- curr_filtered_D0D3_df[which(curr_filtered_D0D3_df[,"Day"] == 1 ),"Day_End"]
+  updated_TimeInfo_df$Actual_D2_Start[i] <- curr_filtered_D0D3_df[which(curr_filtered_D0D3_df[,"Day"] == 2 ),"Day_start"]
+  updated_TimeInfo_df$Actual_D2_End[i]   <- curr_filtered_D0D3_df[which(curr_filtered_D0D3_df[,"Day"] == 2 ),"Day_End"]
+  updated_TimeInfo_df$Actual_D3_Start[i] <- curr_filtered_D0D3_df[which(curr_filtered_D0D3_df[,"Day"] == 3 ),"Day_start"]
+  updated_TimeInfo_df$Actual_D3_End[i]   <- curr_filtered_D0D3_df[which(curr_filtered_D0D3_df[,"Day"] == 3 ),"Day_End"]
+  
+  updated_TimeInfo_df$Actual_D0_ICUHours[i] <- curr_filtered_D0D3_df[which(curr_filtered_D0D3_df[,"Day"] == 0 ),"Hours_InOneDay"]
+  updated_TimeInfo_df$Actual_D1_ICUHours[i] <- curr_filtered_D0D3_df[which(curr_filtered_D0D3_df[,"Day"] == 1 ),"Hours_InOneDay"]
+  updated_TimeInfo_df$Actual_D2_ICUHours[i] <- curr_filtered_D0D3_df[which(curr_filtered_D0D3_df[,"Day"] == 2 ),"Hours_InOneDay"]
+  updated_TimeInfo_df$Actual_D3_ICUHours[i] <- curr_filtered_D0D3_df[which(curr_filtered_D0D3_df[,"Day"] == 3 ),"Hours_InOneDay"]
+  
+  #Get the actual stayed days D0,D1,D2,D3
+  updated_TimeInfo_df$Actual_ICU_Stays[i] <- get_acutal_Days_inICU(curr_filtered_D0D3_df)
+}
+
+
+write.csv(updated_TimeInfo_df,paste0(outdir,"All_Corrected_Timeinfo.csv"),row.names = F)
 
 
