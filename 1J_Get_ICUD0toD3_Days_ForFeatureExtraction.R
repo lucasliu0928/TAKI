@@ -22,12 +22,6 @@ All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFact
 analysis_ID <- unique(All_time_df[,"STUDY_PATIENT_ID"])
 
 ##########################################################################################
-#3.Load Labs 
-##########################################################################################
-raw_LAB1_df <- read.csv(paste0(raw_dir,"LABS_SET1.csv"),stringsAsFactors = F)
-raw_LAB2_df <- read.csv(paste0(raw_dir,"LABS_SET2.csv"),stringsAsFactors = F)
-
-##########################################################################################
 #4.Get ICU stays in terms of D0, D1, D2, D3
 ##########################################################################################
 ICU_D0_D3_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID) ,ncol = 2))
