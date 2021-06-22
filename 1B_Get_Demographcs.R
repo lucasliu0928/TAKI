@@ -54,9 +54,14 @@ AGE <- get_raw_var_values_1option_func(raw_DOB_df,analysis_ID,"AGE","AGE")
 
 All_RACE_GENDER_df <- cbind(GENDER,RACE,AGE)
 All_RACE_GENDER_df <- All_RACE_GENDER_df[,-c(3,5)] #remove duplicated columns
-#remove blank as NA
+#code blank as NA
 All_RACE_GENDER_df[which(All_RACE_GENDER_df[,"GENDER"] ==""),"GENDER"] <- NA
 All_RACE_GENDER_df[which(All_RACE_GENDER_df[,"GENDER"] == "U"),"GENDER"] <- NA
 All_RACE_GENDER_df[which(All_RACE_GENDER_df[,"RACE"] ==""),"RACE"] <- NA
 
-write.csv(All_RACE_GENDER_df,paste0(outdir,"All_RACE_GENDER_AGE_df.csv"),row.names = F)
+#exclude pts has no gender or no race or age
+no_demo_indexes <- which(is.na(All_RACE_GENDER_df$GENDER)== T |
+                         is.na(All_RACE_GENDER_df$RACE)== T | 
+                         is.na(All_RACE_GENDER_df$AGE)==T)
+All_RACE_GENDER_df <- All_RACE_GENDER_df[-no_demo_indexes,]
+write.csv(All_RACE_GENDER_df,paste0(outdir,"All_RACE_GENDER_AGE_df.csv"),row.names = F) #36017
