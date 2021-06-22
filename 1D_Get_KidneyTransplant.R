@@ -80,4 +80,4 @@ for (i in 1:length(analysis_ID)){
 }
 
 table(KidT_Indicator_df$KidneyTrans_BEFOREorDURING)
-write.csv(KidT_Indicator_df,paste0(outdir,"KidneyTranspant.csv"),row.names=FALSE)
+write.csv(KidT_Indicator_df,paste0(outdir,"KidneyTransplant.csv"),row.names=FALSE)
