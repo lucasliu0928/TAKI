@@ -120,7 +120,7 @@ for (i in 1:length(analysis_ID)){
   
 }
 
-table(Death_HOSP120_df$Death_HOSPStartTo120) #
+table(Death_HOSP120_df$Death_HOSPStartTo120) #32330  3687 
 
 ##########################################################################################
 ###Combine above 3 dataframe
@@ -134,6 +134,10 @@ comb_death_df <- comb_death_df[,-c(3,5)]
 write.csv(comb_death_df,paste0(outdir,"All_Mortality.csv"),row.names=FALSE)
 
 #Check
-table(Death_ICU_D0toD3_df[,"Death_ICU_D0toD3"], Death_HOSP120_df[,"Death_HOSPStartTo120"]) #should be 1044 overlap
-table(Death_ICU_D0toD3_df[,"Death_ICU_D0toD3"], Death_inHOSP[,"Death_inHOSP"]) #should be 1044 overlap
-table(Death_HOSP120_df[,"Death_HOSPStartTo120"], Death_inHOSP[,"Death_inHOSP"]) #should be 2332 overlap
+#1. died in ICU d0-d3, but not in hosp
+#the D3 date can outise the hosp, these patient hosp dc date < D3  dates
+which(comb_death_df[,"Death_ICU_D0toD3"] == 1 & comb_death_df[,"Death_inHOSP"]==0) #43
+#2. died in ICU d0-d3, but not within hosp + 120 days 
+which(comb_death_df[,"Death_ICU_D0toD3"] == 1 & comb_death_df[,"Death_HOSPStartTo120"]==0) #0
+#3. died in hosp, but not within hosp + 120 days 
+which(comb_death_df[,"Death_inHOSP"] == 1 & comb_death_df[,"Death_HOSPStartTo120"]==0) #0
