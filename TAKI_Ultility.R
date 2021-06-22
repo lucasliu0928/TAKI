@@ -159,7 +159,7 @@ correct_overlap_CRRTHD <- function(CRRT_Start,CRRT_End,HD_Start,HD_End){
   # HD_End <- curr_HD_End
   
   #First check if ther is any  overlap 
-  #Cuz there might no be overlap even if the following conditions are met 
+  #Cuz there might not be overlap even if the following conditions are met 
   #for example : cond 4: with CRRT_START 12-10, CRRT_End 12-24, HD_START 12-28, HD_End 12-30
   overlap_flag <- check_overlapTime_betweenTwoEvents(CRRT_Start,CRRT_End,HD_Start,HD_End,"CRRT","HD")
   
@@ -184,7 +184,7 @@ correct_overlap_CRRTHD <- function(CRRT_Start,CRRT_End,HD_Start,HD_End){
         updated_HD_End <- HD_End #no change
       }else{ #CRRT dominates , remove overlap part of HD
         updated_HD_Start <- CRRT_End + days(1)
-        updated_HD_End <- HD_End #no change
+        updated_HD_End <- HD_End + days(1) #in case start = end
         updated_CRRT_Start <- CRRT_Start #no change
         updated_CRRT_End <- CRRT_End #no change
       }
@@ -205,7 +205,7 @@ correct_overlap_CRRTHD <- function(CRRT_Start,CRRT_End,HD_Start,HD_End){
       status_flag <- "Cond3"
       if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
         updated_CRRT_Start <- HD_End +days(1)
-        updated_CRRT_End <- CRRT_End #no change
+        updated_CRRT_End <- CRRT_End +days(1) #in case start = end
         updated_HD_Start <- HD_Start #no change
         updated_HD_End <- HD_End #no change
       }else{ #CRRT dominates , remove overlap part of HD
@@ -217,13 +217,13 @@ correct_overlap_CRRTHD <- function(CRRT_Start,CRRT_End,HD_Start,HD_End){
     }else if (CRRT_Start < HD_Start & CRRT_End < HD_End){#4. If CRRT Start < HD_Start and CRRT_End < HD_End
       status_flag <- "Cond4"
       if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
-        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_Start <- CRRT_Start - days(1) #in cast start = end
         updated_CRRT_End <- HD_Start - days(1) 
         updated_HD_Start <- HD_Start #no change
         updated_HD_End <- HD_End #no change
       }else{ #CRRT dominates , remove overlap part of HD
         updated_HD_Start <- CRRT_End + days(1)
-        updated_HD_End <- HD_End #no change
+        updated_HD_End <- HD_End + days(1) #in cast start = end
         updated_CRRT_Start <- CRRT_Start #no change
         updated_CRRT_End <- CRRT_End #no change
       }
@@ -231,7 +231,7 @@ correct_overlap_CRRTHD <- function(CRRT_Start,CRRT_End,HD_Start,HD_End){
       status_flag <- "Cond5"
       if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
         updated_CRRT_End <- HD_Start - days(1) 
-        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_Start <- CRRT_Start - days(1)  #in case start  = end
         updated_HD_Start <- HD_Start #no change
         updated_HD_End <- HD_End #no change
       }else{ #CRRT dominates , remove overlap part of HD
@@ -243,7 +243,7 @@ correct_overlap_CRRTHD <- function(CRRT_Start,CRRT_End,HD_Start,HD_End){
     }else if (CRRT_Start < HD_Start & CRRT_End > HD_End){#6. If CRRT Start < HD_Start and CRRT_End > HD_End
       status_flag <- "Cond6"
       if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
-        updated_CRRT_Start <- CRRT_Start #no change
+        updated_CRRT_Start <- CRRT_Start - days(1) #in case start  = end
         updated_CRRT_End <- HD_Start - days(1) 
         updated_HD_Start <- HD_Start #no change
         updated_HD_End <- HD_End #no change
@@ -261,7 +261,7 @@ correct_overlap_CRRTHD <- function(CRRT_Start,CRRT_End,HD_Start,HD_End){
         updated_HD_Start <- HD_Start #no change
         updated_HD_End <- HD_End #no change
       }else{ #CRRT dominates , remove overlap part of HD
-        updated_HD_Start <- HD_Start
+        updated_HD_Start <- HD_Start - days(1) #in case start = end
         updated_HD_End <- CRRT_Start - days(1)
         updated_CRRT_Start <- CRRT_Start #no change
         updated_CRRT_End <- CRRT_End #no change
@@ -274,7 +274,7 @@ correct_overlap_CRRTHD <- function(CRRT_Start,CRRT_End,HD_Start,HD_End){
         updated_HD_Start <- HD_Start #no change
         updated_HD_End <- HD_End #no change
       }else{ #CRRT dominates , remove overlap part of HD
-        updated_HD_Start <- HD_Start
+        updated_HD_Start <- HD_Start - days(1) #in case start = end
         updated_HD_End <- CRRT_Start - days(1)
         updated_CRRT_Start <- CRRT_Start #no change
         updated_CRRT_End <- CRRT_End #no change
@@ -283,11 +283,11 @@ correct_overlap_CRRTHD <- function(CRRT_Start,CRRT_End,HD_Start,HD_End){
       status_flag <- "Cond9"
       if (HD_duration > 1){ #HD dominates, remove overlap part of CRRT
         updated_CRRT_Start <- HD_End + days(1)
-        updated_CRRT_End <- CRRT_End
+        updated_CRRT_End <- CRRT_End + days(1) #in case start = end
         updated_HD_Start <- HD_Start #no change
         updated_HD_End <- HD_End #no change
       }else{ #CRRT dominates , remove overlap part of HD
-        updated_HD_Start <- HD_Start
+        updated_HD_Start <- HD_Start - days(1) #in case start = end
         updated_HD_End <- CRRT_Start - days(1)
         updated_CRRT_Start <- CRRT_Start #no change
         updated_CRRT_End <- CRRT_End #no change
@@ -416,6 +416,37 @@ get_vars_for_analysisId_func <- function(ananlysis_df, analysis_ID){
   return(updated_analysis_df)
 }
 
+
+get_one_ICU_admission_func <- function(one_hosp_df){
+  # 1. If less than 12 hours between ICU admissions, combine them 
+  # 2. otherwise, use the 1st ICU admission
+  
+  #reorder by ICU admit data
+  reordered_one_hosp_df <- one_hosp_df[order(one_hosp_df[,"ICU_ADMIT_DATE"],decreasing = FALSE),]
+  #compute time between current ICU and the previous ICU
+  reordered_one_hosp_df$time_between_current_to_prev <- NA
+  for (i in 2:nrow(reordered_one_hosp_df)){
+    curr_ICU_ad_time <- reordered_one_hosp_df[i,"ICU_ADMIT_DATE"]
+    prev_ICU_dc_time <-  reordered_one_hosp_df[i-1,"ICU_DISCHARGE_DATE"]
+    reordered_one_hosp_df[i,"time_between_current_to_prev"] <- as.numeric(difftime(curr_ICU_ad_time,prev_ICU_dc_time,units = "hours"))
+  }
+  
+  #Check all ICU between times starting from the 2nd ICU, if between time < 12,
+  #then update the ICU end as the later time
+  #If no one < 12, then just get the 1st ICU
+  First_ICU_Start <- reordered_one_hosp_df[1,"ICU_ADMIT_DATE"]
+  First_ICU_End   <- reordered_one_hosp_df[1,"ICU_DISCHARGE_DATE"]
+  for (i in 2:nrow(reordered_one_hosp_df)){
+    curr_between_time <- reordered_one_hosp_df[i,"time_between_current_to_prev"]
+    if (curr_between_time < 12){
+      First_ICU_End <- reordered_one_hosp_df[i,"ICU_DISCHARGE_DATE"]
+    }
+  }
+  
+  return(list(First_ICU_Start,First_ICU_End))
+}
+
+
 #Get ICU D0 and D3 day start and end time
 #ICU D0 refer to ICU admit time to the same day at 23:59:59
 get_sameDay_lasttime_func <- function(input_time){
@@ -424,93 +455,87 @@ get_sameDay_lasttime_func <- function(input_time){
   return(same_day_last_timepoint)
 }
 
-get_ICUD0_D3_dates_func <- function(icu_start,icu_end){
-  ICU_D0D3_df <- as.data.frame(matrix(NA, nrow = 4, ncol = 3))
-  colnames(ICU_D0D3_df) <- c("Day","Day_start","Day_End")
-  ICU_D0D3_df$Day <- seq(0,3)
+
+#Compute the actual hours in ICU on each day, and the days in ICU
+compute_actualhours_EachDay <- function(D0D3_df,icu_end){
+  #1.first, Fiter out the start time after ICU end
+  idx_startAfterICUend <- which(ymd_hms(D0D3_df[,"Day_start"]) >= icu_end)
+  D0D3_df[idx_startAfterICUend,c("Day_start","Day_End")] <- NA
+  
+  #2.then, If Day start before ICU end, but Day end after ICU end, Set Day_end as ICU end time
+  idx_endAfterICUend <- which(ymd_hms(D0D3_df[,"Day_End"]) > icu_end)
+  D0D3_df[idx_endAfterICUend,"Day_End"] <- as.character(icu_end)
+  
+  D0D3_df[,"Hours_InOneDay"] <- round(as.numeric(difftime(D0D3_df[, "Day_End"] ,D0D3_df[, "Day_start"] ,units = "hours")),2)
+  
+  #Reformat Add 00:00:00
+  aval_n <- length(which(is.na(D0D3_df[,"Day_start"])==F))
+  for (i in 1:aval_n){
+    curr_start <- D0D3_df[i,"Day_start"]
+    if (nchar(curr_start) == 10){
+      D0D3_df[i,"Day_start"] <- paste(D0D3_df[i,"Day_start"],"00:00:00")
+    }
+    curr_end <- D0D3_df[i,"Day_End"]
+    if (nchar(curr_end) == 10){
+      D0D3_df[i,"Day_End"] <- paste(D0D3_df[i,"Day_End"],"00:00:00")
+    }
+  }
+  
+  #code na hours to 0
+  na_indxes <- which(is.na(D0D3_df[,"Hours_InOneDay"]) == T)
+  if(length(na_indxes) > 0){
+    D0D3_df[na_indxes,"Hours_InOneDay"] <- 0
+  }
+  return(D0D3_df)
+}
+
+#Record the actual days(D0, D1,D2,D3) in ICU
+get_acutal_Days_inICU <- function(Filtered_D0D3_df){
+  #non NA days
+  non_NA_idxes <-   which(is.na(Filtered_D0D3_df[,"Day_start"]) == F)
+  non_NA_Days <-  Filtered_D0D3_df[non_NA_idxes,"Day"]
+  days_inICU <- paste0(paste0("D",non_NA_Days),collapse = "$$")
+  return(days_inICU)
+}
+
+#### Get D0-D3 start and end time
+#### D0 Start  == ICU start,      D0 End == the same day of D0 start at 23:59:59
+#### D1 Start  == D0 end + 1 sec, D1 End == the same day of D1 start at 23:59:59
+#### D2 Start  == D1 end + 1 sec, D2 End == the same day of D2 start at 23:59:59
+#### D3 Start  == D2 end + 1 sec, D3 End == the same day of D3 start at 23:59:59
+#'@NOTE: D1 or D2 or D3 can be no in ICU, if the duration of ICU is less than certain hours
+get_D0toD3_dates_func <- function(icu_start,icu_end){
+
+  D0D3_df <- as.data.frame(matrix(NA, nrow = 4, ncol = 3))
+  colnames(D0D3_df) <- c("Day","Day_start","Day_End")
+  D0D3_df$Day <- seq(0,3)
   for (i in 1:4){
     if (i == 1){
       if (nchar(as.character(icu_start)) == 10){
-      ICU_D0D3_df[i, "Day_start"] <- paste(as.character(icu_start),"00:00:00")
+      D0D3_df[i, "Day_start"] <- paste(as.character(icu_start),"00:00:00")
       }else{    
-        ICU_D0D3_df[i, "Day_start"] <- as.character(icu_start)
+        D0D3_df[i, "Day_start"] <- as.character(icu_start)
       }
-      ICU_D0D3_df[i, "Day_End"]   <- as.character(get_sameDay_lasttime_func(icu_start))
+      D0D3_df[i, "Day_End"]   <- as.character(get_sameDay_lasttime_func(icu_start))
     }else{
-      ICU_D0D3_df[i, "Day_start"] <- paste(as.character(ymd_hms(ICU_D0D3_df[i-1, "Day_End"]) + seconds(1)),"00:00:00")
-      ICU_D0D3_df[i, "Day_End"]   <- as.character(get_sameDay_lasttime_func(ymd_hms(ICU_D0D3_df[i, "Day_start"])))
+      D0D3_df[i, "Day_start"] <- paste(as.character(ymd_hms(D0D3_df[i-1, "Day_End"]) + seconds(1)),"00:00:00")
+      D0D3_df[i, "Day_End"]   <- as.character(get_sameDay_lasttime_func(ymd_hms(D0D3_df[i, "Day_start"])))
     }
   }
-  
-  #Fiter out the start time after ICU end
-  idx_startAfterICUend <- which(ymd_hms(ICU_D0D3_df[,"Day_start"]) >= icu_end)
-  ICU_D0D3_df[idx_startAfterICUend,c("Day_start","Day_End")] <- NA
-  
-  #If Day start before ICU end, but Day end after ICU end, Set Day_end as ICU end time
-  idx_endAfterICUend <- which(ymd_hms(ICU_D0D3_df[,"Day_End"]) > icu_end)
-  ICU_D0D3_df[idx_endAfterICUend,"Day_End"] <- as.character(icu_end)
-  
-  
-  ICU_D0D3_df[,"Hours_InOneDay"] <- round(as.numeric(difftime(ICU_D0D3_df[, "Day_End"] ,ICU_D0D3_df[, "Day_start"] ,units = "hours")),2)
   
   #Reformat Add 00:00:00
-  aval_n <- length(which(is.na(ICU_D0D3_df[,"Day_start"])==F))
+  aval_n <- length(which(is.na(D0D3_df[,"Day_start"])==F))
   for (i in 1:aval_n){
-    curr_start <- ICU_D0D3_df[i,"Day_start"]
+    curr_start <- D0D3_df[i,"Day_start"]
     if (nchar(curr_start) == 10){
-      ICU_D0D3_df[i,"Day_start"] <- paste(ICU_D0D3_df[i,"Day_start"],"00:00:00")
+      D0D3_df[i,"Day_start"] <- paste(D0D3_df[i,"Day_start"],"00:00:00")
     }
-    curr_end <- ICU_D0D3_df[i,"Day_End"]
+    curr_end <- D0D3_df[i,"Day_End"]
     if (nchar(curr_end) == 10){
-      ICU_D0D3_df[i,"Day_End"] <- paste(ICU_D0D3_df[i,"Day_End"],"00:00:00")
+      D0D3_df[i,"Day_End"] <- paste(D0D3_df[i,"Day_End"],"00:00:00")
     }
   }
-  return(ICU_D0D3_df)
-}
-
-
-get_ICUD0_D4_dates_func <- function(icu_start,icu_end){
-  ICU_D0D4_df <- as.data.frame(matrix(NA, nrow = 5, ncol = 3))
-  colnames(ICU_D0D4_df) <- c("Day","Day_start","Day_End")
-  ICU_D0D4_df$Day <- seq(0,4)
-  for (i in 1:5){
-    if (i == 1){
-      if (nchar(as.character(icu_start)) == 10){
-        ICU_D0D4_df[i, "Day_start"] <- paste(as.character(icu_start),"00:00:00")
-      }else{    
-        ICU_D0D4_df[i, "Day_start"] <- as.character(icu_start)
-      }
-      ICU_D0D4_df[i, "Day_End"]   <- as.character(get_sameDay_lasttime_func(icu_start))
-    }else{
-      ICU_D0D4_df[i, "Day_start"] <- paste(as.character(ymd_hms(ICU_D0D4_df[i-1, "Day_End"]) + seconds(1)),"00:00:00")
-      ICU_D0D4_df[i, "Day_End"]   <- as.character(get_sameDay_lasttime_func(ymd_hms(ICU_D0D4_df[i, "Day_start"])))
-    }
-  }
-  
-  #Fiter out the start time after ICU end
-  idx_startAfterICUend <- which(ymd_hms(ICU_D0D4_df[,"Day_start"]) >= icu_end)
-  ICU_D0D4_df[idx_startAfterICUend,c("Day_start","Day_End")] <- NA
-  
-  #If Day start before ICU end, but Day end after ICU end, Set Day_end as ICU end time
-  idx_endAfterICUend <- which(ymd_hms(ICU_D0D4_df[,"Day_End"]) > icu_end)
-  ICU_D0D4_df[idx_endAfterICUend,"Day_End"] <- as.character(icu_end)
-  
-  
-  ICU_D0D4_df[,"Hours_InOneDay"] <- round(as.numeric(difftime(ICU_D0D4_df[, "Day_End"] ,ICU_D0D4_df[, "Day_start"] ,units = "hours")),2)
-  
-  #Reformat Add 00:00:00
-  aval_n <- length(which(is.na(ICU_D0D4_df[,"Day_start"])==F))
-  for (i in 1:aval_n){
-    curr_start <- ICU_D0D4_df[i,"Day_start"]
-    if (nchar(curr_start) == 10){
-      ICU_D0D4_df[i,"Day_start"] <- paste(ICU_D0D4_df[i,"Day_start"],"00:00:00")
-    }
-    curr_end <- ICU_D0D4_df[i,"Day_End"]
-    if (nchar(curr_end) == 10){
-      ICU_D0D4_df[i,"Day_End"] <- paste(ICU_D0D4_df[i,"Day_End"],"00:00:00")
-    }
-  }
-  return(ICU_D0D4_df)
+  return(D0D3_df)
 }
 
 
@@ -535,22 +560,22 @@ remove_featureValue <- function(analysis_df,ICU_D0toD3_df){
 #get Scr df in window
 get_value_df_inWindow_func <- function(pt_df,window_start, window_end,time_col){
   inWindow_idxes <- which(ymd_hms(pt_df[,time_col]) >= window_start & 
-                            ymd_hms(pt_df[,time_col]) <= window_end)
+                          ymd_hms(pt_df[,time_col]) <= window_end)
   pt_df_inWindow <- pt_df[inWindow_idxes,]
   pt_df_inWindow <- pt_df_inWindow[order(pt_df_inWindow[,time_col]),] #ordered
   
   return(pt_df_inWindow)
 }
 
-#get baseline Scr (Without revolve MDRD=75)
+#get baseline Scr (Without revolve)
 get_baseline_scr_func <- function(hosp_start_time,pt_scr_df){
-  #hosp_start_time <- curr_hosp_start
-  #pt_scr_df <- curr_scr_df
+  # hosp_start_time <- curr_hosp_start
+  # pt_scr_df <- curr_scr_df
   
-  #1.Baseline Scr (The outpatient sCr value closest to 1 day before hospital admission up to 1 year. 
+  #1.Baseline Scr (The outpatient sCr value closest to 7 day before hospital admission up to 1 year. 
   #                If no outpatient sCr, use the inpatient sCr value closet to 7 days before index hospital admission up to 1 year. 
-  curr_window_start <- hosp_start_time - years(1)
-  curr_window_end <- hosp_start_time - days(1)
+  curr_window_start <- hosp_start_time - days(365)
+  curr_window_end <- hosp_start_time - days(7)
   curr_scrdf_inWindow <- get_value_df_inWindow_func(pt_scr_df,curr_window_start,curr_window_end,"SCR_ENTERED")
   curr_scr_inWindow_outpt_df <- curr_scrdf_inWindow[which(grepl("Outpatient",curr_scrdf_inWindow[,"SCR_ENCOUNTER_TYPE"])==T),]
   
@@ -562,7 +587,7 @@ get_baseline_scr_func <- function(hosp_start_time,pt_scr_df){
   }
   
   #inpteint Scr before hosp admit (from hosp_start - 7 day to hosp_start-1 year)
-  curr_window_start <- hosp_start_time - years(1)
+  curr_window_start <- hosp_start_time - days(365)
   curr_window_end <- hosp_start_time - days(7)
   curr_scrdf_inWindow <- get_value_df_inWindow_func(pt_scr_df,curr_window_start,curr_window_end,"SCR_ENTERED")
   curr_scr_inWindow_inpt_df <- curr_scrdf_inWindow[which(grepl("Inpatient",curr_scrdf_inWindow[,"SCR_ENCOUNTER_TYPE"])==T),]
@@ -573,7 +598,7 @@ get_baseline_scr_func <- function(hosp_start_time,pt_scr_df){
     cloest_in_val <- NA
   }
   
-  #resolve scr 
+
   if (is.na(cloest_out_val) == F){ #if outptient avail
     bl_val <- cloest_out_val
   }else if(is.na(cloest_in_val) == F){
@@ -584,44 +609,76 @@ get_baseline_scr_func <- function(hosp_start_time,pt_scr_df){
   return(bl_val)
 }
 
-#EGFR MDRD equation
-MDRD_equation<-function(Scr,age,gender,race){
-  #GFR (mL/min/1.73 m²) = 175 × (SCr)-1.154 × (Age)-0.203 × (0.742 if female) × (1.212 if African American) (conventional units)
+#EPI for EGFR queation
+EPI_equation<-function(Scr,age,gender,race){
+  #https://www.niddk.nih.gov/health-information/professionals/clinical-tools-patient-management/kidney-disease/laboratory-evaluation/glomerular-filtration-rate-calculators/ckd-epi-adults-conventional-units
   
-  a<-1
-  b<-1
+  #GFR = 141 × min(Scr/k 1)^α × max(Scr/k, 1)^-1.209 × 0.993^Age × 1.018 [if female] × 1.159 [if African American]  
+  if(gender=="F"){
+    k<- 0.7
+    alpha <- -0.329
+  } else if (gender=="M"){
+    k<- 0.9
+    alpha <- -0.411
+  }
   
-  #if qualities the tfollowing 2, updated a and b
-  if(race=="BLACK/AFR AMERI"){
-    b<-1.212
+  c<-1
+  d<-1
+  #if qualities the following 2, updated c and d
+  if(race=="BLACK/AFR AMERI"){ 
+    d<-1.159
   }
   if(gender=="F"){
-    a<-0.742
+    c<-1.018
   }
-  #removed 88.4 cuz unit
-  score<-175*((Scr)^(-1.154))*((age)^(-0.203))*a*b  #first half part is the same for all
+  
+  score <- 141*(min(Scr/k,1)^alpha)*(max(Scr/k,1)^(-1.209))*(0.993^age)*c*d
   
   return(score)
   
 }
 
-#reverse EGFR equation
-SolveScr_reverse_MDRD_equation<-function(age,gender,race){
-  a<-1
-  b<-1
+#Resolve EGFR = 75
+SolveScr_reverse_EPI_equation<-function(age,gender_male,race_black){
+  #GFR = 141 × min(Scr/k 1)^α × max(Scr/k, 1)^-1.209 × 0.993^Age × 1.018 [if female] × 1.159 [if African American]  
+  if(gender_male==0){ #FEMALE
+    k<- 0.7
+    alpha <- -0.329
+  } else if (gender_male==1){ #MALE
+    k<- 0.9
+    alpha <- -0.411
+  }
   
-  #if qualities the tfollowing 2, updated a and b
-  if(race=="BLACK/AFR AMERI"){
-    b<-1.210
+  c<-1
+  d<-1
+  #if qualities the following 2, updated c and d
+  if(race_black== 1 ){ #BLACK/AFR AMERI
+    d<-1.159
   }
-  if(gender=="F"){
-    a<-0.742
+  if(gender_male== 0 ){ #FEMALE
+    c<-1.018
   }
-  GFR <- 75
-  scr <- (175*a*b/(GFR*(age^(0.203))))^(1/1.154)
-  return(scr)
+  
+  eGFR <- 75
+  
+  #assume Scr/k < 1, then (eGFR/141)/(c*d*(0.993^age)) = ((Scr/k)^alpha)*1
+  Scr1 <- (((eGFR/141)/(c*d*(0.993^age)))^(1/alpha))*k 
+  scr_k_ratio1 <- Scr1/k
+  #assume Scr/k > 1, then (eGFR/141)/(c*d*(0.993^age)) = 1*((Scr/k)^(-1.209))
+  Scr2 <- (((eGFR/141)/(c*d*(0.993^age)))^(1/(-1.209)))*k
+  scr_k_ratio2 <- Scr2/k
+  
+  #then make sure actual Scr/k ratio is correct, only one of them could be correct
+  if (scr_k_ratio1 < 1 & scr_k_ratio2 < 1){ #then assumption1 is correct
+    final_scr <- Scr1
+  }else if (scr_k_ratio1 > 1 & scr_k_ratio2 > 1){ #then assumption2 is correct
+    final_scr <- Scr2
+  }
+  
+  return(final_scr)
   
 }
+
 
 #Compute KDIGO score for each time in Scr_data
 get_KDIGO_Score_forScrdf_func <- function(bl_scr,scr_data){
@@ -694,8 +751,8 @@ update_KDIGO_df_forRRT_func<- function(KIDGO_df,CRRT_start,CRRT_end,HD_start,HD_
 }
 
 
-#Compute EGFR only if pt has at least one outpatient SCr after ICU discharge within time_window_start (eg.120 days)
-#using the outpatient SCr closest but before (ICU discharge + 120 days) 
+#Compute EGFR only if pt has at least one outpatient SCr after HOSP discharge within time_window_start (eg.120 days)
+#using the outpatient SCr closest but before (HOSP discharge + 120 days) 
 #if more than 2 outpatient SCr less than 30 days apart and all before 120 days post-discharge
 # use the median of all these values
 compute_EGFR_inWindow_func2 <- function(time_window_start,time_window_expansion,Analysis_Ids,time_data,demo_info_df,Outpt_Scr_df){
@@ -708,7 +765,7 @@ compute_EGFR_inWindow_func2 <- function(time_window_start,time_window_expansion,
 
 
   EGFR_inWindow_df <- as.data.frame(matrix(NA, nrow = length(Analysis_Ids), ncol = 5))
-  colnames(EGFR_inWindow_df) <- c("STUDY_PATIENT_ID","EGFR_120d","n_Scr_afterICU","n_Scr_AfterICU_Before120d","N_SCr_USED")
+  colnames(EGFR_inWindow_df) <- c("STUDY_PATIENT_ID","EGFR_120d","n_OutptScr_afterHOSP","n_OutptScr_AfterHOSP_Before120d","N_SCr_USED")
 
   scr_used_df_list <- list()
   for (p in 1:length(Analysis_Ids)){
@@ -721,8 +778,7 @@ compute_EGFR_inWindow_func2 <- function(time_window_start,time_window_expansion,
     
     #time data
     curr_pt_time_data <- time_data[which(time_data[,"STUDY_PATIENT_ID"]==curr_id),]
-    curr_ICU_START <-  ymd_hms(curr_pt_time_data[,"Updated_ICU_ADMIT_DATE"])
-    curr_ICU_STOP  <-  ymd_hms(curr_pt_time_data[,"Updated_ICU_DISCHARGE_DATE"])
+    curr_HOSP_STOP  <-  ymd_hms(curr_pt_time_data[,"Updated_HOSP_DISCHARGE_DATE"])
     
     #demo data
     curr_pt_demo_data <- demo_info_df[which(demo_info_df[,"STUDY_PATIENT_ID"]==curr_id),]
@@ -733,34 +789,34 @@ compute_EGFR_inWindow_func2 <- function(time_window_start,time_window_expansion,
     #outpatient Scr
     curr_outpt_Scr_df <- Outpt_Scr_df[which(Outpt_Scr_df[,"STUDY_PATIENT_ID"]==curr_id),]
     
-    #outpatient Scr after ICU 
-    curr_outpt_scr_afterICU_df  <- curr_outpt_Scr_df[which(ymd_hms(curr_outpt_Scr_df[,"SCR_ENTERED"]) > curr_ICU_STOP),]
-    EGFR_inWindow_df[p, "n_Scr_afterICU"]  <- nrow(curr_outpt_scr_afterICU_df)
+    #outpatient Scr after HOSP 
+    curr_outpt_scr_afterHOSP_df  <- curr_outpt_Scr_df[which(ymd_hms(curr_outpt_Scr_df[,"SCR_ENTERED"]) > curr_HOSP_STOP),]
+    EGFR_inWindow_df[p, "n_OutptScr_afterHOSP"]  <- nrow(curr_outpt_scr_afterHOSP_df)
 
-    #outpatient Scr after ICU but before time_window_start (120 days)
-    curr_ICU_STOP_plusTWdays <- curr_ICU_STOP + time_window_start
-    curr_afterICU_beforeTW_data <- curr_outpt_scr_afterICU_df[curr_outpt_scr_afterICU_df[,"SCR_ENTERED"] > curr_ICU_STOP & 
-                                                              curr_outpt_scr_afterICU_df[,"SCR_ENTERED"] < curr_ICU_STOP_plusTWdays,]
-    EGFR_inWindow_df[p, "n_Scr_AfterICU_Before120d"] <- nrow(curr_afterICU_beforeTW_data)
+    #outpatient Scr after HOSP but before/equals time_window_start (120 days)
+    curr_HOSP_STOP_plusTWdays <- curr_HOSP_STOP + time_window_start
+    curr_afterHOSP_beforeTW_data <- curr_outpt_scr_afterHOSP_df[curr_outpt_scr_afterHOSP_df[,"SCR_ENTERED"] > curr_HOSP_STOP & 
+                                                                curr_outpt_scr_afterHOSP_df[,"SCR_ENTERED"] <= curr_HOSP_STOP_plusTWdays,]
+    EGFR_inWindow_df[p, "n_OutptScr_AfterHOSP_Before120d"] <- nrow(curr_afterHOSP_beforeTW_data)
 
     #must have demo data to compute egfr
     if (is.na(curr_age)== T | is.na(curr_gender)== T |is.na(curr_race)== T ){
       EGFR_inWindow_df[p, "EGFR_120d"] <- NA
     }else{
       #must have at least 1 outpts data in window
-      if(EGFR_inWindow_df[p, "n_Scr_AfterICU_Before120d"] == 0 ){ 
+      if(EGFR_inWindow_df[p, "n_OutptScr_AfterHOSP_Before120d"] == 0 ){ 
         EGFR_inWindow_df[p, "EGFR_120d"] <- NA
       }else { #if there are outpts values in this window
         #make sure to add dates when no 00:00:00 so we can use ymd_hms in next step
-        for (t_i in nrow(curr_afterICU_beforeTW_data)){
-          curr_afterICU_beforeTW_data[t_i, "SCR_ENTERED"] <- reformat_10char_dates_func(curr_afterICU_beforeTW_data[t_i, "SCR_ENTERED"])
+        for (t_i in nrow(curr_afterHOSP_beforeTW_data)){
+          curr_afterHOSP_beforeTW_data[t_i, "SCR_ENTERED"] <- reformat_10char_dates_func(curr_afterHOSP_beforeTW_data[t_i, "SCR_ENTERED"])
         }
         #reformat time cols to ymd_hms
-        curr_afterICU_beforeTW_data[,"SCR_ENTERED"] <- ymd_hms(curr_afterICU_beforeTW_data[,"SCR_ENTERED"])
+        curr_afterHOSP_beforeTW_data[,"SCR_ENTERED"] <- ymd_hms(curr_afterHOSP_beforeTW_data[,"SCR_ENTERED"])
         #reordered by time 
-        ordered_outpts_data <- curr_afterICU_beforeTW_data[order(curr_afterICU_beforeTW_data[,"SCR_ENTERED"]),]
+        ordered_outpts_data <- curr_afterHOSP_beforeTW_data[order(curr_afterHOSP_beforeTW_data[,"SCR_ENTERED"]),]
         
-        #outpatient data after ICU dischrage cloest to ICU discharge +TW days
+        #outpatient data after HOSP Discharge cloest to HOSP discharge +TW days
         cloest_idx <- nrow(ordered_outpts_data) #the last one since it is ordered
         cloest_time <- ordered_outpts_data[cloest_idx,"SCR_ENTERED"]
         cloest_scr_value <- ordered_outpts_data[cloest_idx,"SCR_VALUE"]
@@ -769,7 +825,7 @@ compute_EGFR_inWindow_func2 <- function(time_window_start,time_window_expansion,
         cloest_time_minus30days <- cloest_time - time_window_expansion
    
         #check if there is any value 30 days before cloest_time
-        days30_before_idxes <- which(ordered_outpts_data[,"SCR_ENTERED"] > cloest_time_minus30days & 
+        days30_before_idxes <- which(ordered_outpts_data[,"SCR_ENTERED"] >= cloest_time_minus30days & 
                                      ordered_outpts_data[,"SCR_ENTERED"] < cloest_time)
         cloest_time_idx <- which(ordered_outpts_data[,"SCR_ENTERED"] == cloest_time)
         
@@ -783,9 +839,7 @@ compute_EGFR_inWindow_func2 <- function(time_window_start,time_window_expansion,
           
         }
         EGFR_inWindow_df[p, "N_SCr_USED"] <- nrow(scr_used_df)
-          
-        EGFR_inWindow_df[p, "EGFR_120d"] <- MDRD_equation(final_scr_value,curr_age,curr_gender,curr_race)
-        #EGFR_inWindow_df[p, "EGFR_120d"] <- EPI_equation(final_scr_value,curr_age,curr_gender,curr_race)
+        EGFR_inWindow_df[p, "EGFR_120d"] <- EPI_equation(final_scr_value,curr_age,curr_gender,curr_race)
         
         scr_used_df_list[[p]] <- scr_used_df
       }
