@@ -170,9 +170,10 @@ table(Final_ESRD_BEFORE_AT_df$ESRD_BEFORE_AT)
 write.csv(Final_ESRD_BEFORE_AT_df,paste0(outdir,"ESRD_Before_AT.csv"),row.names = F)
 
 
-
+############################################################################################################
 #check how many status_flag=1, but usrd_flag=0, and they are actually in USRDS: 51
 #so the final =1 , should equal status_yes (155-51) + USRDS_yes(48+295) = 447
+############################################################################################################
 length(which(ESRD_BEFORE_AT_Indicator_df_Comb$ESRD_BEFORE_AT_STATUS== 1 & 
                ESRD_BEFORE_AT_Indicator_df_Comb$ESRD_BEFORE_AT_USRDS==0 &
                ESRD_BEFORE_AT_Indicator_df_Comb$SOURCE_USRDS == "in_USRDS" ))
