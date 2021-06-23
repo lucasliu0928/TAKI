@@ -411,6 +411,32 @@ get_raw_var_values_2options_func <- function(analysis_df,analysis_ID,feature_nam
   return(value_df)
 }
 
+#code NA the values if patient does not in ICU for that day
+#e.g, the pt ICU duration includes D0, D1, so BUND3 value should be exclude. cuz BUND3 refers to ICU start + 3days
+remove_featureValue <- function(analysis_df,Time_df){
+  analysis_df$Excluded_Feature <- NA #record what feature are excluded
+  for (i in 1:nrow(analysis_df)){
+    if (i %% 2000 == 0){print(i)}
+    curr_id <- analysis_df[i,"STUDY_PATIENT_ID"]
+    
+    #get acutal ICU stay days
+    curr_ICU_days <- Time_df[which(Time_df[,"STUDY_PATIENT_ID"] == curr_id),"Actual_ICU_Stays"]
+    curr_ICU_days <- unlist(strsplit(curr_ICU_days,split = "$$",fixed = T))
+    
+    #get column names to keep (the actual days, ID, and excluded_feature for record)
+    colnames_tokeep <- paste0(c(curr_ICU_days,"STUDY_PATIENT_ID","Excluded_Feature"),collapse = "|") #columns of ID and corresponding Day feature
+    #get column index to exclude  
+    colIndxes_toexclude <- which(grepl(colnames_tokeep,colnames(analysis_df)) == F)
+    if (length(colIndxes_toexclude) > 0 ){
+      #exclude by code NA
+      analysis_df[i,colIndxes_toexclude] <- NA
+      #record what is excluded
+      analysis_df[i,"Excluded_Feature"] <- paste0(colnames(analysis_df)[colIndxes_toexclude],collapse = "$$")
+    }
+  }
+  return(analysis_df)
+}
+
 get_vars_for_analysisId_func <- function(ananlysis_df, analysis_ID){
   updated_analysis_df <- ananlysis_df[which(ananlysis_df[,"STUDY_PATIENT_ID"] %in% analysis_ID),]
   return(updated_analysis_df)
@@ -537,25 +563,6 @@ get_D0toD3_dates_func <- function(icu_start,icu_end){
   }
   return(D0D3_df)
 }
-
-
-#exclude the values if patient does not in ICU for that day
-#e.g, the pt ICU duration includes D0, D1, so BUND3 value should be exclude. cuz BUND3 refers to ICU start + 3days
-remove_featureValue <- function(analysis_df,ICU_D0toD3_df){
-  for (i in 1:nrow(analysis_df)){
-    if (i %% 1000 == 0){print(i)}
-    curr_id <- analysis_df[i,"STUDY_PATIENT_ID"]
-    curr_ICU_days <- ICU_D0toD3_df[which(ICU_D0toD3_df[,"STUDY_PATIENT_ID"] == curr_id),"ICU_Stays_inDays"]
-    curr_ICU_days <- unlist(strsplit(curr_ICU_days,split = "$$",fixed = T))
-    search_string <- paste0(c(curr_ICU_days,"STUDY_PATIENT_ID"),collapse = "|") #columns of ID and corresponding Day feature
-    colIndxes_toexclude <- which(grepl(search_string,colnames(analysis_df)) == F)
-    if (length(colIndxes_toexclude) > 0 ){
-      analysis_df[i,colIndxes_toexclude] <- NA
-    }
-  }
-  return(analysis_df)
-}
-
 
 #get Scr df in window
 get_value_df_inWindow_func <- function(pt_df,window_start, window_end,time_col){
