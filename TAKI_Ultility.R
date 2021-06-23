@@ -341,7 +341,75 @@ check_T1end_T2end_status <- function(t1_time,t2_time){
   
 }
 
+
 ############## Extract Raw data functions ############## 
+compute_missing_rate <- function(data_input,col_name){
+  n_missing <- length(which(is.na(data_input[,col_name])==T))
+  perc_missing <- round(n_missing*100/nrow(data_input),2)
+  res <- paste0(n_missing," (",perc_missing, "%)")
+  return(res)
+}
+
+
+get_missing_rate_table <- function(data_df,features){
+  missing_table <- as.data.frame(matrix(NA, nrow = length(features), ncol = 2))
+  colnames(missing_table) <- c("Feature","Missing_N_Perc")
+  for (j in 1:length(features)){
+    curr_col <- features[j]
+    missing_table[j,"Feature"] <- curr_col
+    missing_table[j,"Missing_N_Perc"]  <- compute_missing_rate(data_df,curr_col)
+  }
+  return(missing_table)
+}
+
+
+remove_values_byValue <- function(data_df,feature_col,value,GreaterORLess_Flag){
+  if (GreaterORLess_Flag == "Less Than"){
+    indxes_toremove <- which(data_df[,feature_col] < value)
+  }else if (GreaterORLess_Flag == "Greater Than"){
+    indxes_toremove <- which(data_df[,feature_col] > value)
+  }
+  
+  if (length(indxes_toremove) > 0 ){
+    data_df[indxes_toremove,feature_col] <- NA
+  }
+  
+  return(data_df)
+}
+
+remove_outlier_BOTOrTOP_5perc <- function(data_df, feature_col,BotOrTOP_Flag){
+  if (BotOrTOP_Flag == "BOTTOM"){   #bot 5 perc
+    bot_5perc_value <- quantile(data_df[,feature_col],na.rm = T,c(0.05))
+    indxes_toremove <- which(data_df[,feature_col]<= bot_5perc_value)
+  }else if (BotOrTOP_Flag == "TOP"){   #top 5 perc
+    top_5perc_value <- quantile(data_df[,feature_col],na.rm = T,c(0.95))
+    indxes_toremove <- which(data_df[,feature_col]>= top_5perc_value)
+  }else if (BotOrTOP_Flag == "BOTTOM and TOP"){
+    bot_5perc_value <- quantile(data_df[,feature_col],na.rm = T,c(0.05))
+    top_5perc_value <- quantile(data_df[,feature_col],na.rm = T,c(0.95))
+    indxes_toremove <- which(data_df[,feature_col]<= bot_5perc_value | data_df[,feature_col]>= top_5perc_value)
+  }
+  
+  if (length(indxes_toremove) > 0 ){
+      data_df[indxes_toremove,feature_col] <- NA
+  }
+  return(data_df)
+}
+
+
+median_imputation_func <- function(data_df,feature_to_Impute){
+  for (j in 1:length(feature_to_Impute)){
+    curr_col <- feature_to_Impute[j]
+    median_value <- median(data_df[,curr_col],na.rm = T) #get median
+    na_indxes <- which(is.na(data_df[,curr_col]) == T)   #get na idxes
+    if (length(na_indxes) > 0 ){
+      data_df[na_indxes,curr_col] <- median_value
+    }
+  }
+  return(data_df)
+}
+
+
 get_raw_var_values_1option_func <- function(analysis_df,analysis_ID,feature_name,colname_1st_choice){
   #analysis_df <- raw_Vitals_df
   #analysis_ID <- analysis_ID
