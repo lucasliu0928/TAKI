@@ -519,4 +519,33 @@ for (i in 1:nrow(updated_TimeInfo_df)){
 
 write.csv(updated_TimeInfo_df,paste0(outdir,"All_Corrected_Timeinfo.csv"),row.names = F)
 
+##########################################################################################
+#### Add if on RRT last 48 hours before discharge
+##########################################################################################
+updated_TimeInfo_df <- read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
+updated_TimeInfo_df$onRRT_Flag <- 0
+updated_TimeInfo_df$onRRT_Last48hBeforeDischarge <- 0
 
+for (i in 1:nrow(updated_TimeInfo_df)){
+  if (i %% 1000 == 0) {print(i)}
+  curr_time_df <- updated_TimeInfo_df[i,]
+  
+  #on RRT last 48 hours before HOSP discharge
+  curr_hosp_end <- ymd_hms(curr_time_df[,"Updated_HOSP_DISCHARGE_DATE"])
+  curr_hd_end  <- ymd_hms(curr_time_df[,"Updated_HD_End"])
+  curr_crrt_end <- ymd_hms(curr_time_df[,"Updated_CRRT_End"])
+  
+  if (is.na(curr_hd_end) == F | is.na(curr_crrt_end) == F){ #if on CRRT or HD
+    updated_TimeInfo_df[i,"onRRT_Flag"] <- 1
+    curr_max_RRT_Endtime <- max(c(curr_hd_end,curr_crrt_end), na.rm = T)
+    
+    if (curr_max_RRT_Endtime  >= (curr_hosp_end - hours(48))){
+      updated_TimeInfo_df[i,"onRRT_Last48hBeforeDischarge"] <- 1
+    }
+  }
+}
+
+table(updated_TimeInfo_df$onRRT_Flag) #34198  2291
+table(updated_TimeInfo_df$onRRT_Last48hBeforeDischarge) #34812  1677
+
+write.csv(updated_TimeInfo_df,paste0(outdir,"All_Corrected_Timeinfo.csv"),row.names = F)
