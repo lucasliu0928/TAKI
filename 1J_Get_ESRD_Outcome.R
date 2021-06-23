@@ -10,42 +10,17 @@ outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/"
 
 
 ##########################################################################################
-#1. Analysis Id before exclusion of ESRD
+#1.Load data
 ##########################################################################################
+#1. Analysis Id after exclusion
 analysis_ID_df <-read.csv(paste0(outdir,"Final_Analysis_ID.csv"),stringsAsFactors = F)
-analysis_ID <- unique(analysis_ID_df[,"STUDY_PATIENT_ID"])
+analysis_ID <- unique(analysis_ID_df[,"STUDY_PATIENT_ID"]) #7354
 
-
-##########################################################################################
-#1. Corrected Time df 
-##########################################################################################
+#2. Corrected Time df and get
 All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
-All_time_df$onRRT_Flag <- 0
-All_time_df$onRRT_Last48hBeforeDischarge <- 0
 
-for (i in 1:nrow(All_time_df)){
-  if (i %% 1000 == 0) {print(i)}
-  curr_time_df <- All_time_df[i,]
 
-  #on RRT last 48 hours before HOSP discharge
-  curr_hosp_end <- ymd_hms(curr_time_df[,"Updated_HOSP_DISCHARGE_DATE"])
-  curr_hd_end  <- ymd_hms(curr_time_df[,"Updated_HD_End"])
-  curr_crrt_end <- ymd_hms(curr_time_df[,"Updated_CRRT_End"])
-  
-  if (is.na(curr_hd_end) == F | is.na(curr_crrt_end) == F){ #if one of them is not NA
-    All_time_df[i,"onRRT_Flag"] <- 1
-    curr_max_RRT_Endtime <- max(c(curr_hd_end,curr_crrt_end), na.rm = T)
-    
-    if (curr_max_RRT_Endtime  >= curr_hosp_end - hours(48)){
-      All_time_df[i,"onRRT_Last48hBeforeDischarge"] <- 1
-    }
-  }
-}
-
-table(All_time_df$onRRT_Flag)
-table(All_time_df$onRRT_Last48hBeforeDischarge)
-
-#2. source 1: USRDS_ESRD
+#3. source 1: USRDS_ESRD
 USRDS_ESRD_df <-read.csv(paste0(raw_dir,"USRDS_ESRD.csv"),stringsAsFactors = F)
 USRDS_ESRD_df <- USRDS_ESRD_df[-which(USRDS_ESRD_df$ESRD_DATE==""),] #remove blanks
 #reformat 
@@ -56,7 +31,7 @@ USRDS_ESRD_df$ESRD_DATE[dash_idxes] <- as.character(ymd(USRDS_ESRD_df$ESRD_DATE[
 slash_idxes <- which(grepl("/",USRDS_ESRD_df$ESRD_DATE) == T)
 USRDS_ESRD_df$ESRD_DATE[slash_idxes] <- as.character(mdy(USRDS_ESRD_df$ESRD_DATE[slash_idxes]))
 
-#3. source 2
+#4. source 2
 ESRD_STATUS_df <-read.csv(paste0(raw_dir,"ESRD_STATUS.csv"),stringsAsFactors = F)
 ESRD_STATUS_df[which(ESRD_STATUS_df == "",arr.ind = T)] <- 0
 ESRD_STATUS_df[which(ESRD_STATUS_df == "Y",arr.ind = T)] <- 1
@@ -98,7 +73,7 @@ for (i in 1:length(analysis_ID)){
   
 }
 
-table(ESRD_Indicator_df1$ESRD_DURING_AND_AFTER_HOSP_Within120D)
+table(ESRD_Indicator_df1$ESRD_DURING_AND_AFTER_HOSP_Within120D) #7243  111
 
 ############################################################################################################
 #4. Process ESRD_STATUS.csv to get during
@@ -128,7 +103,7 @@ for (i in 1:length(analysis_ID)){
   
 }
 
-table(ESRD_Indicator_df2$ESRD_DURING)
+table(ESRD_Indicator_df2$ESRD_DURING) #7293   61
 
 
 ############################################################################################################
@@ -155,6 +130,9 @@ for (i in 1:length(analysis_ID)){
   
 }
 
+############################################################################################################
+#Check agreement
+############################################################################################################
 USRD_DuringAfterWithin120D <- ESRD_Comb[,"ESRD_DURING_AND_AFTER_HOSP_Within120D_USRDS"]
 STATUS_During <- ESRD_Comb[,"ESRD_DURING_STATUS"]
 table(USRD_DuringAfterWithin120D,STATUS_During)
@@ -200,10 +178,55 @@ usrds1_status1_onRRT48_df <- ESRD_Comb[which(ESRD_Comb[,"ESRD_DURING_AND_AFTER_H
                                                ESRD_Comb[,"onRRT_Last48h"]==1),]
 nrow(usrds1_status1_onRRT48_df)
 
-#TODO
+
 ############################################################################################################
-#6. Final before/AT status
-#USE USRDs first, then if patient not in USRDS, use status table
+#6.ESRD_120 YES is defined as: 
+#a.	For the patient has record in USRDS_ESRD, if Hospital Start < ESRD_Dates <= Hospital End + 120 days 
+#b.	For the patient has no record in USRDS_ESRD but the patient has record in ESRD_STATUS, if ESRD_During = 1 
 ############################################################################################################
-#write.csv(ESRD_Comb,paste0(outdir,"ESRD.csv"),row.names=FALSE)
+Final_ESRD_120_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID), ncol = 2))
+colnames(Final_ESRD_120_df) <- c("STUDY_PATIENT_ID","ESRD_120")
+for (i in 1:length(analysis_ID)){
+  if (i %% 1000 == 0) {print(i)}
+  curr_id <- analysis_ID[i]
+  Final_ESRD_120_df[i,"STUDY_PATIENT_ID"] <- curr_id
+  
+  #source 1: USRDs
+  curr_USRDs <- ESRD_Indicator_df1[which(ESRD_Indicator_df1[,"STUDY_PATIENT_ID"] == curr_id),]
+  curr_USRDs_flag <- curr_USRDs[,"ESRD_DURING_AND_AFTER_HOSP_Within120D"]
+  curr_USRDs_source <- curr_USRDs[,"SOURCE"]
+  
+  #source 2: status table
+  curr_status_tb <- ESRD_Indicator_df2[which(ESRD_Indicator_df2[,"STUDY_PATIENT_ID"] == curr_id),]
+  curr_status_flag <- curr_status_tb[,"ESRD_DURING"]
+  curr_status_source<- curr_status_tb[,"SOURCE"]
+  
+  if (curr_USRDs_source == "in_USRDS"){ #as long as it is in USRDS
+    final_flag <- curr_USRDs_flag
+  }else if(curr_USRDs_source == "notin_USRDS" & curr_status_source == "in_STATUS_TABLE"){ #if not in USRDS, but in status
+    final_flag <- curr_status_flag
+  }else if (curr_USRDs_source == "notin_USRDS" & curr_status_source == "notin_STATUS_TABLE"){#if not in both, both has the same flag
+    final_flag <- unique(c(curr_USRDs_flag,curr_status_flag))
+  }else{
+    final_flag <- NA
+  }
+  
+  Final_ESRD_120_df[i,"ESRD_120"] <- final_flag
+}
+
+table(Final_ESRD_120_df$ESRD_120) #7204  150 
+
+
+write.csv(Final_ESRD_120_df,paste0(outdir,"ESRD_120.csv"),row.names = F)
+
+
+############################################################################################################
+#check how many status_flag=1, but usrd_flag=0, and they are actually in USRDS: 4
+#so the final =1 , should equal status_yes (43-4) + USRDS_yes(93+18) = 150
+############################################################################################################
+table(USRD_DuringAfterWithin120D,STATUS_During)
+
+length(which(ESRD_Comb$ESRD_DURING_STATUS== 1 & 
+             ESRD_Comb$ESRD_DURING_AND_AFTER_HOSP_Within120D_USRDS==0 &
+             ESRD_Comb$SOURCE_USRDS == "in_USRDS"))
 
