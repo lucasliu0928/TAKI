@@ -29,6 +29,9 @@ raw_Vitals_df <- read.csv(paste0(raw_dir,"CLINICAL_VITALS.csv"),stringsAsFactors
 #                       3. Heart Rate D1 High/Low
 #Steps: 1. Get raw available values
 #       2. Filter out values if patient not in ICU on that day
+#       3. remove outliers
+#       4. compute missing
+#       5. Impudation median
 ##########################################################################################
 #1. Get raw available values
 #MAP
@@ -48,15 +51,49 @@ All_Vital_df <- cbind(MAP_d1_Low,MAP_d1_High,Temp_d1_Low,Temp_d1_High,HR_d1_Low,
 All_Vital_df <- All_Vital_df[,-c(3,5,7,9,11)] #remove redudant ID columns
 
 
-##########################################################################################
-###If patient does not have D1 in All_time_df$Actual_ICU_Stays, code the corresponding value as NA
-##########################################################################################
-#1.Update
+
+#2.If patient does not have D1 in All_time_df$Actual_ICU_Stays, code the corresponding value as NA
+#2.1.Update
 updated_Vital_df <- remove_featureValue(All_Vital_df,All_time_df)
 
-#2.Check agreement pts has no D1, and the values were excluded 
+#2.2 Check agreement pts has no D1, and the values were excluded 
 indxes_noD1 <- which(grepl("D1",All_time_df$Actual_ICU_Stays) == F)
 length(indxes_noD1) #0
 table(updated_Vital_df$Excluded_Feature) #0
 
-write.csv(updated_Vital_df,paste0(outdir,"All_MAP_TEMP_HR_df.csv"),row.names = F)
+#3.Remove outliers
+#MAP_D1_LOW
+updated_Vital_df_OutlierExcluded <- remove_values_byValue(updated_Vital_df,"MAP_D1_LOW",0,"Less Than")
+updated_Vital_df_OutlierExcluded <- remove_outlier_BOTOrTOP_5perc(updated_Vital_df_OutlierExcluded,"MAP_D1_LOW","BOTTOM")
+
+#MAP_D1_HIGH
+updated_Vital_df_OutlierExcluded <- remove_values_byValue(updated_Vital_df_OutlierExcluded,"MAP_D1_HIGH",0,"Less Than")
+updated_Vital_df_OutlierExcluded <- remove_outlier_BOTOrTOP_5perc(updated_Vital_df_OutlierExcluded,"MAP_D1_HIGH","TOP")
+
+#Temperature_D1_LOW
+updated_Vital_df_OutlierExcluded <- remove_values_byValue(updated_Vital_df_OutlierExcluded,"Temperature_D1_LOW",30,"Less Than")
+updated_Vital_df_OutlierExcluded <- remove_values_byValue(updated_Vital_df_OutlierExcluded,"Temperature_D1_LOW",45,"Greater Than")
+#Temperature_D1_HIGH
+updated_Vital_df_OutlierExcluded <- remove_values_byValue(updated_Vital_df_OutlierExcluded,"Temperature_D1_HIGH",30,"Less Than")
+updated_Vital_df_OutlierExcluded <- remove_values_byValue(updated_Vital_df_OutlierExcluded,"Temperature_D1_HIGH",45,"Greater Than")
+
+#HR_D1_LOW
+updated_Vital_df_OutlierExcluded <- remove_values_byValue(updated_Vital_df_OutlierExcluded,"HR_D1_LOW",25,"Less Than")
+updated_Vital_df_OutlierExcluded <- remove_values_byValue(updated_Vital_df_OutlierExcluded,"HR_D1_HIGH",25,"Less Than")
+
+
+#4. Compute missing before imputation
+feature_columns <-  c("MAP_D1_LOW", "MAP_D1_HIGH", "Temperature_D1_LOW",
+                      "Temperature_D1_HIGH","HR_D1_LOW", "HR_D1_HIGH")
+missing_table <- get_missing_rate_table(updated_Vital_df_OutlierExcluded,feature_columns)
+
+
+#5.imputation median
+Final_Vital_df <- median_imputation_func(updated_Vital_df_OutlierExcluded,feature_columns)
+missing_table2 <- get_missing_rate_table(Final_Vital_df,feature_columns)
+
+#6.remove features not needed for model
+exlucde_indxes <- which(colnames(Final_Vital_df) %in% c("Excluded_Feature"))
+Final_Vital_df <- Final_Vital_df[,-exlucde_indxes]
+
+write.csv(Final_Vital_df,paste0(outdir,"All_MAP_TEMP_HR_imputed.csv"),row.names = F)
