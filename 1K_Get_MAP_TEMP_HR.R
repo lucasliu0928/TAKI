@@ -14,12 +14,11 @@ outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/"
 analysis_ID_df <-read.csv(paste0(outdir,"Final_Analysis_ID.csv"),stringsAsFactors = F)
 analysis_ID <- unique(analysis_ID_df[,"STUDY_PATIENT_ID"]) #7354
 
-#1. Corrected Time df 
+#2. Corrected Time df 
 All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
 All_time_df <- All_time_df[which(All_time_df$STUDY_PATIENT_ID %in% analysis_ID),] #filter for anlaysis Id only
-##########################################################################################
+
 #3.Load CLINICAL_VITALS 
-##########################################################################################
 raw_Vitals_df <- read.csv(paste0(raw_dir,"CLINICAL_VITALS.csv"),stringsAsFactors = F)
 
 
