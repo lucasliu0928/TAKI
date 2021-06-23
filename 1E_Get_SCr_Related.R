@@ -293,4 +293,4 @@ table(EGFR_Drop_df$eGFR_Drop50) #7422  460
 table(EGFR_Drop_df$eGFR_Drop30) #6842 1040 
 length(which(is.na(EGFR_Drop_df$eGFR_Drop50)==T)) #28135
 
-write.csv(EGFR_Drop_df,paste0(outdir,"EGFR_Drop_df.csv"),row.names=FALSE)
+write.csv(EGFR_Drop_df,paste0(outdir,"EGFR_Drop_120_df.csv"),row.names=FALSE)
