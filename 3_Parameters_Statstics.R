@@ -1,13 +1,3 @@
-compute_missing_rate <- function(data_input,col_name){
-  #data_input <- UK_df
-  #col_name <- "Albumin"
-  
-  n_missing <- length(which(is.na(data_input[,col_name])==T))
-  perc_missing <- round(n_missing*100/nrow(data_input),2)
-  res <- paste0(n_missing," (",perc_missing, "%)")
-  return(res)
-}
-
 
 data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/TAKI_Feature/features_forsubmission/"
 
