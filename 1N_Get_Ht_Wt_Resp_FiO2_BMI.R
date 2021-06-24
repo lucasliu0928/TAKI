@@ -55,13 +55,13 @@ All_ClinicalOthers_df <- All_ClinicalOthers_df[,-which(colnames(All_ClinicalOthe
 updated_ClinicalOthers_df <- remove_featureValue(All_ClinicalOthers_df,All_time_df)
 table(updated_ClinicalOthers_df$Excluded_Feature) #0
 
-#3. Add height and weight back 
-All_ClinicalOthers_df <- cbind(All_ClinicalOthers_df,height,weight)
-All_ClinicalOthers_df <- All_ClinicalOthers_df[,-which(colnames(All_ClinicalOthers_df) == "STUDY_PATIENT_ID")[-1]] #remove redudant ID columns except the 1st one
+#3. Add height and weight back to the updated df
+updated_ClinicalOthers_df <- cbind(updated_ClinicalOthers_df,height,weight)
+updated_ClinicalOthers_df <- updated_ClinicalOthers_df[,-which(colnames(updated_ClinicalOthers_df) == "STUDY_PATIENT_ID")[-1]] #remove redudant ID columns except the 1st one
 
 #3.Remove outlier
 #FI02_D1_LOW
-updated_ClinicalOthers_dfOutlierExcluded <- remove_values_byValue(All_ClinicalOthers_df,"FI02_D1_LOW",21,"Less Than")
+updated_ClinicalOthers_dfOutlierExcluded <- remove_values_byValue(updated_ClinicalOthers_df,"FI02_D1_LOW",21,"Less Than")
 updated_ClinicalOthers_dfOutlierExcluded <- remove_values_byValue(updated_ClinicalOthers_dfOutlierExcluded,"FI02_D1_LOW",100,"Greater Than")
 
 #FI02_D1_HIGH
@@ -107,4 +107,4 @@ for (i in 1:nrow(Final_ClinicalOthers_df)){
   Final_ClinicalOthers_df[i,"BMI"] <- curr_BMI
 }
 
-write.csv(Final_ClinicalOthers_df,paste0(outdir,"All_HT_WT_RESP_FIO2_df.csv"),row.names = F)
+write.csv(Final_ClinicalOthers_df,paste0(outdir,"All_HT_WT_RESP_FIO2_BMI_df.csv"),row.names = F)
