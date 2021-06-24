@@ -555,30 +555,43 @@ get_onMachine_flag_ICUD0_D3 <- function(machine_df,time_df,pt_id,start_t_col,sto
 }
 
 #check if pt on medciation in time window
-get_exposure_toMedication_inTimeWindow <- function(time_start,time_end,medication_df,pt_id){
+get_exposure_toMedication_inTimeWindow <- function(time_start,time_end,medication_df,pt_id,medname_col){
   # time_start <- curr_icu_start
   # time_end <- curr_last_ICU_time
-  # medication_df <- Nephrotoxin_df
+  # medication_df <- Vasopressor_df
   # pt_id <- curr_id
+  # medname_col <- "MEDICATION_NAME"
 
   curr_df <- medication_df[which(medication_df[,"STUDY_PATIENT_ID"] == pt_id),]
   
   if (nrow(curr_df) == 0){
     final_exposure_flag <- 0
+    final_exposire_meds_names <- NA
   }else{
     each_exposure_flag <- NA
+    each_exposure_meds_name <-NA
+    ct <- 1 #count for meds in ICU d0-d3
     for (m in 1:nrow(curr_df)){ #check for each medication
       curr_order_time <- mdy(curr_df[m,"ORDER_ENTERED_DATE"])
       if (curr_order_time >= curr_icu_start & curr_order_time <= curr_last_ICU_time){
         each_exposure_flag[m] <- 1
+        each_exposure_meds_name[ct] <- curr_df[m,medname_col]
+        ct <- ct+ 1
       }else{
         each_exposure_flag[m] <- 0
       }
     }
     
+    unique_meds_names <- unique(each_exposure_meds_name)
+    
+    if (all(is.na(unique_meds_names) == F)){
+      final_exposire_meds_names <- paste0(unique_meds_names,collapse = "$$")
+    }else{
+      final_exposire_meds_names <- NA
+    }
     final_exposure_flag <- max(each_exposure_flag) #if used any one, (e.g,0,0,1) the max is one, expose at least one medication
   }
-  return(final_exposure_flag)
+  return(list(final_exposure_flag,final_exposire_meds_names))
 }
 
 
