@@ -40,8 +40,8 @@ Vasopressor_df  <- raw_MEDICATIONS_df[Vasopressor_indxes,]
 
 ##########################################################################################
 #1. Get raw available values
-Exposure_df<- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 3))
-colnames(Exposure_df) <- c("STUDY_PATIENT_ID","Nephrotoxin_ICUD0toD3","Vasopressor_ICUD0toD3")
+Exposure_df<- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 5))
+colnames(Exposure_df) <- c("STUDY_PATIENT_ID","Nephrotoxin_ICUD0toD3","Nephrotoxin_Meds_ICUD0toD3","Vasopressor_ICUD0toD3","Vasopressor_Meds_ICUD0toD3")
 
 for (i in 1:length(analysis_ID)){
   if (i %% 1000 == 0){print(i)}
@@ -59,9 +59,14 @@ for (i in 1:length(analysis_ID)){
   curr_actual_ICU_time <- curr_time_df[,curr_actual_ICU_time_idxes]
   curr_last_ICU_time <- max(ymd_hms(curr_actual_ICU_time),na.rm = T)
   
-  Exposure_df[i,"Nephrotoxin_ICUD0toD3"] <- get_exposure_toMedication_inTimeWindow(curr_icu_start,curr_last_ICU_time,Nephrotoxin_df,curr_id)
-
-  Exposure_df[i,"Vasopressor_ICUD0toD3"] <-get_exposure_toMedication_inTimeWindow(curr_icu_start,curr_last_ICU_time,Vasopressor_df,curr_id)
+  res1 <- get_exposure_toMedication_inTimeWindow(curr_icu_start,curr_last_ICU_time,Nephrotoxin_df,curr_id,"MEDICATION_TYPE")
+  Exposure_df[i,"Nephrotoxin_ICUD0toD3"] <- res1[[1]]
+  Exposure_df[i,"Nephrotoxin_Meds_ICUD0toD3"] <- res1[[2]]
+  
+  res2 <- get_exposure_toMedication_inTimeWindow(curr_icu_start,curr_last_ICU_time,Vasopressor_df,curr_id,"MEDICATION_NAME")
+  Exposure_df[i,"Vasopressor_ICUD0toD3"] <-res2[[1]]
+  Exposure_df[i,"Vasopressor_Meds_ICUD0toD3"] <-res2[[2]]
+  
 }
 
 table(Exposure_df$Nephrotoxin_ICUD0toD3)
