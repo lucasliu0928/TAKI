@@ -511,6 +511,78 @@ get_vars_for_analysisId_func <- function(ananlysis_df, analysis_ID){
 }
 
 
+#Check if pt is on a machine during ICU D0-D3 (D0-D3 must be in ICU)
+get_onMachine_flag_ICUD0_D3 <- function(machine_df,time_df,pt_id,start_t_col,stop_t_col){
+  # machine_df <- raw_ORGANSUPP_ECMO_df
+  # pt_id <- curr_id
+  # start_t_col <- "ECMO_START_DATE"
+  # stop_t_col <- "ECMO_STOP_DATE"
+  # time_df <- All_time_df 
+  
+  #ICU start
+  curr_time_df <-  time_df[which(time_df[,"STUDY_PATIENT_ID"] == pt_id),]
+  curr_icu_start <- ymd_hms(curr_time_df[,"Updated_ICU_ADMIT_DATE"])
+  
+  #Get actual days/times in ICU D0-D3
+  #it could be ICU end time (e.g, if ICU stays < 3 days) or the end of ICU D3
+  curr_actual_ICU_time_idxes <- which(colnames(curr_time_df) %in% c("Actual_D0_End","Actual_D1_End","Actual_D2_End","Actual_D3_End"))
+  curr_actual_ICU_time <- curr_time_df[,curr_actual_ICU_time_idxes]
+  curr_last_ICU_time <- max(ymd_hms(curr_actual_ICU_time),na.rm = T)
+  
+  ICU_interval <-interval(curr_icu_start,curr_last_ICU_time)
+  
+  
+  curr_df <- machine_df[which(machine_df[,"STUDY_PATIENT_ID"] == pt_id),]
+  if (nrow(curr_df) !=0 ){ #if pt is ever on machine 
+    #get on machine start and end time 
+    curr_machine_start <- ymd_hms(curr_df[,start_t_col])
+    curr_machine_end <-  ymd_hms(curr_df[,stop_t_col])
+    
+    machine_interval <-interval(curr_machine_start,curr_machine_end)
+    
+    if(int_overlaps(ICU_interval, machine_interval)==T){
+      on_flag <- 1 
+      
+    }else{
+      on_flag <- 0 
+    }
+    
+  }else{
+    on_flag <- 0 
+  }
+  
+  return(on_flag)
+}
+
+#check if pt on medciation in time window
+get_exposure_toMedication_inTimeWindow <- function(time_start,time_end,medication_df,pt_id){
+  # time_start <- curr_icu_start
+  # time_end <- curr_last_ICU_time
+  # medication_df <- Nephrotoxin_df
+  # pt_id <- curr_id
+
+  curr_df <- medication_df[which(medication_df[,"STUDY_PATIENT_ID"] == pt_id),]
+  
+  if (nrow(curr_df) == 0){
+    final_exposure_flag <- 0
+  }else{
+    each_exposure_flag <- NA
+    for (m in 1:nrow(curr_df)){ #check for each medication
+      curr_order_time <- mdy(curr_df[m,"ORDER_ENTERED_DATE"])
+      if (curr_order_time >= curr_icu_start & curr_order_time <= curr_last_ICU_time){
+        each_exposure_flag[m] <- 1
+      }else{
+        each_exposure_flag[m] <- 0
+      }
+    }
+    
+    final_exposure_flag <- max(each_exposure_flag) #if used any one, (e.g,0,0,1) the max is one, expose at least one medication
+  }
+  return(final_exposure_flag)
+}
+
+
+
 get_one_ICU_admission_func <- function(one_hosp_df){
   # 1. If less than 12 hours between ICU admissions, combine them 
   # 2. otherwise, use the 1st ICU admission
