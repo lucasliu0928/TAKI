@@ -522,7 +522,6 @@ write.csv(updated_TimeInfo_df,paste0(outdir,"All_Corrected_Timeinfo.csv"),row.na
 ##########################################################################################
 #### Add if on RRT last 48 hours before discharge
 ##########################################################################################
-updated_TimeInfo_df <- read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
 updated_TimeInfo_df$onRRT_Flag <- 0
 updated_TimeInfo_df$onRRT_Last48hBeforeDischarge <- 0
 
@@ -547,5 +546,20 @@ for (i in 1:nrow(updated_TimeInfo_df)){
 
 table(updated_TimeInfo_df$onRRT_Flag) #34198  2291
 table(updated_TimeInfo_df$onRRT_Last48hBeforeDischarge) #34812  1677
+
+write.csv(updated_TimeInfo_df,paste0(outdir,"All_Corrected_Timeinfo.csv"),row.names = F)
+
+##########################################################################################
+#### Add Acutal ICU hours in D0-D3
+##########################################################################################
+updated_TimeInfo_df <- read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
+
+updated_TimeInfo_df$Actual_ICUHours_D0toD3 <- NA
+for (i in 1:nrow(updated_TimeInfo_df)){
+  if (i %% 1000 == 0) {print(i)}
+  curr_time_df <- updated_TimeInfo_df[i,]
+  curr_total_hours_inICU <- sum(curr_time_df[,c("Actual_D0_ICUHours", "Actual_D1_ICUHours","Actual_D2_ICUHours", "Actual_D3_ICUHours")])
+  updated_TimeInfo_df[i,"Actual_ICUHours_D0toD3"] <- curr_total_hours_inICU
+}
 
 write.csv(updated_TimeInfo_df,paste0(outdir,"All_Corrected_Timeinfo.csv"),row.names = F)
