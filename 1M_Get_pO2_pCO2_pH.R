@@ -65,6 +65,7 @@ updated_BloodGAS_df_OutlierExcluded <- remove_values_byValue(updated_BloodGAS_df
 feature_columns <-  c("PCO2_D1_LOW", "PCO2_D1_HIGH","PH_D1_LOW", "PH_D1_HIGH","PO2_D1_LOW","PO2_D1_HIGH")
 missing_table <- get_missing_rate_table(updated_BloodGAS_df_OutlierExcluded,feature_columns)
 missing_table
+write.csv(updated_BloodGAS_df_OutlierExcluded,paste0(outdir,"All_pO2_pCO2_pH_NOTimputed.csv"),row.names = F)
 
 
 #5.imputation median
