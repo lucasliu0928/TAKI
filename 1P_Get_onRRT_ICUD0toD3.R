@@ -51,3 +51,21 @@ missing_table <- get_missing_rate_table(onRRT_df,feature_columns)
 missing_table
 
 write.csv(onRRT_df,paste0(outdir,"All_onRRT_ICUD0toD3.csv"),row.names = F)
+
+##########################################################################################
+###Check if on RRT in ICU_D0_D3 get KDIGO = 4
+#NOTE: All patient on RRT in ICU_D0_D3 have KDIGO = 4
+#      one patient has KDIGO = 4 , but not acutally on RRT in ICU D0_D3, becuase the 48 hours extension effect for KDIGO
+#      e.g, HD end 2009-09-19,  2009-09-19 is not in ICU D0_D3, but 2009-09-19+  48 hours is in ICU_D0_D3, so KDIGO score is 4
+##########################################################################################
+#'@NOTE_TODO: Check all on RRT inICU_D0_D3 must has KDIGO=4, not on RRT IDs must not have KDIGO=4
+KDIGO_df <- read.csv(paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"),stringsAsFactors = F)
+KDIGO_df <- KDIGO_df[which(KDIGO_df$STUDY_PATIENT_ID %in% onRRT_df$STUDY_PATIENT_ID),]
+
+onRRT_D0D3_IDs <- onRRT_df$STUDY_PATIENT_ID[which(onRRT_df$onRRT_ICUD0toD3 %in% c(1,2))]
+KDIGO4_IDs <- updated_KDIGO_df[which(updated_KDIGO_df$MAX_KDIGO_ICU_D0toD3==4),"STUDY_PATIENT_ID"]
+
+#check on RRT but not KDIGO= 4 (none)
+which(!onRRT_D0D3_IDs %in% KDIGO4_IDs)
+#check  KDIGO= 4 but not on RRT, because the 48 hours extension for KDIGO score
+which(!KDIGO4_IDs %in% onRRT_D0D3_IDs)
