@@ -162,5 +162,5 @@ for (i in 1:nrow(Final_LAB_df)){
   Anemia_df[i,"Anemia"] <- curr_flag
 }
 
-write.csv(Anemia_df,paste0(outdir,"All_Anemia.csv"),row.names = F)
+write.csv(Anemia_df,paste0(outdir,"All_Anemia_usingImputedLabs.csv"),row.names = F)
 
