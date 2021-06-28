@@ -780,13 +780,13 @@ for (i in 1:length(analysis_ID)){
   curr_apche_pot_high <- apche8_func(curr_pot_high)
   APACHE_SCORE_df[i,"APACHE_Potassium"]<- max(c(curr_apche_pot_low,curr_apche_pot_high), na.rm = T)
   
-  
+  #'@TODO
   #9. Apache sCR: #use min and peak
   curr_Lowest_SCr_inICU_D0toD3 <- curr_feature_df[,"Lowest_SCr_inICU_D0_D3"]
   curr_Peak_SCr_inICU_D0toD3 <- curr_feature_df[,"Peak_SCr_inICU_D0toD3"]
   curr_apche_Scr_low <- apche9_func(curr_Lowest_SCr_inICU_D0toD3)
   curr_apche_Scr_high <- apche9_func(curr_Peak_SCr_inICU_D0toD3)
-  APACHE_SCORE_df[i,"APACHE_sCr"]<-  apche9_func(curr_Peak_SCr_inICU_D0toD3)
+  APACHE_SCORE_df[i,"APACHE_sCr"]<- max(c(curr_apche_Scr_low,curr_apche_Scr_high), na.rm = T)
   
   apche9_func <- function(sCr_Value){
     if (is.na(sCr_Value) == T){ #if one value is not available
@@ -811,16 +811,17 @@ for (i in 1:length(analysis_ID)){
   
   
   #10. Apache APACHE_Hematocrit
-
+  curr_Hematocrit_low <- curr_feature_df[,"Hematocrit_D1_LOW"]
+  curr_Hematocrit_high <- curr_feature_df[,"Hematocrit_D1_HIGH"]
+  curr_apche_hemat_low <- apche10_func(curr_Hematocrit_low)
+  curr_apche_hemat_high <- apche10_func(curr_Hematocrit_high)
+  APACHE_SCORE_df[i,"APACHE_Hematocrit"]<- max(c(curr_apche_hemat_low,curr_apche_hemat_high), na.rm = T)
+  
   
   #####
   curr_gcs <- curr_feature_df[,"GCS"]
-  curr_Use_DDM <- curr_feature_df[,"Use_of_Dopamine_OR_Dobutamine_OR_Milrinone"]
-  curr_Use_ENPV <- curr_feature_df[,"Use_of_Epinephrine_Or_Norepinephrine_Or_Phenylephrine_Or_Vasopressin"]
-  
 
-  
-  
+
 }
 
 SOFA_SCORE_df$SOFA_TOTAL <- rowSums(SOFA_SCORE_df[,2:7])
