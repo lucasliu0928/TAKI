@@ -17,13 +17,10 @@ All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFact
 All_time_df <- All_time_df[which(All_time_df$STUDY_PATIENT_ID %in% analysis_ID),] #filter for anlaysis Id only
 
 #3.Load Imputed Labs 
-Imputed_LAB_df <- read.csv(paste0(outdir,"All_LAB_imputed.csv"),stringsAsFactors = F)
+Final_LAB_df <- read.csv(paste0(outdir,"All_LAB_imputed.csv"),stringsAsFactors = F)
 
 #4. Load demo for compute Anemia
 All_RACE_GENDER_df <-read.csv(paste0(outdir,"All_RACE_GENDER_AGE_df.csv"),stringsAsFactors = F)
-
-
-
 
 
 ##########################################################################################
