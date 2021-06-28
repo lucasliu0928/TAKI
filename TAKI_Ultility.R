@@ -53,6 +53,22 @@ check_overlapTime_betweenTwoEvents <- function(T1_Start,T1_End,T2_Start,T2_End,e
   
 }
 
+#check overlap between two events manully
+check_overlapp_manually_func <- function(event1_start,event1_end,event2_start,event2_end){
+  if (is.na(event1_start) == F & is.na(event2_start)==F){
+    if (event1_start <= event2_end & event1_end >= event2_start){
+      overlapp_flag <- 1
+    }else{
+      overlapp_flag <- 0
+    }
+  }else{
+    overlapp_flag <- NA
+  }
+  
+  return(overlapp_flag)
+}
+
+
 #Check if pateints has dates
 check_has_dates <- function(Time_df){
   IDs_toCheck <- Time_df[,"STUDY_PATIENT_ID"]
@@ -839,6 +855,32 @@ SolveScr_reverse_EPI_equation<-function(age,gender_male,race_black){
   
 }
 
+#for each day, check if any overlap between RRT time and ICU days
+get_ICUd0d3_RRT_KDIGO <- function(curr_time_df,rrt_start,curr_end_plus48hours){
+  ICU_KDIGO_df <- as.data.frame(matrix(NA, nrow  = 4, ncol = 2))
+  colnames(ICU_KDIGO_df) <- c("Day","KDIGO")
+  for (d in 1:nrow(ICU_KDIGO_df)){
+    curr_day <- d-1
+    ICU_KDIGO_df[d,"Day"] <- curr_day
+    curr_actual_start <- ymd_hms(curr_time_df[,paste0("Actual_D",curr_day,"_Start")])
+    curr_actual_end  <-  ymd_hms(curr_time_df[,paste0("Actual_D",curr_day,"_End")])
+    curr_overlap_flag <- check_overlapp_manually_func(rrt_start,curr_end_plus48hours,curr_actual_start,curr_actual_end)
+    if (is.na(curr_overlap_flag) == T){ #one of time is NA, then cannot determine the flag and KDIGO
+      ICU_KDIGO_df[d,"KDIGO"] <- NA
+    }else{ #if both time are avaiable
+      if (curr_overlap_flag == 1){ #if overlap, then KDIGO on this day is 4
+        ICU_KDIGO_df[d,"KDIGO"] <- 4
+      }else{
+        ICU_KDIGO_df[d,"KDIGO"] <- NA
+      }
+    }
+    
+    
+  }
+  
+  return(ICU_KDIGO_df)
+}
+
 
 #Compute KDIGO score for each time in Scr_data
 get_KDIGO_Score_forScrdf_func <- function(bl_scr,scr_data){
@@ -882,33 +924,73 @@ get_KDIGO_Score_forScrdf_func <- function(bl_scr,scr_data){
   
 }
 
-#update if each time step is in RRT duration, if so, update the KDIGO score to 4
-#'@ADDED jun09 21: 48 hours extention of RRT end (If curr time is within 48 hours after RRT, it counted as 4)
-update_KDIGO_df_forRRT_func<- function(KIDGO_df,CRRT_start,CRRT_end,HD_start,HD_end,extend_hours){
-  for (i in 1:nrow(KIDGO_df)){
-    curr_time <- ymd_hms(KIDGO_df[i,"Scr_Time"])
-    
-    if (is.na(CRRT_start) == F & is.na(HD_start) == T){ #if has CRRT , no HD
-      cond1 <- (curr_time >= CRRT_start & curr_time <= (CRRT_end + hours(extend_hours))) #if in CRRT
-      if (cond1 == T){ 
-        KIDGO_df[i,"KDIGO"] <- 4
-      }
-    } else if (is.na(CRRT_start) == T & is.na(HD_start) == F){ #if has HD , no CRRT
-      cond2 <- (curr_time >= HD_start & curr_time <= (HD_end + hours(extend_hours))) #if in HD
-      if (cond2 == T){
-        KIDGO_df[i,"KDIGO"] <- 4
-      }
-    }else if (is.na(CRRT_start) == F & is.na(HD_start) == F){ #if has both info, check both
-      cond1 <- (curr_time >= CRRT_start & curr_time <= (CRRT_end + hours(extend_hours))) #if in CRRT
-      cond2 <- (curr_time >= HD_start & curr_time <= (HD_end + hours(extend_hours))) #if in HD
-      if (cond1 == T | cond2 == T){
-        KIDGO_df[i,"KDIGO"] <- 4
-      }
-    }
 
-  }
-  return(KIDGO_df)
+#Get dates in an interval
+get_DateIndxes_inInterval <- function(dates_to_check_list, interval_start,interval_end){
+  #dates_to_check_list <- ymd_hms(curr_KDIGO_df[,"Scr_Time"])
+  #interval_start <- curr_crrt_start
+  #interval_end <- curr_crrt_end + hours(48)
+  
+  idxes_inInterval <- which(dates_to_check_list >= interval_start & dates_to_check_list<= interval_end)
+  return(idxes_inInterval)
 }
+
+
+get_RRT_KDIGO_df_ICUD0D3 <- function(rrt_start,rrt_end,rrt_end_extension,icu_start,last_icu_time){
+  curr_end_plus48hours <- rrt_end + hours(rrt_end_extension)
+  
+  #1.Get KDIGO df for all RRT duration + 48 hours
+  rrt_time_byday <- seq(rrt_start,curr_end_plus48hours,by="hours")
+  RRT_KDIGO_df <- as.data.frame(matrix(NA, nrow  = length(rrt_time_byday), ncol = 2))
+  colnames(RRT_KDIGO_df) <- c("Time","KDIGO")
+  RRT_KDIGO_df[,"Time"] <- as.character(rrt_time_byday)
+  RRT_KDIGO_df[,"KDIGO"] <- 4
+  
+  
+  #if overlap between RRT time and ICU d0 to d3
+  if (is.na(rrt_start) == F){
+    onRRT_D0_D3_flag<- check_overlapp_manually_func(rrt_start,curr_end_plus48hours,icu_start,last_icu_time)
+  }
+  
+  if(onRRT_D0_D3_flag == 1){ #if on RRT in D0 to D3
+    inICUd0_d3_idxes <- which(ymd_hms(RRT_KDIGO_df[,"Time"]) >= icu_start & ymd_hms(RRT_KDIGO_df[,"Time"]) <= last_icu_time)
+    RRT_KDIGO_df <- RRT_KDIGO_df[inICUd0_d3_idxes,]
+  }else{ #remove every thing
+    RRT_KDIGO_df <- NULL
+  }
+  
+  return(RRT_KDIGO_df)
+  
+}
+
+
+#' #update if each time step is in RRT duration, if so, update the KDIGO score to 4
+#' #'@ADDED jun09 21: 48 hours extention of RRT end (If curr time is within 48 hours after RRT, it counted as 4)
+#' update_KDIGO_df_forRRT_func<- function(KIDGO_df,CRRT_start,CRRT_end,HD_start,HD_end,extend_hours){
+#'   for (i in 1:nrow(KIDGO_df)){
+#'     curr_time <- ymd_hms(KIDGO_df[i,"Scr_Time"])
+#'     
+#'     if (is.na(CRRT_start) == F & is.na(HD_start) == T){ #if has CRRT , no HD
+#'       cond1 <- (curr_time >= CRRT_start & curr_time <= (CRRT_end + hours(extend_hours))) #if in CRRT
+#'       if (cond1 == T){ 
+#'         KIDGO_df[i,"KDIGO"] <- 4
+#'       }
+#'     } else if (is.na(CRRT_start) == T & is.na(HD_start) == F){ #if has HD , no CRRT
+#'       cond2 <- (curr_time >= HD_start & curr_time <= (HD_end + hours(extend_hours))) #if in HD
+#'       if (cond2 == T){
+#'         KIDGO_df[i,"KDIGO"] <- 4
+#'       }
+#'     }else if (is.na(CRRT_start) == F & is.na(HD_start) == F){ #if has both info, check both
+#'       cond1 <- (curr_time >= CRRT_start & curr_time <= (CRRT_end + hours(extend_hours))) #if in CRRT
+#'       cond2 <- (curr_time >= HD_start & curr_time <= (HD_end + hours(extend_hours))) #if in HD
+#'       if (cond1 == T | cond2 == T){
+#'         KIDGO_df[i,"KDIGO"] <- 4
+#'       }
+#'     }
+#' 
+#'   }
+#'   return(KIDGO_df)
+#' }
 
 
 #Compute EGFR only if pt has at least one outpatient SCr after HOSP discharge within time_window_start (eg.120 days)
