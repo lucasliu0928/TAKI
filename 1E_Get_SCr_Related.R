@@ -141,17 +141,11 @@ length(no_bl_scr_IDs) ##N of Resolved baseline by EPI: 25488
 #2.Maximum KDIGO 	(Maximum KDIGO score in ICU D0 to D3)
 #3.Last    KDIGO  (Last KDIGO score    in ICU D0 to D3)
 ##########################################################################################
-aval_ids <- Final_SCR_df$STUDY_PATIENT_ID[which(Final_SCR_df$NUM_SCr_inICU_D0_D3>0)]
-aval_ids2 <- All_time_df$STUDY_PATIENT_ID[which(is.na(All_time_df$Updated_CRRT_Start)==F)]
-intersect(aval_ids2,aval_ids)[1]
-
 KDIGO_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 4))
 colnames(KDIGO_df) <- c("STUDY_PATIENT_ID","Admit_KDIGO_ICU","MAX_KDIGO_ICU_D0toD3","LAST_KDIGO_ICU_D0toD3")
-for (i in 1:length(analysis_ID)){
-  i <- which(analysis_ID == 92)
-  
+for (i in  1:length(analysis_ID)){
   if (i %% 1000 ==0){print(i)}
-  
+
   curr_id <- analysis_ID[i]
   KDIGO_df[i,"STUDY_PATIENT_ID"] <- curr_id
   
@@ -184,58 +178,84 @@ for (i in 1:length(analysis_ID)){
   if (nrow(curr_scr_inICUD0D3) > 0 & is.na(curr_baseline_scr) == F){
     #current KIDGO for all Scr in window
     curr_SCR_KDIGO_df    <- get_KDIGO_Score_forScrdf_func(curr_baseline_scr,curr_scr_inICUD0D3)
+    colnames(curr_SCR_KDIGO_df)[1] <- "Time"
+  }else {
+    curr_SCR_KDIGO_df <- NULL
   }
   
-  # #update KDIGO for each time step for Scr if each time step is in RRT duration, update the KDIGO score to 4
-  # if (is.na(curr_crrt_start) == F | is.na(curr_hd_start) == F){
-  #   curr_updated_KDIGO_df <- update_KDIGO_df_forRRT_func(curr_SCR_KDIGO_df,curr_crrt_start,curr_crrt_end,curr_hd_start,curr_hd_end,48)
-  # }else{
-  #   curr_updated_KDIGO_df <-  curr_SCR_KDIGO_df #no updates
-  # }
-  
-  #2.get idxes of Scr dates is within RRT start and RRT end +  48 hours
-  if (is.na(curr_crrt_start)== F ){
-    idxes_inCRRT <- get_DateIndxes_inInterval(curr_SCR_KDIGO_df[,"Scr_Time"],curr_crrt_start,curr_crrt_end + hours(48))
+  #2. Use RRT time to check if KDIGO-3D in ICU D0-D3 
+  if (is.na(curr_crrt_start)== F | is.na(curr_hd_start)== F) { #if ever on CRRT or HD
+      if (is.na(curr_crrt_start)== F){
+        #1. Get CRRT KDIGO df
+        crrt_kdigo_df <- get_RRT_KDIGO_df_ICUD0D3(curr_crrt_start,curr_crrt_end,48,curr_icu_start,curr_last_ICU_time)
+        #2. get idxes of Scr dates is within RRT start and RRT end +  48 hours, these idxes will be excluded later
+        SCR_idxes_inCRRT <- get_DateIndxes_inInterval(curr_SCR_KDIGO_df[,"Time"],curr_crrt_start,curr_crrt_end + hours(48))
+      }else{
+        crrt_kdigo_df <- NULL
+        SCR_idxes_inCRRT <- NULL
+      }
+      
+      if (is.na(curr_hd_start)== F){
+        #1. Get HD KDIGO df
+        hd_kdigo_df <- get_RRT_KDIGO_df_ICUD0D3(curr_hd_start,curr_hd_end,48,curr_icu_start,curr_last_ICU_time)
+        #2. get idxes of Scr dates is within RRT start and RRT end +  48 hours, these idxes will be excluded later
+        SCR_idxes_inHD <- get_DateIndxes_inInterval(curr_SCR_KDIGO_df[,"Time"],curr_hd_start,curr_hd_end + hours(48))
+      }else{
+        hd_kdigo_df <- NULL
+        SCR_idxes_inHD <- NULL
+      }
+      comb_idxes <- unique(c(SCR_idxes_inCRRT,SCR_idxes_inHD))
   }else{
-    idxes_inCRRT <- NULL
+    crrt_kdigo_df <- NULL
+    hd_kdigo_df <- NULL
+    comb_idxes <- NULL #if never on CRRT or HD
   }
   
-  if (is.na(curr_hd_start)== F){
-    idxes_inHD <- get_DateIndxes_inInterval(curr_SCR_KDIGO_df[,"Scr_Time"],curr_hd_start,curr_hd_end + hours(48))
-  }else{
-    idxes_inHD <- NULL
-  }
-  comb_idxes <- unique(c(idxes_inCRRT,idxes_inHD))
-  
-  #3. exclude the Scr KDIGO_Df with the dates on RRT, becuase this dates will be covered in RRT_KDIGO_df
+  #3. exclude the Scr_KDIGO_Df with the dates on RRT if any, becuase this dates will be covered in RRT_KDIGO_df
   if (length(comb_idxes) > 0 ){
     curr_SCR_KDIGO_df_filtered <- curr_SCR_KDIGO_df[-comb_idxes,]
-    colnames(curr_SCR_KDIGO_df_filtered)[1] <- "Time"
-  }else{
-    curr_SCR_KDIGO_df_filtered <- NULL
+  }else{ #do not exclude anything
+    curr_SCR_KDIGO_df_filtered <- curr_SCR_KDIGO_df
   }
   
-  
-  #4.Use RRT time to check if KDIGO-3D in ICU D0-D3 
-  crrt_kdigo_df <- get_RRT_KDIGO_df_ICUD0D3(curr_crrt_start,curr_crrt_end,48,curr_icu_start,curr_last_ICU_time)
-  crrt_kdigo_time_steps <-  unique(crrt_kidgo_df[,"Time"])
-  
-  hd_kdigo_df <- get_RRT_KDIGO_df_ICUD0D3(curr_hd_start,curr_hd_end,48,curr_icu_start,curr_last_ICU_time)
-  hd_kdigo_time_steps <-  unique(hd_kdigo_df[,"Time"])
-  
-  #5.Combine all available time steps which has KDIGO score
+  #4.Combine KDIGO from Scr and CRRT and HD (If any one of them is ampty is fine, just add an empty)
   Comb_KDIGO_df <- rbind(curr_SCR_KDIGO_df_filtered,crrt_kdigo_df,hd_kdigo_df)
   
-  last_time_point  <- max(ymd_hms(Comb_KDIGO_df[,"Time"]))
-  curr_time_cloest_toICUadmit <- min(ymd_hms(Comb_KDIGO_df[,"Time"]))
-
-  KDIGO_df[i,"MAX_KDIGO_ICU_D0toD3"]   <- max(Comb_KDIGO_df[,"KDIGO"])
-  KDIGO_df[i,"LAST_KDIGO_ICU_D0toD3"]  <- Comb_KDIGO_df[which(ymd_hms(Comb_KDIGO_df[,"Time"]) == last_time_point),"KDIGO"]
-  KDIGO_df[i,"Admit_KDIGO_ICU"] <- Comb_KDIGO_df[which(ymd_hms(Comb_KDIGO_df[,"Time"]) == curr_time_cloest_toICUadmit),"KDIGO"]
-  
+  if (is.null(Comb_KDIGO_df)== F){
+      #Remove duplicated time step
+      #this duplicaed time point is due to the extension of 48 hours of CRRT and HD, so that these two may have dupicated time, if the gap between these two is e.g, 24 hours
+      dup_idxes <- which(duplicated(Comb_KDIGO_df$Time)==T)
+      if (length(dup_idxes)>0){
+        Comb_KDIGO_df <- Comb_KDIGO_df[-dup_idxes,] 
+      }
+      
+      last_time_point  <- max(ymd_hms(Comb_KDIGO_df[,"Time"]))
+      curr_time_cloest_toICUadmit <- min(ymd_hms(Comb_KDIGO_df[,"Time"]))
+    
+      KDIGO_df[i,"MAX_KDIGO_ICU_D0toD3"]   <- max(Comb_KDIGO_df[,"KDIGO"])
+      KDIGO_df[i,"LAST_KDIGO_ICU_D0toD3"]  <- Comb_KDIGO_df[which(ymd_hms(Comb_KDIGO_df[,"Time"]) == last_time_point),"KDIGO"]
+      KDIGO_df[i,"Admit_KDIGO_ICU"] <- Comb_KDIGO_df[which(ymd_hms(Comb_KDIGO_df[,"Time"]) == curr_time_cloest_toICUadmit),"KDIGO"]
+  }
 }
 
 write.csv(KDIGO_df,paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"))
+
+########################################################################################
+#'@NOTE_CHECK: Check all on RRT inICU_D0_D3 must has KDIGO=4, not on RRT IDs must not have KDIGO=4
+#'#NOTE: All patient on RRT in ICU_D0_D3 have KDIGO = 4
+#      one patient (ID  47832) has KDIGO = 4 , but not acutally on RRT in ICU D0_D3, becuase the 48 hours extension effect for KDIGO
+#      e.g, HD end 2009-09-19,  2009-09-19 is not in ICU D0_D3, but 2009-09-19+  48 hours is in ICU_D0_D3, so KDIGO score is 4
+#'########################################################################################
+onRRT_df <- read.csv(paste0(outdir,"All_onRRT_ICUD0toD3.csv"),stringsAsFactors = F)
+KDIGO_df_analysis_ID <- KDIGO_df[which(KDIGO_df$STUDY_PATIENT_ID %in% onRRT_df$STUDY_PATIENT_ID),]
+
+onRRT_D0D3_IDs <- onRRT_df$STUDY_PATIENT_ID[which(onRRT_df$onRRT_ICUD0toD3 %in% c(1,2))]
+KDIGO4_IDs <- KDIGO_df_analysis_ID[which(KDIGO_df_analysis_ID$MAX_KDIGO_ICU_D0toD3==4),"STUDY_PATIENT_ID"]
+
+#check on RRT but not KDIGO= 4 (none)
+which(!onRRT_D0D3_IDs %in% KDIGO4_IDs)
+#check  KDIGO= 4 but not on RRT, because the 48 hours extension for KDIGO score
+which(!KDIGO4_IDs %in% onRRT_D0D3_IDs)
 
 ########################################################################################
 # Baseline EGFR
