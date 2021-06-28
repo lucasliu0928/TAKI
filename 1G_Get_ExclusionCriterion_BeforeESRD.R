@@ -93,7 +93,7 @@ length(actual_exclusion_IDs4) #3145
 length(updated_inclusion_IDs4) #32267
   
 #Exclude 5- No AKI in the first 3 days of ICU admission (D0 to D3)
-ExclusionID5 <- KIDGO_df[which(KIDGO_df[,"MAX_KDIGO_ICU_D0toD3"] == 0),"STUDY_PATIENT_ID"]
+ExclusionID5 <- KIDGO_df[which(KIDGO_df[,"MAX_KDIGO_ICU_D0toD3"] == 0 |is.na(KIDGO_df[,"MAX_KDIGO_ICU_D0toD3"])==T),"STUDY_PATIENT_ID"]
 res <- exclude_pts_func(updated_inclusion_IDs4,ExclusionID5)
 actual_exclusion_IDs5 <- res[[1]] 
 updated_inclusion_IDs5 <- res[[2]]
@@ -130,5 +130,3 @@ Final_Anlaysis_ID <-as.data.frame(updated_inclusion_IDs7)
 colnames(Final_Anlaysis_ID) <- "STUDY_PATIENT_ID"
 nrow(Final_Anlaysis_ID) #7801
 write.csv(Final_Anlaysis_ID,paste0(outdir,"Final_Analysis_ID_BeforeExclusionOfESRD.csv"),row.names = F)
-
-
