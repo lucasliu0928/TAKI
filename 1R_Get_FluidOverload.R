@@ -17,7 +17,7 @@ All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFact
 All_time_df <- All_time_df[which(All_time_df$STUDY_PATIENT_ID %in% analysis_ID),] #filter for anlaysis Id only
 
 #3. Weight
-weight_df <- read.csv(paste0(outdir,"All_HT_WT_RESP_FIO2_BMI_df.csv"),stringsAsFactors = F)
+weight_df <- read.csv(paste0(outdir,"All_HT_WT_RESP_FIO2_BMI_NOTimputed.csv"),stringsAsFactors = F)
 
 #4. IO
 raw_IO_df <- read.csv(paste0(raw_dir,"IO_TOTALS.csv"),stringsAsFactors = F)
@@ -94,6 +94,7 @@ for (i in 1:nrow(updated_IO_df)){
   updated_IO_df[i,"FluidOverload_inPercentage"] <- curr_val
 }
 
+write.csv(updated_IO_df,paste0(outdir,"All_FluidOverLoad_NOTImputed.csv"))
 
 #4. Compute missing
 feature_columns <-  c("FluidOverload_inPercentage")
@@ -114,7 +115,7 @@ write.csv(Final_IO_df,paste0(outdir,"All_FluidOverLoad_Imputed.csv"))
 ###########################################################################################
 #Random select 20 of not imputated for checking
 ###########################################################################################
-#'@NOTE: #only 3 FluidOverload is imputed when no IN or OUT avaiable
+#'@NOTE: #FluidOverload could be missing if no weight or IO
 
 set.seed(123)
 imputed_idxes <- which(is.na(Final_IO_df$TOTAL_IN)==T)
