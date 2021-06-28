@@ -89,7 +89,7 @@ feature_columns <-  c("FI02_D1_LOW", "FI02_D1_HIGH","RESP_RATE_D1_LOW", "RESP_RA
 missing_table <- get_missing_rate_table(updated_ClinicalOthers_dfOutlierExcluded,feature_columns)
 missing_table
 
-write.csv(updated_ClinicalOthers_dfOutlierExcluded,paste0(outdir,"All_HT_WT_RESP_FIO2_BMI_NOTimputed.csv"),row.names = F)
+write.csv(updated_ClinicalOthers_dfOutlierExcluded,paste0(outdir,"All_HT_WT_RESP_FIO2_NOTimputed.csv"),row.names = F)
 
 
 #5.imputation median
@@ -101,6 +101,6 @@ missing_table2
 exlucde_indxes <- which(colnames(Final_ClinicalOthers_df) %in% c("Excluded_Feature"))
 Final_ClinicalOthers_df <- Final_ClinicalOthers_df[,-exlucde_indxes]
 
-write.csv(Final_ClinicalOthers_df,paste0(outdir,"All_HT_WT_RESP_FIO2_BMI_Imputed.csv"),row.names = F)
+write.csv(Final_ClinicalOthers_df,paste0(outdir,"All_HT_WT_RESP_FIO2_Imputed.csv"),row.names = F)
 
 
