@@ -89,21 +89,17 @@ All_LAB_df <- All_LAB_df[,-which(colnames(All_LAB_df) == "STUDY_PATIENT_ID")[-1]
 updated_LAB_df <- remove_featureValue(All_LAB_df,All_time_df)
 table(updated_LAB_df$Excluded_Feature)
 
-#3.Get MAX BUN in ICU D0-D3 with values only in ICU (in updated_LAB_df, the value not in ICU is excluded)
-updated_LAB_df$BUN_D0toD3_HIGH <- NA
-for (i in 1:nrow(updated_LAB_df)){
-  curr_df <- updated_LAB_df[i,c("BUN_D0_HIGH", "BUN_D1_HIGH" , "BUN_D2_HIGH" ,"BUN_D3_HIGH")]
-  updated_LAB_df[i,"BUN_D0toD3_HIGH"] <- max(curr_df,na.rm = T)
-}
-
 
 #3.Remove outlier
 #Bicarbonate_D1_LOW
 updated_LAB_df_OutlierExcluded <- remove_values_byValue(updated_LAB_df,"Bicarbonate_D1_LOW",5,"Less Than")
 updated_LAB_df_OutlierExcluded <- remove_values_byValue(updated_LAB_df_OutlierExcluded,"Bicarbonate_D1_LOW",50,"Greater Than")
 
-#BUN_D0toD3_HIGH
-updated_LAB_df_OutlierExcluded <- remove_values_byValue(updated_LAB_df_OutlierExcluded,"BUN_D0toD3_HIGH",5,"Less Than")
+#BUN D0-D3
+updated_LAB_df_OutlierExcluded <- remove_values_byValue(updated_LAB_df_OutlierExcluded,"BUN_D0_HIGH",5,"Less Than")
+updated_LAB_df_OutlierExcluded <- remove_values_byValue(updated_LAB_df_OutlierExcluded,"BUN_D1_HIGH",5,"Less Than")
+updated_LAB_df_OutlierExcluded <- remove_values_byValue(updated_LAB_df_OutlierExcluded,"BUN_D2_HIGH",5,"Less Than")
+updated_LAB_df_OutlierExcluded <- remove_values_byValue(updated_LAB_df_OutlierExcluded,"BUN_D3_HIGH",5,"Less Than")
 
 #Potassium_D1_LOW
 updated_LAB_df_OutlierExcluded <- remove_outlier_BOTOrTOP_5perc(updated_LAB_df_OutlierExcluded,"Potassium_D1_LOW","TOP")
@@ -117,12 +113,24 @@ updated_LAB_df_OutlierExcluded <- remove_outlier_BOTOrTOP_5perc(updated_LAB_df_O
 updated_LAB_df_OutlierExcluded <- remove_outlier_BOTOrTOP_5perc(updated_LAB_df_OutlierExcluded,"WBC_D1_HIGH","TOP")
 
 
+#4.Get MAX BUN in ICU D0-D3 after ouliter eexcluded
+updated_LAB_df$BUN_D0toD3_HIGH <- NA
+for (i in 1:nrow(updated_LAB_df_OutlierExcluded)){
+  curr_df <- updated_LAB_df_OutlierExcluded[i,c("BUN_D0_HIGH", "BUN_D1_HIGH" , "BUN_D2_HIGH" ,"BUN_D3_HIGH")]
+  if (all(is.na(curr_df)==T)){  #all is NA
+    updated_LAB_df_OutlierExcluded[i,"BUN_D0toD3_HIGH"] <- NA
+  }else{ ##at least one is not NA
+    updated_LAB_df_OutlierExcluded[i,"BUN_D0toD3_HIGH"] <- max(curr_df,na.rm = T)
+    
+  }
+}
 
 #4. Compute missing
 feature_columns <-  c("Bilirubin_D1_HIGH", "Platelets_D1_LOW", "Sodium_D1_LOW",
                       "Sodium_D1_HIGH","Potassium_D1_LOW", "Potassium_D1_HIGH", "Hematocrit_D1_LOW",
                       "Hematocrit_D1_HIGH", "Hemoglobin_D1_LOW", "Hemoglobin_D1_HIGH" , "WBC_D1_LOW",
-                      "WBC_D1_HIGH" ,"Bicarbonate_D1_LOW", "Bicarbonate_D1_HIGH","BUN_D0toD3_HIGH")
+                      "WBC_D1_HIGH" ,"Bicarbonate_D1_LOW", "Bicarbonate_D1_HIGH",
+                      "BUN_D0_HIGH", "BUN_D1_HIGH" , "BUN_D2_HIGH" ,"BUN_D3_HIGH","BUN_D0toD3_HIGH")
 missing_table <- get_missing_rate_table(updated_LAB_df_OutlierExcluded,feature_columns)
 missing_table
 
