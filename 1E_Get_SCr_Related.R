@@ -230,8 +230,8 @@ for (i in 1:length(analysis_ID)){
   curr_time_cloest_toICUadmit <- min(ymd_hms(Comb_KDIGO_df[,"Time"]))
 
   KDIGO_df[i,"MAX_KDIGO_ICU_D0toD3"]   <- max(Comb_KDIGO_df[,"KDIGO"])
-  KDIGO_df[i,"LAST_KDIGO_ICU_D0toD3"]  <- Comb_KDIGO_df[which(Comb_KDIGO_df[,"Scr_Time"] == last_time_point),"KDIGO"]
-  KDIGO_df[i,"Admit_KDIGO_ICU"] <- Comb_KDIGO_df[which(Comb_KDIGO_df[,"Scr_Time"] == curr_time_cloest_toICUadmit),"KDIGO"]
+  KDIGO_df[i,"LAST_KDIGO_ICU_D0toD3"]  <- Comb_KDIGO_df[which(ymd_hms(Comb_KDIGO_df[,"Time"]) == last_time_point),"KDIGO"]
+  KDIGO_df[i,"Admit_KDIGO_ICU"] <- Comb_KDIGO_df[which(ymd_hms(Comb_KDIGO_df[,"Time"]) == curr_time_cloest_toICUadmit),"KDIGO"]
   
 }
 
