@@ -927,16 +927,22 @@ get_KDIGO_Score_forScrdf_func <- function(bl_scr,scr_data){
 
 #Get dates in an interval
 get_DateIndxes_inInterval <- function(dates_to_check_list, interval_start,interval_end){
-  #dates_to_check_list <- ymd_hms(curr_KDIGO_df[,"Scr_Time"])
+  #dates_to_check_list <- curr_KDIGO_df[,"Scr_Time"]
   #interval_start <- curr_crrt_start
   #interval_end <- curr_crrt_end + hours(48)
   
-  idxes_inInterval <- which(dates_to_check_list >= interval_start & dates_to_check_list<= interval_end)
+  idxes_inInterval <- which(ymd_hms(dates_to_check_list) >= interval_start & dates_to_check_list<= interval_end)
   return(idxes_inInterval)
 }
 
 
 get_RRT_KDIGO_df_ICUD0D3 <- function(rrt_start,rrt_end,rrt_end_extension,icu_start,last_icu_time){
+  # rrt_start <- curr_hd_start
+  # rrt_end <- curr_hd_end
+  # rrt_end_extension <- 48
+  # icu_start <- curr_icu_start
+  # last_icu_time <- curr_last_ICU_time
+  
   curr_end_plus48hours <- rrt_end + hours(rrt_end_extension)
   
   #1.Get KDIGO df for all RRT duration + 48 hours
@@ -954,7 +960,11 @@ get_RRT_KDIGO_df_ICUD0D3 <- function(rrt_start,rrt_end,rrt_end_extension,icu_sta
   
   if(onRRT_D0_D3_flag == 1){ #if on RRT in D0 to D3
     inICUd0_d3_idxes <- which(ymd_hms(RRT_KDIGO_df[,"Time"]) >= icu_start & ymd_hms(RRT_KDIGO_df[,"Time"]) <= last_icu_time)
-    RRT_KDIGO_df <- RRT_KDIGO_df[inICUd0_d3_idxes,]
+    if(length(inICUd0_d3_idxes) >0){
+      RRT_KDIGO_df <- RRT_KDIGO_df[inICUd0_d3_idxes,]
+    }else{
+      RRT_KDIGO_df <- NULL
+    }
   }else{ #remove every thing
     RRT_KDIGO_df <- NULL
   }
