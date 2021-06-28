@@ -63,9 +63,9 @@ KDIGO_df <- read.csv(paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"),strin
 KDIGO_df <- KDIGO_df[which(KDIGO_df$STUDY_PATIENT_ID %in% onRRT_df$STUDY_PATIENT_ID),]
 
 onRRT_D0D3_IDs <- onRRT_df$STUDY_PATIENT_ID[which(onRRT_df$onRRT_ICUD0toD3 %in% c(1,2))]
-KDIGO4_IDs <- updated_KDIGO_df[which(updated_KDIGO_df$MAX_KDIGO_ICU_D0toD3==4),"STUDY_PATIENT_ID"]
+KDIGO4_IDs <- KDIGO_df[which(KDIGO_df$MAX_KDIGO_ICU_D0toD3==4),"STUDY_PATIENT_ID"]
 
 #check on RRT but not KDIGO= 4 (none)
 which(!onRRT_D0D3_IDs %in% KDIGO4_IDs)
 #check  KDIGO= 4 but not on RRT, because the 48 hours extension for KDIGO score
-which(!KDIGO4_IDs %in% onRRT_D0D3_IDs)
+which(!KDIGO4_IDs %in% onRRT_D0D3_IDs) #1
