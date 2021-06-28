@@ -83,28 +83,35 @@ updated_ClinicalOthers_dfOutlierExcluded <- remove_outlier_BOTOrTOP_5perc(update
 updated_ClinicalOthers_dfOutlierExcluded <- remove_values_byValue(updated_ClinicalOthers_dfOutlierExcluded,"INITIAL_WEIGHT_KG",30,"Less Than")
 updated_ClinicalOthers_dfOutlierExcluded <- remove_values_byValue(updated_ClinicalOthers_dfOutlierExcluded,"INITIAL_WEIGHT_KG",200,"Greater Than")
 
+
+# Compute BMI  and add to Final_ClinicalOthers_df
+updated_ClinicalOthers_dfOutlierExcluded$BMI <- NA
+for (i in 1:nrow(updated_ClinicalOthers_dfOutlierExcluded)){
+  curr_wt <- updated_ClinicalOthers_dfOutlierExcluded[i,"INITIAL_WEIGHT_KG"]
+  curr_ht <- updated_ClinicalOthers_dfOutlierExcluded[i,"HEIGHT_Meters"]
+
+  curr_BMI <- curr_wt/(curr_ht^2)
+  updated_ClinicalOthers_dfOutlierExcluded[i,"BMI"] <- curr_BMI
+}
+
 #4. Compute missing
 feature_columns <-  c("FI02_D1_LOW", "FI02_D1_HIGH","RESP_RATE_D1_LOW", "RESP_RATE_D1_HIGH",
-                      "HEIGHT_Meters","INITIAL_WEIGHT_KG")
+                      "HEIGHT_Meters","INITIAL_WEIGHT_KG","BMI")
 missing_table <- get_missing_rate_table(updated_ClinicalOthers_dfOutlierExcluded,feature_columns)
 missing_table
+
+write.csv(updated_ClinicalOthers_dfOutlierExcluded,paste0(outdir,"All_HT_WT_RESP_FIO2_BMI_NOTimputed.csv"),row.names = F)
+
 
 #5.imputation median
 Final_ClinicalOthers_df <- median_imputation_func(updated_ClinicalOthers_dfOutlierExcluded,feature_columns)
 missing_table2 <- get_missing_rate_table(Final_ClinicalOthers_df,feature_columns)
 missing_table2
 
+#6.remove features not needed for model
+exlucde_indxes <- which(colnames(Final_ClinicalOthers_df) %in% c("Excluded_Feature"))
+Final_ClinicalOthers_df <- Final_ClinicalOthers_df[,-exlucde_indxes]
 
-##########################################################################################
-# Compute BMI and add to Final_ClinicalOthers_df
-##########################################################################################
-Final_ClinicalOthers_df$BMI <- NA
-for (i in 1:nrow(Final_ClinicalOthers_df)){
-  curr_wt <- Final_ClinicalOthers_df[i,"INITIAL_WEIGHT_KG"]
-  curr_ht <- Final_ClinicalOthers_df[i,"HEIGHT_Meters"]
+write.csv(Final_ClinicalOthers_df,paste0(outdir,"All_HT_WT_RESP_FIO2_BMI_Imputed.csv"),row.names = F)
 
-  curr_BMI <- curr_wt/(curr_ht^2)
-  Final_ClinicalOthers_df[i,"BMI"] <- curr_BMI
-}
 
-write.csv(Final_ClinicalOthers_df,paste0(outdir,"All_HT_WT_RESP_FIO2_BMI_df.csv"),row.names = F)
