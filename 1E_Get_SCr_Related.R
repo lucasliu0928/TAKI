@@ -49,9 +49,9 @@ analysis_ID <- unique(Inclusion_df[,"STUDY_PATIENT_ID"])
 ##########################################################################################
 #1.Get baseline Scr and other Scr
 options(warn=2)
-Final_SCR_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 6))
+Final_SCR_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 7))
 colnames(Final_SCR_df) <- c("STUDY_PATIENT_ID","Baseline_SCr","AdmitICU_SCr","AdmitICU_SCr_TIME",
-                            "Peak_SCr_inICU_D0_D3","NUM_SCr_inICU_D0_D3")
+                            "Peak_SCr_inICU_D0_D3","NUM_SCr_inICU_D0_D3","Lowest_SCr_inICU_D0_D3")
 for (i in 1:length(analysis_ID)){
   if (i %% 1000 ==0){print(i)}
   
@@ -95,6 +95,10 @@ for (i in 1:length(analysis_ID)){
     curr_num_scr  <- nrow(curr_scr_inICUD0D3)
     Final_SCR_df[i,"Peak_SCr_inICU_D0_D3"] <- curr_peak_scr
     Final_SCR_df[i,"NUM_SCr_inICU_D0_D3"] <- curr_num_scr
+    
+    #Lowest Scr in ICU D0-D3
+    curr_lowest_scr <- min(curr_scr_inICUD0D3[,"SCR_VALUE"])
+    Final_SCR_df[i,"Lowest_SCr_inICU_D0_D3"] <- curr_lowest_scr
     
   }else{
     Final_SCR_df[i,"NUM_SCr_inICU_D0_D3"] <- 0
@@ -140,6 +144,8 @@ length(no_bl_scr_IDs) ##N of Resolved baseline by EPI: 25488
 KDIGO_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 4))
 colnames(KDIGO_df) <- c("STUDY_PATIENT_ID","Admit_KDIGO_ICU","MAX_KDIGO_ICU_D0toD3","LAST_KDIGO_ICU_D0toD3")
 for (i in 1:length(analysis_ID)){
+  i <- which(analysis_ID == 20092)
+  
   if (i %% 1000 ==0){print(i)}
   
   curr_id <- analysis_ID[i]
@@ -161,6 +167,7 @@ for (i in 1:length(analysis_ID)){
   curr_hd_start <- ymd_hms(curr_time_df[,"Updated_HD_Start"])
   curr_hd_end <- ymd_hms(curr_time_df[,"Updated_HD_End"])
   
+  
   #All SCr df
   curr_scr_df <- raw_SCR_df[which(raw_SCR_df[,"STUDY_PATIENT_ID"] == curr_id),]
   
@@ -173,10 +180,11 @@ for (i in 1:length(analysis_ID)){
   #Get curr scr in ICU D0-D3, could be less than 3 days
   curr_scr_inICUD0D3 <- get_value_df_inWindow_func(curr_scr_df,curr_icu_start,curr_last_ICU_time,"SCR_ENTERED")
   
+  #1.Use scr in ICU D0-D3 to compute KDIGO
   if (nrow(curr_scr_inICUD0D3) > 0 & is.na(curr_baseline_scr) == F){
     #current KIDGO for all Scr in window
     curr_KDIGO_df    <- get_KDIGO_Score_forScrdf_func(curr_baseline_scr,curr_scr_inICUD0D3)
-    #update if each time step is in RRT duration, if so, update the KDIGO score to 4
+    #update KDIGO for each time step for Scr if each time step is in RRT duration, update the KDIGO score to 4
     if (is.na(curr_crrt_start) == F | is.na(curr_hd_start) == F){
       curr_updated_KDIGO_df <- update_KDIGO_df_forRRT_func(curr_KDIGO_df,curr_crrt_start,curr_crrt_end,curr_hd_start,curr_hd_end,48)
     }else{
@@ -190,6 +198,79 @@ for (i in 1:length(analysis_ID)){
     KDIGO_df[i,"Admit_KDIGO_ICU"] <- curr_updated_KDIGO_df[which(curr_updated_KDIGO_df[,"Scr_Time"] == curr_admit_scr_time),"KDIGO"]
     
   }
+  
+
+
+  #2.Use RRT time to check if KDIGO-3D in ICU D0-D3 
+  
+  get_overlapTime_RRTandICU_D0_D3 <- function(rrt_start,rrt_end,rrt_end_extension,icu_start,last_icu_time){
+    rrt_start <- curr_crrt_start
+    rrt_end <- curr_crrt_end
+    rrt_end_extension <- 48
+    icu_start <- curr_icu_start
+    last_icu_time <- curr_last_ICU_time
+    
+    curr_end_plus48hours <- rrt_end + hours(48)
+  
+    #1.Get KDIGO df for all RRT duration + 48 hours
+    rrt_time_byday <- seq(rrt_start,curr_end_plus48hours,by="days")
+    RRT_KDIGO_df <- as.data.frame(matrix(NA, nrow  = length(rrt_time_byday), ncol = 2))
+    colnames(RRT_KDIGO_df) <- c("Time","KDIGO")
+    RRT_KDIGO_df[,"Time"] <- as.character(paste(rrt_time_byday,"00:00:00"))
+    RRT_KDIGO_df[,"KDIGO"] <- 4
+    
+    
+    #if overlap between RRT time and ICU d0 to d3
+    if (is.na(rrt_start) == F){
+      check_overlapp_manually_func(rrt_start,curr_end_plus48hours,icu_start,last_icu_time)
+    }
+    
+    #for each day, check if any overlap between RRT time and ICU days
+
+    ICU_KDIGO_df <- as.data.frame(matrix(NA, nrow  = 4, ncol = 2))
+    colnames(ICU_KDIGO_df) <- c("Day","KDIGO")
+    for (d in 1:nrow(ICU_KDIGO_df)){
+      curr_day <- d-1
+      ICU_KDIGO_df[d,"Day"] <- curr_day
+      curr_actual_start <- ymd_hms(curr_time_df[,paste0("Actual_D",curr_day,"_Start")])
+      curr_actual_end  <-  ymd_hms(curr_time_df[,paste0("Actual_D",curr_day,"_End")])
+      curr_overlap_flag <- check_overlapp_manually_func(rrt_start,curr_end_plus48hours,curr_actual_start,curr_actual_end)
+      if (is.na(curr_overlap_flag) == T){ #one of time is NA, then cannot determine the flag and KDIGO
+        ICU_KDIGO_df[d,"KDIGO"] <- NA
+      }else{ #if both time are avaiable
+       if (curr_overlap_flag == 1){ #if overlap, then KDIGO on this day is 4
+         ICU_KDIGO_df[d,"KDIGO"] <- 4
+       }else{
+         ICU_KDIGO_df[d,"KDIGO"] <- NA
+       }
+      }
+      
+    
+    }
+
+    #2. Get  overlapp flag : between RRT with 48 hours extension and ICU D0-D3
+    
+    #check overlap between two events
+    check_overlapp_manually_func <- function(event1_start,event1_end,event2_start,event2_end){
+       if (is.na(event1_start) == F & is.na(event2_start)==F){
+        if (event1_start <= event2_end & event1_end >= event2_start){
+          overlapp_flag <- 1
+        }else{
+          overlapp_flag <- 0
+        }
+       }else{
+         overlapp_flag <- NA
+       }
+ 
+      return(overlapp_flag)
+    }
+    
+
+    
+  
+  }
+  
+  
   
 }
 
