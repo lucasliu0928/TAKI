@@ -419,7 +419,91 @@ apche5_func <- function(fio2_value,pco2_value,po2_value){
   }
   return(highest_score)
 }
-
+apche6_func <- function(ph_value){
+  if (is.na(ph_value) == T){ #if one value is not available
+    highest_score <- 0
+  }else{
+    
+    if (ph_value >= 7.33 & ph_value < 7.50){
+      scoreA <- 0
+    }else{
+      scoreA <- NA
+    }
+    
+    if (ph_value >= 7.50 & ph_value < 7.6){
+      scoreB <- 1
+    }else{
+      scoreB <- NA
+    }
+    
+    if (ph_value >= 7.25 & ph_value < 7.33){
+      scoreC <- 2
+    }else{
+      scoreC <- NA
+    }
+    
+    if( (ph_value >= 7.6 & ph_value < 7.7) | (ph_value > 7.15 & ph_value < 7.25)){
+      scoreD <- 3
+    }else{
+      scoreD <- NA
+    }
+    
+    if(ph_value >= 7.7 & ph_value <= 7.15){
+      scoreE <- 4
+    }else{
+      scoreE <- NA
+    }
+    
+    
+    all_possbile_scores <- c(scoreA,scoreB,scoreC,scoreD,scoreE)
+    highest_score <- max(all_possbile_scores,na.rm = T)
+  }
+  return(highest_score)
+}
+apche7_func <- function(sodium_value){
+  if (is.na(sodium_value) == T){ #if one value is not available
+    highest_score <- 0
+  }else{
+    
+    if (sodium_value >= 130 & sodium_value < 150){
+      highest_score <- 0
+    }else if (sodium_value >= 150 & sodium_value < 155){
+      highest_score <- 1
+    } else if ( (sodium_value >= 155 & sodium_value < 160) | (sodium_value >= 120 & sodium_value < 130)){
+      highest_score <- 2
+    }else if( (sodium_value >= 160 & sodium_value < 180) | (sodium_value > 110 & sodium_value < 120)){
+      highest_score <- 3
+    }else if(sodium_value >= 180 | sodium_value <= 110){
+      highest_score <- 4
+    }else{
+      highest_score <- NA
+    }
+    
+  }
+  return(highest_score)
+}
+apche8_func <- function(pot_value){
+  if (is.na(pot_value) == T){ #if one value is not available
+    apche_score <- 0
+  }else{
+    
+    if (pot_value >= 3.5 & pot_value < 5.5){
+      apche_score <- 0
+    }else if ( (pot_value >= 5.5 & pot_value < 6.0) | (pot_value >= 3.0 & pot_value < 3.5)){
+      apche_score <- 1
+    }else if (pot_value >= 2.5 & pot_value < 3.0){
+      apche_score <- 2
+    }else if (pot_value >= 6.0 & pot_value < 7){
+      apche_score <- 3
+    }else if(pot_value >= 7 | pot_value < 2.5){
+      apche_score <- 4
+    }else{
+      apche_score <- NA
+    }
+    
+  }
+  return(apche_score)
+}
 #Raw data dir
 raw_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UKY/raw_csv_files/"
 outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/"
@@ -676,48 +760,7 @@ for (i in 1:length(analysis_ID)){
   APACHE_SCORE_df[i,"APACHE_PH"]<- max(c(curr_apche_ph_low,curr_apache_ph_high), na.rm = T)
   
   
-  apche6_func <- function(ph_value){
-    if (is.na(ph_value) == T){ #if one value is not available
-      highest_score <- 0
-    }else{
-      
-      if (ph_value >= 7.33 & ph_value < 7.50){
-        scoreA <- 0
-      }else{
-        scoreA <- NA
-      }
-      
-      if (ph_value >= 7.50 & ph_value < 7.6){
-        scoreB <- 1
-      }else{
-        scoreB <- NA
-      }
-      
-      if (ph_value >= 7.25 & ph_value < 7.33){
-        scoreC <- 2
-      }else{
-        scoreC <- NA
-      }
-      
-      if( (ph_value >= 7.6 & ph_value < 7.7) | (ph_value > 7.15 & ph_value < 7.25)){
-        scoreD <- 3
-      }else{
-        scoreD <- NA
-      }
-      
-      if(ph_value >= 7.7 & ph_value <= 7.15){
-        scoreE <- 4
-      }else{
-        scoreE <- NA
-      }
-      
-      
-      all_possbile_scores <- c(scoreA,scoreB,scoreC,scoreD,scoreE)
-      highest_score <- max(all_possbile_scores,na.rm = T)
-    }
-    return(highest_score)
-  }
-  
+
   
   #7. Apache sodium:
   curr_sodium_low <- curr_feature_df[,"Sodium_D1_LOW"]
@@ -727,29 +770,7 @@ for (i in 1:length(analysis_ID)){
   APACHE_SCORE_df[i,"APACHE_Sodium"]<- max(c(curr_apche_sodium_low,curr_apche_sodium_high), na.rm = T)
   
   
-  apche7_func <- function(sodium_value){
-    if (is.na(sodium_value) == T){ #if one value is not available
-      highest_score <- 0
-    }else{
-      
-      if (sodium_value >= 130 & sodium_value < 150){
-        highest_score <- 0
-      }else if (sodium_value >= 150 & sodium_value < 155){
-        highest_score <- 1
-      } else if ( (sodium_value >= 155 & sodium_value < 160) | (sodium_value >= 120 & sodium_value < 130)){
-        highest_score <- 2
-      }else if( (sodium_value >= 160 & sodium_value < 180) | (sodium_value > 110 & sodium_value < 120)){
-        highest_score <- 3
-      }else if(sodium_value >= 180 | sodium_value <= 110){
-        highest_score <- 4
-      }else{
-        highest_score <- NA
-      }
-      
-    }
-    return(highest_score)
-  }
-  
+
   
   
   #8. Apache potassium:
@@ -759,33 +780,12 @@ for (i in 1:length(analysis_ID)){
   curr_apche_pot_high <- apche8_func(curr_pot_high)
   APACHE_SCORE_df[i,"APACHE_Potassium"]<- max(c(curr_apche_pot_low,curr_apche_pot_high), na.rm = T)
   
-  apche8_func <- function(pot_value){
-    if (is.na(pot_value) == T){ #if one value is not available
-      apche_score <- 0
-    }else{
-      
-      if (pot_value >= 3.5 & pot_value < 5.5){
-        apche_score <- 0
-      }else if ( (pot_value >= 5.5 & pot_value < 6.0) | (pot_value >= 3.0 & pot_value < 3.5)){
-        apche_score <- 1
-      }else if (pot_value >= 2.5 & pot_value < 3.0){
-        apche_score <- 2
-      }else if (pot_value >= 6.0 & pot_value < 7){
-        apche_score <- 3
-      }else if(pot_value >= 7 | pot_value < 2.5){
-        apche_score <- 4
-      }else{
-        apche_score <- NA
-      }
-      
-    }
-    return(apche_score)
-  }
-  
-  
   
   #9. Apache sCR: #use min and peak
+  curr_Lowest_SCr_inICU_D0toD3 <- curr_feature_df[,"Lowest_SCr_inICU_D0_D3"]
   curr_Peak_SCr_inICU_D0toD3 <- curr_feature_df[,"Peak_SCr_inICU_D0toD3"]
+  curr_apche_Scr_low <- apche9_func(curr_Lowest_SCr_inICU_D0toD3)
+  curr_apche_Scr_high <- apche9_func(curr_Peak_SCr_inICU_D0toD3)
   APACHE_SCORE_df[i,"APACHE_sCr"]<-  apche9_func(curr_Peak_SCr_inICU_D0toD3)
   
   apche9_func <- function(sCr_Value){
@@ -808,6 +808,11 @@ for (i in 1:length(analysis_ID)){
     }
     return(apche_score)
   }
+  
+  
+  #10. Apache APACHE_Hematocrit
+
+  
   #####
   curr_gcs <- curr_feature_df[,"GCS"]
   curr_Use_DDM <- curr_feature_df[,"Use_of_Dopamine_OR_Dobutamine_OR_Milrinone"]
