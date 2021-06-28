@@ -87,6 +87,8 @@ feature_columns <-  c("MAP_D1_LOW", "MAP_D1_HIGH", "Temperature_D1_LOW",
                       "Temperature_D1_HIGH","HR_D1_LOW", "HR_D1_HIGH")
 missing_table <- get_missing_rate_table(updated_Vital_df_OutlierExcluded,feature_columns)
 
+write.csv(updated_Vital_df_OutlierExcluded,paste0(outdir,"All_MAP_TEMP_HR_NOTimputed.csv"),row.names = F)
+
 
 #5.imputation median
 Final_Vital_df <- median_imputation_func(updated_Vital_df_OutlierExcluded,feature_columns)
