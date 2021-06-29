@@ -420,9 +420,9 @@ remove_outlier_BOTOrTOP_5perc <- function(data_df, feature_col,BotOrTOP_Flag){
 median_imputation_func <- function(data_df,feature_to_Impute){
   for (j in 1:length(feature_to_Impute)){
     curr_col <- feature_to_Impute[j]
-    median_value <- median(data_df[,curr_col],na.rm = T) #get median
     na_indxes <- which(is.na(data_df[,curr_col]) == T)   #get na idxes
     if (length(na_indxes) > 0 ){
+      median_value <- median(data_df[,curr_col],na.rm = T) #get median
       data_df[na_indxes,curr_col] <- median_value
     }
   }
@@ -1695,4 +1695,512 @@ compare_AUC_func <- function(cohort_name,curr_perf,baseline_name,tocompare_model
   pvalue <- Test_AUC_diff_func(perf_dir,baseline_model_file,comprison_model_file)
   
   return(list(exact_diffs,pvalue))
+}
+
+###################################################################################################
+###                     SOFA and APACHE Functions
+###################################################################################################
+sofa1_func <- function(po2,fio2,onMV_flag){
+  #1. Compute P/F ratio
+  if (is.na(po2) == T | is.na(fio2) == T){ #if one value is not available
+    PF_ratio <- NA
+  }else{
+    PF_ratio <- (po2/(fio2/100)) #convert FIO2 to actual percentage
+  }
+  
+  #2.Conditions
+  if (is.na(PF_ratio) == T){
+    highest_score <- 0
+  }else{
+    if (PF_ratio >= 400){
+      scoreA <- 0
+    }else{
+      scoreA <- NA
+    }
+    
+    if(PF_ratio < 400){
+      scoreB <- 1
+    }else{
+      scoreB <- NA
+    }
+    
+    if(PF_ratio < 300){
+      scoreC <- 2
+    }else{
+      scoreC <- NA
+    }
+    
+
+    if(PF_ratio < 200 & onMV_flag == 1){
+      scoreD <- 3
+    }else{
+      scoreD <- NA
+    }
+    if(PF_ratio < 100 & onMV_flag == 1){
+      scoreE <- 4
+    }else{
+      scoreE <- NA
+    }
+
+    all_possbile_scores <- c(scoreA,scoreB,scoreC,scoreD,scoreE)
+    highest_score <- max(all_possbile_scores,na.rm = T)
+  }
+  return(highest_score)
+}
+
+sofa2_func <- function(GCS_value){
+  if (is.na(GCS_value) == T){ #if value is not available, same as treat it as 15
+    highest_score <- 0
+  }else{
+    if (GCS_value == 15){
+      scoreA <- 0
+    }else{
+      scoreA <- NA
+    }
+    
+    if(GCS_value >=13 & GCS_value <= 14 ){
+      scoreB <- 1
+    }else{
+      scoreB <- NA
+    }
+    if(GCS_value >=10 & GCS_value <= 12 ){
+      scoreC <- 2
+    }else{
+      scoreC <- NA
+    }
+    if(GCS_value >=6 & GCS_value <= 9 ){
+      scoreD <- 3
+    }else{
+      scoreD <- NA
+    }
+    if(GCS_value < 6){
+      scoreE <- 4
+    }else{
+      scoreE <- NA
+    }
+    all_possbile_scores <- c(scoreA,scoreB,scoreC,scoreD,scoreE)
+    highest_score <- max(all_possbile_scores,na.rm = T)
+  }
+  return(highest_score)
+}
+
+sofa3_func <- function(MAP_value,Use_DDM,UseENPV){
+  
+  if (is.na(MAP_value) == T){ #if value is not available
+    Score_MAP <- 0
+  }else{
+    if (MAP_value >= 70){
+      Score_MAP <- 0
+    }else if(MAP_value < 70){
+      Score_MAP <- 1
+    }
+  }
+  
+  if(Use_DDM == 1){
+    Score_DDM <- 2
+  }else{
+    Score_DDM <- NA
+  }
+  
+  if(UseENPV == 1){
+    Score_ENPV <- 3
+  }else{
+    Score_ENPV <- NA
+  }
+  
+  all_possbile_scores <- c(Score_MAP,Score_DDM,Score_ENPV)
+  highest_score <- max(all_possbile_scores,na.rm = T)
+  
+  return(highest_score)
+}
+
+sofa4_func <- function(bilirubin_value){
+  if (is.na(bilirubin_value) == T){ #if one value is not available
+    sofa_score <- 0
+  }else{
+    if (bilirubin_value < 1.2){
+      sofa_score <- 0
+    }else if (bilirubin_value  >= 1.2 & bilirubin_value < 2){
+      sofa_score <- 1
+    }else if(bilirubin_value  >= 2 & bilirubin_value < 6){
+      sofa_score <- 2
+    }else if(bilirubin_value  >= 6 & bilirubin_value < 12){
+      sofa_score <- 3
+    }else if(bilirubin_value  >= 12){
+      sofa_score <- 4
+    }
+  }
+  return(sofa_score)
+}
+
+sofa5_func <- function(Platelets_value){
+  if (is.na(Platelets_value) == T){ #if value is not available
+    highest_score <- 0
+  }else{
+    
+    if (Platelets_value >= 150){
+      scoreA <- 0
+    }else{
+      scoreA <- NA
+    }
+    
+    if(Platelets_value < 150){
+      scoreB <- 1
+    }else{
+      scoreB <- NA
+    }
+    
+    if(Platelets_value < 100){
+      scoreC <- 2
+    }else{
+      scoreC <- NA
+    }
+    
+    if(Platelets_value < 50){
+      scoreD <- 3
+    }else{
+      scoreD <- NA
+    }
+    
+    if(Platelets_value < 20){
+      scoreE <- 4
+    }else{
+      scoreE <- NA
+    }
+    
+    all_possbile_scores <- c(scoreA,scoreB,scoreC,scoreD,scoreE)
+    highest_score <- max(all_possbile_scores,na.rm = T)
+  }
+  return(highest_score)
+}
+
+sofa6_func <- function(sCr_Value){
+  if (is.na(sCr_Value) == T){ #if one value is not available
+    sofa_score <- 0
+  }else{
+    
+    if (sCr_Value < 1.2){
+      sofa_score <- 0
+    }else if(sCr_Value >= 1.2 & sCr_Value < 2){
+      sofa_score <- 1
+    }else if(sCr_Value >= 2 & sCr_Value < 3.5){
+      sofa_score <- 2
+    }else if(sCr_Value >= 3.5 & sCr_Value < 5){
+      sofa_score <- 3
+    }else if(sCr_Value >= 5){
+      sofa_score <- 4
+    }
+    
+  }
+  return(sofa_score)
+}
+
+
+apache1_func <- function(temp){
+  if (is.na(temp) == T){ #if one value is not available
+    highest_score <- 0
+  }else{
+    
+    if (temp >= 36 & temp < 38.5){
+      scoreA <- 0
+    }else{
+      scoreA <- NA
+    }
+    
+    if( (temp >= 38.5 & temp < 39) | (temp >=34 & temp < 36)){
+      scoreB <- 1
+    }else{
+      scoreB <- NA
+    }
+    
+    if(temp >=32 & temp < 34 ){
+      scoreC <- 2
+    }else{
+      scoreC <- NA
+    }
+    
+    if( (temp >=39 & temp < 41) | (temp >=30 & temp < 32)){
+      scoreD <- 3
+    }else{
+      scoreD <- NA
+    }
+    if(temp >=41 | temp < 30){
+      scoreE <- 4
+    }else{
+      scoreE <- NA
+    }
+    all_possbile_scores <- c(scoreA,scoreB,scoreC,scoreD,scoreE)
+    highest_score <- max(all_possbile_scores,na.rm = T)
+  }
+  return(highest_score)
+}
+
+apache2_func <- function(map_value){
+  if (is.na(map_value) == T){ #if one value is not available
+    apache_score <- 0
+  }else{
+    
+    if (map_value >= 70 & map_value < 110){
+      apache_score <- 0
+    }else if( (map_value >= 110 & map_value < 130) | (map_value >=50 & map_value < 70)){
+      apache_score <- 2
+    }else if(map_value >=130 & map_value < 160 ){
+      apache_score <- 3
+    }else  if( map_value >= 160 |  map_value < 50){
+      apache_score <- 4
+    }
+    
+  }
+  return(apache_score)
+}
+
+
+apache3_func <- function(hr_value){
+  if (is.na(hr_value) == T){ #if one value is not available
+    apache_score <- 0
+  }else{
+    
+    if (hr_value >= 70 & hr_value < 110){
+      apache_score <- 0
+    }else if( (hr_value >= 110 & hr_value < 140) | (hr_value >=55 & hr_value < 70)){
+      apache_score <- 2
+    }else if( (hr_value >= 140 & hr_value < 180) | (hr_value >=40 & hr_value < 55) ){
+      apache_score <- 3
+    }else if( hr_value >= 180 |  hr_value < 40){
+      apache_score <- 4
+    }
+
+  }
+  return(apache_score)
+}
+
+apache4_func <- function(resp_value){
+  if (is.na(resp_value) == T){ #if one value is not available
+    apache_score <- 0
+  }else{
+    
+    if (resp_value >= 12 & resp_value < 25){
+      apache_score <- 0
+    }else if( (resp_value >= 25 & resp_value < 35) | (resp_value >=10 & resp_value < 12)){
+      apache_score <- 1
+    }else if( resp_value >= 6 & resp_value < 10 ){
+      apache_score <- 2
+    }else if(resp_value >= 35 & resp_value < 50 ){
+      apache_score <- 3
+    }else if(resp_value >= 50 | resp_value < 6){
+      apache_score <- 4
+    }
+
+  }
+  return(apache_score)
+}
+
+apache5_func <- function(fio2_value,pco2_value,po2_value){
+  
+  if (is.na(fio2_value) == T){ #if FIO2 is not available 
+    apache_score <- 0
+  }else {
+    fio2_value <- fio2_value/100 #convert to percentage
+    #1.Condition A 
+    if (fio2_value >= 0.5){ #use A-aDO2 formula 
+      if (is.na(pco2_value) == T | is.na(po2_value) == T){ #if PCO2 or PO2 is not available
+            apache_score <- 0 
+      }else{ 
+            
+            A_aDO2_score <- fio2_value*713 - (pco2_value/0.8) - po2_value
+            
+            if (A_aDO2_score < 200 ){
+              apache_score <- 0
+            }else if (A_aDO2_score >= 200 & A_aDO2_score < 350) {
+              apache_score <- 2
+            }else if (A_aDO2_score >= 350 & A_aDO2_score < 500) {
+              apache_score <- 3
+            }else if (A_aDO2_score >= 500 ) {
+              apache_score <- 4
+            }
+      }
+      
+    #2.Condition B
+    }else if (fio2_value < 0.5){ #use PO2
+          if(is.na(po2_value) == T){ #if po2 is not avaialble
+            apache_score <- 0  
+          }else{
+            if (po2_value > 70 ){
+              apache_score <- 0
+            }else if (po2_value > 60 & po2_value <= 70) {
+              apache_score <- 1
+            }else if (po2_value >= 55 & po2_value <= 60) {
+              apache_score <- 3
+            }else if (po2_value < 55) {
+              apache_score <- 4
+            }
+          }
+    }
+
+  }
+  return(apache_score)
+}
+
+apache6_func <- function(ph_value){
+  if (is.na(ph_value) == T){ #ifvalue is not available
+    apache_score <- 0
+  }else{
+    
+    if (ph_value >= 7.33 & ph_value < 7.50){
+      apache_score <- 0
+    }else if (ph_value >= 7.50 & ph_value < 7.6){
+      apache_score <- 1
+    }else if (ph_value >= 7.25 & ph_value < 7.33){
+      apache_score <- 2
+    }else if( (ph_value >= 7.6 & ph_value < 7.7) | (ph_value > 7.15 & ph_value < 7.25)){
+      apache_score <- 3
+    }else if(ph_value >= 7.7 | ph_value <= 7.15){
+      apache_score <- 4
+    }
+    
+  }
+  return(apache_score)
+}
+
+apache7_func <- function(sodium_value){
+  if (is.na(sodium_value) == T){ #if value is not available
+    apache_score <- 0
+  }else{
+    
+    if (sodium_value >= 130 & sodium_value < 150){
+      apache_score <- 0
+    }else if (sodium_value >= 150 & sodium_value < 155){
+      apache_score <- 1
+    } else if ( (sodium_value >= 155 & sodium_value < 160) | (sodium_value >= 120 & sodium_value < 130)){
+      apache_score <- 2
+    }else if( (sodium_value >= 160 & sodium_value < 180) | (sodium_value > 110 & sodium_value < 120)){
+      apache_score <- 3
+    }else if(sodium_value >= 180 | sodium_value <= 110){
+      apache_score <- 4
+    }else{
+      apache_score <- NA
+    }
+    
+  }
+  return(apache_score)
+}
+
+apache8_func <- function(pot_value){
+  if (is.na(pot_value) == T){ #if one value is not available
+    apache_score <- 0
+  }else{
+    
+    if (pot_value >= 3.5 & pot_value < 5.5){
+      apache_score <- 0
+    }else if ( (pot_value >= 5.5 & pot_value < 6.0) | (pot_value >= 3.0 & pot_value < 3.5)){
+      apache_score <- 1
+    }else if (pot_value >= 2.5 & pot_value < 3.0){
+      apache_score <- 2
+    }else if (pot_value >= 6.0 & pot_value < 7){
+      apache_score <- 3
+    }else if(pot_value >= 7 | pot_value < 2.5){
+      apache_score <- 4
+    }else{
+      apache_score <- NA
+    }
+    
+  }
+  return(apache_score)
+}
+
+apache9_func <- function(sCr_Value){
+  if (is.na(sCr_Value) == T){ #if one value is not available
+    apache_score <- 0
+  }else{
+    
+    if (sCr_Value >= 0.6 & sCr_Value < 1.5){
+      apache_score <- 0
+    }else if ( (sCr_Value >= 1.5 & sCr_Value < 2.0) | ( sCr_Value < 0.6)){
+      apache_score <- 2
+    }else if (sCr_Value >= 2.0 & sCr_Value < 3.5){
+      apache_score <- 3
+    }else if (sCr_Value >= 3.5){
+      apache_score <- 4
+    }else{
+      apache_score <- NA
+    }
+    
+  }
+  return(apache_score)
+}
+
+
+apache10_func <- function(hemat_value){
+  if (is.na(hemat_value) == T){ #if one value is not available
+    apache_score <- 0
+  }else{
+    
+    if (hemat_value >= 30 & hemat_value < 46){
+      apache_score <- 0
+    }else if ( hemat_value >= 46 & hemat_value < 50){
+      apache_score <- 1
+    }else if ((hemat_value >= 50 & hemat_value < 60) | (hemat_value >= 20 & hemat_value < 30)){
+      apache_score <- 2
+    }else if (hemat_value >= 60 | hemat_value <20 ){
+      apache_score <- 4
+    }else{
+      apache_score <- NA
+    }
+    
+  }
+  return(apache_score)
+}
+
+
+apache11_func <- function(wbc_value){
+  if (is.na(wbc_value) == T){ #if one value is not available
+    apache_score <- 0
+  }else{
+    
+    if (wbc_value >= 3 & wbc_value < 15){
+      apache_score <- 0
+    }else if ( wbc_value >= 15 & wbc_value < 20){
+      apache_score <- 1
+    }else if ((wbc_value >= 20 & wbc_value < 40) | (wbc_value >= 1 & wbc_value < 3)){
+      apache_score <- 2
+    }else if (wbc_value >= 40 | wbc_value < 1 ){
+      apache_score <- 4
+    }else{
+      apache_score <- NA
+    }
+    
+  }
+  return(apache_score)
+}
+
+
+apache12_func <- function(gcs_value){
+  if(is.na(gcs_value) == T){
+    apache_score <- 0 #same as treating GCS as 15
+  }else{
+    apache_score <- 15 - gcs_value
+  }
+  return(apache_score)
+}
+
+
+apache13_func <- function(age){
+  if (is.na(age) == T){ #if one value is not available
+    apache_score <- 0
+  }else{
+    
+    if (age < 45){
+      apache_score <- 0
+    }else if ( age >= 45 & age < 55){
+      apache_score <- 2
+    }else if ((age >= 55 & age < 65)){
+      apache_score <- 3
+    }else if ((age >= 65 & age < 75)){
+      apache_score <- 5
+    }else if (age >= 75){
+      apache_score <- 6
+    }
+    
+  }
+  return(apache_score)
 }
