@@ -31,14 +31,15 @@ MAKE1_idxes <- which(outcome_df[,"died_in_window"] == 1 |
 outcome_df$MAKE[MAKE1_idxes] <- 1
 outcome_df$MAKE[-MAKE1_idxes] <- 0
 
+
 #Load UK exclusion
-UK_exclusion_df <- read.csv(paste0(UK_data_dir,"exclusion_criteria._taylor.csv"),stringsAsFactors = F)
+UK_exclusion_df <- read.csv("/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UKY/exclusion_criteria._taylor.csv",stringsAsFactors = F)
 UK_ID_left_df <- UK_exclusion_df[which(rowSums(UK_exclusion_df[,2:ncol(UK_exclusion_df)])==0),] #keep pt without "1" in any of the column
 
 #Update outcome df with ID left
 updated_outcome_df <- outcome_df[which(outcome_df[,"STUDY_PATIENT_ID"] %in% UK_ID_left_df[,"STUDY_PATIENT_ID"]),c("STUDY_PATIENT_ID","died_inp","MAKE")]
 table(updated_outcome_df$MAKE)
-
+table(updated_outcome_df$died_inp)
 write.csv(updated_outcome_df,paste0(UK_outdir,"updated_outcome.csv"),row.names = F)
 
 
