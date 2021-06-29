@@ -16,21 +16,35 @@ All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFact
 All_time_df <- All_time_df[which(All_time_df$STUDY_PATIENT_ID %in% analysis_ID),] #filter for anlaysis Id only
 
 #3.Load raw data
-HT_WT_df <- read.csv(paste0(outdir,"All_HT_WT_RESP_FIO2_Imputed.csv"),stringsAsFactors = F)
+#imputed_HT_WT_df <- read.csv(paste0(outdir,"All_HT_WT_RESP_FIO2_Imputed.csv"),stringsAsFactors = F)
+notimputed_HT_WT_df <- read.csv(paste0(outdir,"All_HT_WT_RESP_FIO2_NOTimputed.csv"),stringsAsFactors = F)
 
-# Compute BMI and using Imputed values
-BMI_df <- as.data.frame(matrix(NA, nrow = nrow(HT_WT_df), ncol = 2))
+# Compute BMI and using not Imputed values
+BMI_df <- as.data.frame(matrix(NA, nrow = nrow(notimputed_HT_WT_df), ncol = 2))
 colnames(BMI_df) <- c("STUDY_PATIENT_ID","BMI")
 
-for (i in 1:nrow(HT_WT_df)){
-  curr_wt <- HT_WT_df[i,"INITIAL_WEIGHT_KG"]
-  curr_ht <- HT_WT_df[i,"HEIGHT_Meters"]
-  curr_id <- HT_WT_df[i,"STUDY_PATIENT_ID"]
+for (i in 1:nrow(notimputed_HT_WT_df)){
+  curr_wt <- notimputed_HT_WT_df[i,"INITIAL_WEIGHT_KG"]
+  curr_ht <- notimputed_HT_WT_df[i,"HEIGHT_Meters"]
+  curr_id <- notimputed_HT_WT_df[i,"STUDY_PATIENT_ID"]
   
   curr_BMI <- curr_wt/(curr_ht^2)
   BMI_df[i,"STUDY_PATIENT_ID"] <- curr_id
   BMI_df[i,"BMI"] <- curr_BMI
 }
 
-write.csv(BMI_df,paste0(outdir,"All_BMI_usingImputedHT_WT.csv"),row.names = F)
+#4. Compute missing
+feature_columns <-  c("BMI")
+missing_table <- get_missing_rate_table(BMI_df,feature_columns)
+missing_table
+
+write.csv(BMI_df,paste0(outdir,"All_BMI_NOTimputed.csv"),row.names = F)
+
+
+#5.imputation median for feature column
+Final_BMI_df <- median_imputation_func(BMI_df,feature_columns)
+missing_table2 <- get_missing_rate_table(Final_BMI_df,feature_columns)
+missing_table2
+
+write.csv(BMI_df,paste0(outdir,"All_BMI_Imputed.csv"),row.names = F)
 
