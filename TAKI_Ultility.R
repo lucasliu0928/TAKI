@@ -394,6 +394,9 @@ remove_values_byValue <- function(data_df,feature_col,value,GreaterORLess_Flag){
 }
 
 remove_outlier_BOTOrTOP_5perc <- function(data_df, feature_col,BotOrTOP_Flag){
+  # outlier_col_name <- paste0("Outlier_",feature_col)
+  # data_df[,outlier_col_name] <- 0
+  # 
   if (BotOrTOP_Flag == "BOTTOM"){   #bot 5 perc
     bot_5perc_value <- quantile(data_df[,feature_col],na.rm = T,c(0.05))
     indxes_toremove <- which(data_df[,feature_col]<= bot_5perc_value)
@@ -408,6 +411,7 @@ remove_outlier_BOTOrTOP_5perc <- function(data_df, feature_col,BotOrTOP_Flag){
   
   if (length(indxes_toremove) > 0 ){
       data_df[indxes_toremove,feature_col] <- NA
+      #data_df[indxes_toremove,outlier_col_name] <- 1
   }
   return(data_df)
 }
