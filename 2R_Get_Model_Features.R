@@ -40,6 +40,7 @@ All_onRRT_df <-read.csv(paste0(outdir,"All_onRRT_ICUD0toD3.csv"),stringsAsFactor
 All_KDIGO_df <-read.csv(paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"),stringsAsFactors = F)
 
 All_ELIX_df <-read.csv(paste0(outdir,"All_ELIXHAUSER_df.csv"),stringsAsFactors = F)
+All_unplannedAdmission_df <-read.csv(paste0(outdir,"All_unplanned_Admission.csv"),stringsAsFactors = F)
 
 #Recode gender and race
 M_idxes <- which(All_Demo_df$GENDER == "M")
@@ -216,8 +217,11 @@ for (i in 1:length(analysis_ID)){
   #"Hours_inICUD0toD3"
   Feature_df[i,"Hours_inICUD0toD3"] <- get_feature_forPt(curr_id,All_time_df,"Actual_ICUHours_D0toD3")
   
-
+  #Unplanned_Admission
+  Feature_df[i,"Unplanned_Admission"] <- get_feature_forPt(curr_id,All_unplannedAdmission_df,"unplanned_Admission")
+  
 }
+
 
 #4. Compute missing before imputation
 missing_table <- get_missing_rate_table(Feature_df,colnames(Feature_df))
@@ -225,10 +229,18 @@ missing_table
 write.csv(Feature_df,paste0(outdir,"Model_Feature_Outcome/All_Feature_NOTimputed.csv"),row.names = F)
 
 #5.imputation median
-features_toimputed <- colnames(Feature_df)[-which(colnames(Feature_df) %in% c("Unplanned_Admission","STUDY_PATIENT_ID"))]
-Final_Feature_df <- median_imputation_func(Feature_df,features_toimputed)
-missing_table2 <- get_missing_rate_table(Final_Feature_df,features_toimputed)
+features_cols <- colnames(Feature_df)[-which(colnames(Feature_df) == "STUDY_PATIENT_ID")]
+Final_Feature_df <- median_imputation_func(Feature_df,features_cols)
+missing_table2 <- get_missing_rate_table(Final_Feature_df,features_cols)
 missing_table2
 
-write.csv(Feature_df,paste0(outdir,"Model_Feature_Outcome/All_Feature_imputed.csv"),row.names = F)
+write.csv(Final_Feature_df,paste0(outdir,"Model_Feature_Outcome/All_Feature_imputed.csv"),row.names = F)
 
+#6.Max min norm
+Feature_df_normed <- Final_Feature_df
+for (j in 1:length(features_cols)){
+  curr_f <- features_cols[j]
+  Feature_df_normed[,curr_f] <- min_max_func(Feature_df_normed[,curr_f])
+}
+
+write.csv(Feature_df_normed,paste0(outdir,"Model_Feature_Outcome/All_Feature_imputed_normed.csv"),row.names = F)
