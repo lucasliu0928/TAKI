@@ -1223,7 +1223,7 @@ get_pred_class_func <- function(predicted_prob){
 
 #XGboost functions
 #return traingined model and importnce matrix
-train_xgboost<-function(data_part,train_label,xgb_params,num_rounds,upsample_flag){
+train_xgboost<-function(data_part,train_label,xgb_params,num_rounds){
   # data_part <- train_data_part
   # train_label <- sampled_train_data[,outcome_index]
     
@@ -1316,7 +1316,7 @@ cv_func <- function(analysis_df,Idxes_fold_df,outcome_colname,model_name,validat
         model_svm  <- train(train_data_part, sampled_train_data[,outcome_index],method='svmRadial' , 
                             trControl = trainControl("none", classProbs = TRUE),verbose=F) # Support Vector Machines
         curr_model <- model_svm
-        import_res <- varImp(curr_model, scale = TRUE)
+        import_res <- varImp(curr_model, scale = TRUE) ##The area under ROC is used as the measure of variable importance for each predictor
         curr_importance_matrix <- import_res$importance
         curr_importance_matrix$Sample_Index <- paste0("Sample",s)
         curr_importance_matrix$Feature <- rownames(curr_importance_matrix)
@@ -1466,7 +1466,7 @@ cv_func <- function(analysis_df,Idxes_fold_df,outcome_colname,model_name,validat
         #first find feature importanance 
         num_rounds<- 10
         xgb_params <- list(booster = "gbtree","objective" = "reg:logistic")
-        xgb_res <- train_xgboost(train_data_part,sampled_train_data[,outcome_index],xgb_params,num_rounds,upsample_flag)
+        xgb_res <- train_xgboost(train_data_part,sampled_train_data[,outcome_index],xgb_params,num_rounds)
         model_xgb <- xgb_res[[1]] #model with all features
         importance_matrix_xgb <- xgb_res[[2]]
         
@@ -1478,7 +1478,7 @@ cv_func <- function(analysis_df,Idxes_fold_df,outcome_colname,model_name,validat
         }
         new_train_part <- as.data.frame(train_data_part[,top_features])
         colnames(new_train_part) <- top_features
-        model_top_xgb_res <- train_xgboost(new_train_part,sampled_train_data[,outcome_index],xgb_params,num_rounds,upsample_flag)
+        model_top_xgb_res <- train_xgboost(new_train_part,sampled_train_data[,outcome_index],xgb_params,num_rounds)
         model_top_xgb <- model_top_xgb_res[[1]] #model with top features
         importance_matrix_xgb_top <- model_top_xgb_res[[2]]
         curr_model <- model_top_xgb
