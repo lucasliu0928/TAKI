@@ -1160,13 +1160,13 @@ code_Label_10_func <- function(input_df,label_colname){
   return(input_df)
 }
 
-create_fold_func <- function(analysis_df){
+create_fold_func <- function(analysis_df,NFolds){
   #this function returns row index of analysis_df for each fold
   #create 10 folds
   set.seed(123)
-  Idx_Folds <- createFolds(1:nrow(analysis_df), k = 10)
+  Idx_Folds <- createFolds(1:nrow(analysis_df), k = NFolds)
   Fold_list <- list()
-  for (i in 1:10){
+  for (i in 1:NFolds){
     curr_ids <- Idx_Folds[[i]]
     curr_fold_name <- rep(i,length(curr_ids))
     Fold_list[[i]] <- cbind(curr_ids,curr_fold_name)
@@ -1575,7 +1575,58 @@ cv_func <- function(analysis_df,Idxes_fold_df,outcome_colname,model_name,validat
 }
 
 
-
+#CV updated 0630, only for training data
+cv2_func <- function(analysis_df,outcome_colname,model_name,upsample_flag,N_sampling,NFolds){
+  # analysis_df <- model_data
+  # upsample_flag <- 0
+  # N_sampling <- 2
+  # model_name <- "SVM"
+  # outcome_colname <- "Death_inHOSP"
+  
+  #Get folds indexes table 
+  Idxes_fold_df <- create_fold_func(analysis_df,NFolds)
+  
+  #Training and prediction
+  All_sampling_results_perFold <- list(NA)
+  for (i in 1:NFolds){ #10 Fold
+    curr_test_data  <-  analysis_df[which(Idxes_fold_df[,"Fold"] == i),]
+    curr_train_data <-  analysis_df[which(Idxes_fold_df[,"Fold"] != i),]
+    
+    #sampling for traning data
+    sampling_pred_table_list <- list(NA)
+    for (s in 1:N_sampling){
+      print(paste0("Fold",i,": Sampling",s))
+      seed_num <- s*i
+      sampled_train_data <- Data_Sampling_Func(upsample_flag,curr_train_data,outcome_colname,seed_num)
+      
+      #train on sample data
+      res <- train_models(sampled_train_data,outcome_colname,model_name)
+      curr_model <- res[[1]]
+      
+      #predicted prob
+      pred_prob <- prediction_usingTrainedModels(curr_test_data,outcome_colname,curr_model,model_name)
+      
+      #Prediction class
+      pred_class <- get_pred_class_func(pred_prob) #testing 
+      
+      #Code outcome of test back to 1 and 0
+      curr_test_data <- code_Label_10_func(curr_test_data,outcome_colname)
+      
+      #combine pred prob, pred class, acutal label, and fold index
+      #Testing results
+      pred_table <- cbind.data.frame(rownames(curr_test_data),pred_prob,pred_class,as.numeric(curr_test_data[,outcome_colname]),paste0("Fold",i),paste0("S",s))
+      colnames(pred_table) <- c("ID","pred_prob","pred_class","Label","TestFold","TrainingSample_Index")
+      sampling_pred_table_list[[s]] <- pred_table
+      
+    } 
+    
+    All_sampling_results_perFold[[i]] <- do.call(rbind,sampling_pred_table_list)
+  }
+  
+  final_pred <- do.call(rbind,All_sampling_results_perFold)
+  
+  return(final_pred)
+}
 
 ##Performance functions
 #compute calibration slope and Intercept
@@ -1635,8 +1686,53 @@ compute_performance_func <- function(prediction_table){
   return(perf_vec)
 }
 
+
+compute_performance_TrainCV_func <- function(N_sampling, NFolds,prediction_table){
+  #Compute performance for each fold with each sampling
+  EachFoldEachSampling_perf_table <- as.data.frame(matrix(NA, nrow =NFolds*N_sampling ,ncol = 14))
+  colnames(EachFoldEachSampling_perf_table) <-c("Fold","DownSample_Indxes","AUC","Accuracy",
+                                                "Precision","Sensitivity","Specificity","PPV","NPV",
+                                                "Calibration_Intercept","Calibration_Slope",
+                                                "Taylor_Calibration_Intercept","Taylor_Calibration_Slope","F1")
+  ct <- 1
+  for (i in 1:NFolds){
+    curr_fold <- paste0("Fold",i)
+    for (j in 1:N_sampling){
+      EachFoldEachSampling_perf_table[ct,"Fold"] <- curr_fold
+      curr_sample <-  paste0("S",j)
+      EachFoldEachSampling_perf_table[ct,"DownSample_Indxes"] <- curr_sample
+      curr_perf_idxes <- which(prediction_table[,"TestFold"] == curr_fold & prediction_table[,"TrainingSample_Index"] == curr_sample)
+      curr_perf_table <- prediction_table[curr_perf_idxes,]
+      
+      #calibration
+      calib_res <- compute_calibration_func(curr_perf_table)
+      my_calib_res <- calib_res[[1]]
+      taylors_res <- c(calib_res[[2]],calib_res[[3]])
+      EachFoldEachSampling_perf_table[ct,"Calibration_Intercept"] <- my_calib_res[1]
+      EachFoldEachSampling_perf_table[ct,"Calibration_Slope"] <- my_calib_res[2]
+      EachFoldEachSampling_perf_table[ct,"Taylor_Calibration_Intercept"] <- taylors_res[1]
+      EachFoldEachSampling_perf_table[ct,"Taylor_Calibration_Slope"] <- taylors_res[2]
+      
+      #Other perforamnce:
+      other_res <- compute_performance_func(curr_perf_table)
+      EachFoldEachSampling_perf_table[ct,"AUC"] <- as.numeric(other_res[1])
+      EachFoldEachSampling_perf_table[ct,"Accuracy"] <- other_res["Accuracy"]
+      EachFoldEachSampling_perf_table[ct,"Precision"] <- other_res["Precision"]
+      EachFoldEachSampling_perf_table[ct,"Sensitivity"] <- other_res["Sensitivity"]
+      EachFoldEachSampling_perf_table[ct,"Specificity"] <- other_res["Specificity"]
+      EachFoldEachSampling_perf_table[ct,"PPV"] <- other_res["Pos Pred Value"]
+      EachFoldEachSampling_perf_table[ct,"NPV"] <- other_res["Neg Pred Value"]
+      EachFoldEachSampling_perf_table[ct,"F1"] <- other_res["F1"]
+      
+      ct <- ct + 1
+    }
+  }
+  return(EachFoldEachSampling_perf_table)
+}
+
+
 #Compute report mean and CI for all folds
-perf_Mean_CI_Folds_func <-function(Fold_perf_table){
+perf_Mean_CI_func <-function(Fold_perf_table){
   #Fold_perf_table <- EachFold_perf_table
   
   mean_CI_perf <- as.data.frame(matrix(NA,nrow = ncol(Fold_perf_table),ncol = 1))
@@ -2244,13 +2340,15 @@ get_feature_importance_for_Logreg <- function(trained_model){
   return(importance_matrix)
 }
 
-scale_0to100_func <- function(xgb_importance_matrix){
-  col_value <- xgb_importance_matrix[,"Gain"]
+scale_0to100_func <- function(importance_matrix,importance_col){
+  #importance_col <- "Gain"
+    
+  col_value <- importance_matrix[,importance_col]
   minv <- min(col_value,na.rm = T)
   maxv <- max(col_value,na.rm = T)
   normed_col_value <- (col_value - minv) / (maxv - minv) * 100
-  xgb_importance_matrix[,"Gain"] <- normed_col_value
-  return(xgb_importance_matrix)
+  importance_matrix[,importance_col] <- normed_col_value
+  return(importance_matrix)
 }
 
 
@@ -2270,3 +2368,74 @@ plot_func <- function(importance_matrix){
   return(plot)
 }
 
+
+
+#Load feature and outcome file, and combine them
+construct_model_data_func <- function(data_dir,feature_file,outcome_file,outcome_colname){
+  #1.Load feature data
+  feature_df <- read.csv(paste0(data_dir,feature_file),stringsAsFactors = F)
+  #2. Load Outcome data
+  outcome_df <- read.csv(paste0(data_dir,outcome_file),stringsAsFactors = F)
+  outcome_df <- outcome_df[match(feature_df[,"STUDY_PATIENT_ID"],outcome_df[,"STUDY_PATIENT_ID"]),] #  #reorder outcome to match ID
+  
+  #3.Check if IDs order are matched, if so process
+  if(identical(outcome_df[,"STUDY_PATIENT_ID"],feature_df[,"STUDY_PATIENT_ID"])==T){
+    #4.Add outcome to feature data as train data
+    model_data <- feature_df
+    model_data[,outcome_colname] <- outcome_df[,outcome_colname]
+    
+    #5.Add ID as row name, and remove ID col
+    rownames(model_data) <- model_data[,"STUDY_PATIENT_ID"] #add ID as
+    model_data <- model_data[,-1]
+    
+    #6.Recode label as Y and N, because caret package does not accept 1 or 0
+    model_data <- code_Label_YN_func(model_data,outcome_colname)
+    
+  }else{
+    model_data <- NULL
+    print("Feature and Outcome IDs does not match")
+  }
+  return(model_data)
+}
+
+#Train model of choice and return model and important matrix
+train_models <- function(train_data,outcome_colname,model_name){
+  
+  #Outcome index 
+  outcome_index <- which(colnames(train_data) == outcome_colname)
+  
+  #Train data part
+  train_X <-  train_data[,-outcome_index]
+  #Train label
+  train_Y <-  train_data[,outcome_index]
+  
+  if (model_name == "SVM"){
+    trained_model  <- train(train_X, train_Y,method='svmRadial' , trControl = trainControl("none", classProbs = TRUE),verbose=F) # Support Vector Machines
+    importance_matrix <- get_feature_importance_for_SVMRF(trained_model,scale_flag=T)
+  }else if (model_name == "RF"){
+    trained_model <- train(train_X, train_Y, method='rf', trControl = trainControl("none", classProbs = TRUE), verbose=F) # Random Forest
+    importance_matrix <- get_feature_importance_for_SVMRF(trained_model,scale_flag=T)
+  }else if (model_name == "LogReg"){
+    trained_model <- glm(as.formula(paste0(eval(outcome_colname) ,"~.")), data = train_data, family = binomial)
+    importance_matrix <- get_feature_importance_for_Logreg(trained_model)
+  }else if (model_name == "XGB"){
+    xgb_res <- train_xgboost(train_X,train_Y,list(booster = "gbtree","objective" = "reg:logistic"),num_rounds = 10)
+    trained_model <- xgb_res[[1]] 
+    importance_matrix <- as.data.frame(xgb_res[[2]])
+    importance_matrix<- scale_0to100_func(importance_matrix,"Gain") #scale 0-100
+    
+  }
+  return(list(trained_model,importance_matrix))
+}
+
+
+compute_ROCAUC_bootstrap_CI <- function(pred_table){
+  roc <- roc(pred_table[,"pred_class"], pred_table[,"Label"])
+  CI_AUC <- ci.auc(roc, conf.level=0.95, method=c("bootstrap"), boot.n = 2000, boot.stratified = TRUE, reuse.auc=TRUE,
+                   progress = getOption("pROCProgress")$name, parallel=FALSE)
+  roc_auc_andCI <- CI_AUC
+  res <- t(data.frame(roc_auc_andCI))
+  colnames(res) <- c("CI_P2_5","AUC","CI_P97_5")
+  rownames(res) <- NULL
+  return(res)
+}    
