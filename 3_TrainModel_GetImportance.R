@@ -1,113 +1,211 @@
 source("TAKI_Ultility.R")
-
-#Load feature and outcome file, and combine them
-construct_model_data_func <- function(data_dir,feature_file,outcome_file,outcome_colname){
-  #1.Load feature data
-  feature_df <- read.csv(paste0(data_dir,feature_file),stringsAsFactors = F)
-  #2. Load Outcome data
-  outcome_df <- read.csv(paste0(data_dir,outcome_file),stringsAsFactors = F)
-  outcome_df <- outcome_df[match(feature_df[,"STUDY_PATIENT_ID"],outcome_df[,"STUDY_PATIENT_ID"]),] #  #reorder outcome to match ID
-  
-  #3.Check if IDs order are matched, if so process
-  if(identical(outcome_df[,"STUDY_PATIENT_ID"],feature_df[,"STUDY_PATIENT_ID"])==T){
-    #4.Add outcome to feature data as train data
-    model_data <- feature_df
-    model_data[,outcome_colname] <- outcome_df[,outcome_colname]
-    
-    #5.Add ID as row name, and remove ID col
-    rownames(model_data) <- model_data[,"STUDY_PATIENT_ID"] #add ID as
-    model_data <- model_data[,-1]
-    
-    #6.Recode label as Y and N, because caret package does not accept 1 or 0
-    model_data <- code_Label_YN_func(model_data,outcome_colname)
-    
-  }else{
-    model_data <- NULL
-    print("Feature and Outcome IDs does not match")
-  }
-  return(model_data)
-}
-
-#Train model of choice and return model and important matrix
-train_models <- function(train_data,outcome_colname,model_name){
-  
-  #Outcome index 
-  outcome_index <- which(colnames(train_data) == outcome_colname)
-  
-  #Train data part
-  train_X <-  train_data[,-outcome_index]
-  #Train label
-  train_Y <-  train_data[,outcome_index]
-  
-  if (model_name == "SVM"){
-    trained_model  <- train(train_X, train_Y,method='svmRadial' , trControl = trainControl("none", classProbs = TRUE),verbose=F) # Support Vector Machines
-    importance_matrix <- get_feature_importance_for_SVMRF(trained_model,scale_flag=T)
-  }else if (model_name == "RF"){
-    trained_model <- train(train_X, train_Y, method='rf', trControl = trainControl("none", classProbs = TRUE), verbose=F) # Random Forest
-    importance_matrix <- get_feature_importance_for_SVMRF(trained_model,scale_flag=T)
-  }else if (model_name == "LogReg"){
-    trained_model <- glm(as.formula(paste0(eval(outcome_colname) ,"~.")), data = train_data, family = binomial)
-    importance_matrix <- get_feature_importance_for_Logreg(trained_model)
-  }else if (model_name == "XGB"){
-    xgb_res <- train_xgboost(train_X,train_Y,list(booster = "gbtree","objective" = "reg:logistic"),num_rounds = 10)
-    trained_model <- xgb_res[[1]] 
-    importance_matrix <- xgb_res[[2]]
-    importance_matrix<- scale_0to100_func(importance_matrix) #scale 0-100
-  }
-  return(list(trained_model,importance_matrix))
-}
+#this script use entire UK data plus down sampleing to train the model and get importance matrix
 
 
-####################################################################################### 
-######                           mortality Prediction                      ############
-#1. SOFA_SUM_norm.csv
-#2. APACHE_SUM_norm.csv
-#3. All_Feature_imputed_normed.csv
-####################################################################################### 
-#User input
+#Data dir
 data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
 
 #out dir
 out_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0629/"
-outdir <- paste0(out_dir,"mortality/")
-outdir2 <- paste0(out_dir,"mortality_importance/")
 
 #feature file and outcome file names
 feature_file <- c("All_Feature_imputed_normed.csv")
 outcome_file <- "All_outcome.csv"
 
+####################################################################################### 
+######                           Mortality Prediction                      ############
+#feature file: All_Feature_imputed_normed.csv
+#Outcome file: All_outcome.csv
+####################################################################################### 
+#Outdir for mortality
+outdir1 <- paste0(out_dir,"mortality/All_Clinical_Feature/importance/")
+
 #Outcome column name
 outcome_colname <- "Death_inHOSP"
 
 #1.Get model data
-UK_data <- construct_model_data_func(data_dir,feature_file,outcome_file,outcome_colname)
+train_data <- construct_model_data_func(data_dir,feature_file,outcome_file,outcome_colname)
+table(train_data$Death_inHOSP)
 
-#2.Down sampling 10 times on entire UK data, get the average importance matrix
-train_data <- UK_data
-
-upsample_flag <- 0
-
-importance_matrix_list <- list(NA)
-for (s in 1:10){
-  seed_num <- s
-  #Get sampled data
-  train_data_sampled <- Data_Sampling_Func(upsample_flag,train_data,outcome_colname,seed_num)
-  #train model
-  res <- train_models(train_data_sampled,outcome_colname,"XGB")
-  curr_model <- res[[1]]
-  curr_importance_matrix <- res[[2]]
-  curr_importance_matrix$Sample_Indxes <- s
-  importance_matrix_list[[s]] <- curr_importance_matrix
-}
-
-#get importance matrix for every sampling results
-all_importance_matrix <- do.call(rbind,importance_matrix_list)
-table(all_importance_matrix$Feature)
-
-#compute average importance for each feature
-for (){
+#2.For each model, do down sampling 10 times on entire UK data, get the average importance matrix
+upsample_flag <- 0 #down sample
+model_name_list <- c("SVM","RF","LogReg","XGB")
+for (m in 1:length(model_name_list)){
+  model_name <- model_name_list[m]
+  importance_matrix_list <- list(NA)
+  for (s in 1:10){
+    seed_num <- s
+    #Get sampled data
+    train_data_sampled <- Data_Sampling_Func(upsample_flag,train_data,outcome_colname,seed_num)
+    #train model
+    res <- train_models(train_data_sampled,outcome_colname,model_name)
+    curr_model <- res[[1]]
+    curr_importance_matrix <- res[[2]]
+    curr_importance_matrix$Sample_Indxes <- s
+    importance_matrix_list[[s]] <- curr_importance_matrix
+  }
   
+  #3.get importance matrix for every sampling results
+  all_importance_matrix <- do.call(rbind,importance_matrix_list)
+  table(all_importance_matrix$Feature)
+  
+  #4.compute average importance for each feature
+  feature_indexes<- which(colnames(train_data) != outcome_colname)
+  average_importance_df <- as.data.frame(matrix(NA, nrow = length(feature_indexes), ncol = 2))
+  colnames(average_importance_df) <- c("Feature","AVG_Importance")
+  for (f in 1:length(feature_indexes)){
+    curr_f <- colnames(train_data)[f]
+    curr_f_importances_matrix <- all_importance_matrix[which(all_importance_matrix[,"Feature"] == curr_f),]
+    if (nrow(curr_f_importances_matrix)  == 0){ #it is possible in XGB, the feature did not show up in importance matrix, cuz it is not importance
+      curr_f_avg_importances <- 0
+    }else{
+       curr_f_avg_importances <- mean(curr_f_importances_matrix[,2])
+    }
+    average_importance_df[f,"Feature"] <- curr_f
+    average_importance_df[f,"AVG_Importance"] <- curr_f_avg_importances
+    
+}
+  
+  #scale 0 to 100
+  if (model_name != "LogReg"){
+    average_importance_df <- scale_0to100_func(average_importance_df,"AVG_Importance") #scale 0-100
+  }
+  
+  #Reorder
+  average_importance_df <- average_importance_df[order(abs(average_importance_df$AVG_Importance),decreasing = T),]
+  
+  write.csv(average_importance_df, paste0(outdir1,"importance_matrix_", model_name, ".csv"))
 }
 
-#2.10-folds CV +  Down sampling 10 times, each intance get 10 predicted results
-#3.
+
+
+####################################################################################### 
+######              MAKE 120 with drop 30   Prediction                     ############
+#feature file: All_Feature_imputed_normed.csv
+#Outcome file: All_outcome.csv
+####################################################################################### 
+#Outdir for mortality
+outdir2 <- paste0(out_dir,"/make120_drop30/All_Clinical_Feature/importance/")
+
+#Outcome column name
+outcome_colname <- "MAKE_HOSP120_Drop30"
+
+#1.Get model data
+train_data <- construct_model_data_func(data_dir,feature_file,outcome_file,outcome_colname)
+table(train_data$MAKE_HOSP120_Drop30)
+
+#2.For each model, do down sampling 10 times on entire UK data, get the average importance matrix
+upsample_flag <- 0 #down sample
+model_name_list <- c("SVM","RF","LogReg","XGB")
+for (m in 1:length(model_name_list)){
+  model_name <- model_name_list[m]
+  importance_matrix_list <- list(NA)
+  for (s in 1:10){
+    seed_num <- s
+    #Get sampled data
+    train_data_sampled <- Data_Sampling_Func(upsample_flag,train_data,outcome_colname,seed_num)
+    #train model
+    res <- train_models(train_data_sampled,outcome_colname,model_name)
+    curr_model <- res[[1]]
+    curr_importance_matrix <- res[[2]]
+    curr_importance_matrix$Sample_Indxes <- s
+    importance_matrix_list[[s]] <- curr_importance_matrix
+  }
+  
+  #3.get importance matrix for every sampling results
+  all_importance_matrix <- do.call(rbind,importance_matrix_list)
+  table(all_importance_matrix$Feature)
+  
+  #4.compute average importance for each feature
+  feature_indexes<- which(colnames(train_data) != outcome_colname)
+  average_importance_df <- as.data.frame(matrix(NA, nrow = length(feature_indexes), ncol = 2))
+  colnames(average_importance_df) <- c("Feature","AVG_Importance")
+  for (f in 1:length(feature_indexes)){
+    curr_f <- colnames(train_data)[f]
+    curr_f_importances_matrix <- all_importance_matrix[which(all_importance_matrix[,"Feature"] == curr_f),]
+    if (nrow(curr_f_importances_matrix)  == 0){ #it is possible in XGB, the feature did not show up in importance matrix, cuz it is not importance
+      curr_f_avg_importances <- 0
+    }else{
+      curr_f_avg_importances <- mean(curr_f_importances_matrix[,2])
+    }
+    average_importance_df[f,"Feature"] <- curr_f
+    average_importance_df[f,"AVG_Importance"] <- curr_f_avg_importances
+    
+  }
+  
+  #scale 0 to 100
+  if (model_name != "LogReg"){
+    average_importance_df <- scale_0to100_func(average_importance_df,"AVG_Importance") #scale 0-100
+  }
+  
+  #Reorder
+  average_importance_df <- average_importance_df[order(abs(average_importance_df$AVG_Importance),decreasing = T),]
+  
+  write.csv(average_importance_df, paste0(outdir2,"importance_matrix_", model_name, ".csv"))
+}
+
+
+####################################################################################### 
+######              MAKE 120 with drop 50   Prediction                     ############
+#feature file: All_Feature_imputed_normed.csv
+#Outcome file: All_outcome.csv
+####################################################################################### 
+#Outdir for mortality
+outdir3 <- paste0(out_dir,"/make120_drop50/All_Clinical_Feature/importance/")
+
+#Outcome column name
+outcome_colname <- "MAKE_HOSP120_Drop50"
+
+#1.Get model data
+train_data <- construct_model_data_func(data_dir,feature_file,outcome_file,outcome_colname)
+table(train_data$MAKE_HOSP120_Drop50)
+
+#2.For each model, do down sampling 10 times on entire UK data, get the average importance matrix
+upsample_flag <- 0 #down sample
+model_name_list <- c("SVM","RF","LogReg","XGB")
+for (m in 1:length(model_name_list)){
+  model_name <- model_name_list[m]
+  importance_matrix_list <- list(NA)
+  for (s in 1:10){
+    seed_num <- s
+    #Get sampled data
+    train_data_sampled <- Data_Sampling_Func(upsample_flag,train_data,outcome_colname,seed_num)
+    #train model
+    res <- train_models(train_data_sampled,outcome_colname,model_name)
+    curr_model <- res[[1]]
+    curr_importance_matrix <- res[[2]]
+    curr_importance_matrix$Sample_Indxes <- s
+    importance_matrix_list[[s]] <- curr_importance_matrix
+  }
+  
+  #3.get importance matrix for every sampling results
+  all_importance_matrix <- do.call(rbind,importance_matrix_list)
+  table(all_importance_matrix$Feature)
+  
+  #4.compute average importance for each feature
+  feature_indexes<- which(colnames(train_data) != outcome_colname)
+  average_importance_df <- as.data.frame(matrix(NA, nrow = length(feature_indexes), ncol = 2))
+  colnames(average_importance_df) <- c("Feature","AVG_Importance")
+  for (f in 1:length(feature_indexes)){
+    curr_f <- colnames(train_data)[f]
+    curr_f_importances_matrix <- all_importance_matrix[which(all_importance_matrix[,"Feature"] == curr_f),]
+    if (nrow(curr_f_importances_matrix)  == 0){ #it is possible in XGB, the feature did not show up in importance matrix, cuz it is not importance
+      curr_f_avg_importances <- 0
+    }else{
+      curr_f_avg_importances <- mean(curr_f_importances_matrix[,2])
+    }
+    average_importance_df[f,"Feature"] <- curr_f
+    average_importance_df[f,"AVG_Importance"] <- curr_f_avg_importances
+    
+  }
+  
+  #scale 0 to 100
+  if (model_name != "LogReg"){
+    average_importance_df <- scale_0to100_func(average_importance_df,"AVG_Importance") #scale 0-100
+  }
+  
+  #Reorder
+  average_importance_df <- average_importance_df[order(abs(average_importance_df$AVG_Importance),decreasing = T),]
+  
+  write.csv(average_importance_df, paste0(outdir3,"importance_matrix_", model_name, ".csv"))
+}
