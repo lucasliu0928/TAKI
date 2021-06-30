@@ -1179,7 +1179,7 @@ create_fold_func <- function(analysis_df){
 }
 
 #Sampling function
-Model_sampling_func <- function(upsample_flag,train_data,label_col_name,seed_num){
+Data_Sampling_Func <- function(upsample_flag,train_data,label_col_name,seed_num){
   # upsample_flag <- 0
   # train_data <- curr_train_data
   # label_col_name <- outcome_colname
@@ -1287,7 +1287,7 @@ cv_func <- function(analysis_df,Idxes_fold_df,outcome_colname,model_name,validat
     for (s in 1:N_sampling){
       print(paste0("Fold",i,": Sampling",s))
       seed_num <- s*i
-      sampled_train_data <- Model_sampling_func(upsample_flag,curr_train_data,outcome_colname,seed_num)
+      sampled_train_data <- Data_Sampling_Func(upsample_flag,curr_train_data,outcome_colname,seed_num)
       
      
       if (ncol(sampled_train_data) == 2){  #For data has one feature column
@@ -1455,7 +1455,7 @@ cv_func <- function(analysis_df,Idxes_fold_df,outcome_colname,model_name,validat
         #first find feature importanance 
         num_rounds<- 10
         xgb_params <- list(booster = "gbtree","objective" = "reg:logistic")
-        xgb_res <- train_xgboost(train_data_part,sampled_train_data[,outcome_index],xgb_params,num_rounds,upsample_flag)
+        xgb_res <- train_xgboost(train_data_part,sampled_train_data[,outcome_index],xgb_params,num_rounds)
         model_xgb <- xgb_res[[1]] #model with all features
         importance_matrix_xgb <- xgb_res[[2]]
         curr_model <- model_xgb
@@ -2204,3 +2204,69 @@ apache13_func <- function(age){
   }
   return(apache_score)
 }
+
+########################################################################
+#### Imporatnce Matrix related
+########################################################################
+get_feature_importance_for_SVMRF <- function(trained_model,scale_flag){
+  #trained_model <- model_svm
+  
+  #get importance matrix
+  import_res <- varImp(trained_model, scale = scale_flag) #The area under ROC is used as the measure of variable importance for each predictor
+  importance_matrix <- import_res$importance
+  
+  #Add feature name and remove rownames
+  importance_matrix$Feature <- rownames(importance_matrix)
+  rownames(importance_matrix) <- NULL
+  #change column name
+  if (scale_flag == T){
+    colnames(importance_matrix)[1] <- "Importance_Scaled0_100"
+    importance_matrix <- importance_matrix[,c("Feature","Importance_Scaled0_100")]
+    
+  }else{
+    colnames(importance_matrix)[1] <- "Importance_NOT_Scaled"
+    importance_matrix <- importance_matrix[,c("Feature","Importance_NOT_Scaled")]
+    
+  }
+  
+  return(importance_matrix)
+}
+
+get_feature_importance_for_Logreg <- function(trained_model){
+  #get model coeffient
+  model_coef <- as.data.frame(trained_model$coefficients)
+  
+  #get importance matrix
+  importance_matrix <- cbind(rownames(model_coef),model_coef)
+  importance_matrix <- importance_matrix[- which(rownames(importance_matrix) == "(Intercept)"),] #remove intercept
+  colnames(importance_matrix) <- c("Feature","Coeff")
+  rownames(importance_matrix) <- NULL
+  return(importance_matrix)
+}
+
+scale_0to100_func <- function(xgb_importance_matrix){
+  col_value <- xgb_importance_matrix[,"Gain"]
+  minv <- min(col_value,na.rm = T)
+  maxv <- max(col_value,na.rm = T)
+  normed_col_value <- (col_value - minv) / (maxv - minv) * 100
+  xgb_importance_matrix[,"Gain"] <- normed_col_value
+  return(xgb_importance_matrix)
+}
+
+
+plot_func <- function(importance_matrix){
+  plot <-ggplot(importance_matrix,
+                ggplot2::aes(x = factor(Feature, levels = rev(Feature)), y = Importance, width = 0.5),
+                environment = environment()) +
+    geom_bar(aes(fill = "Darkred"), stat = "identity", position = "identity") +
+    coord_flip() +
+    xlab("Features") +
+    ggtitle("Feature importance") +
+    theme(plot.title = element_text(lineheight = .9, face = "bold"),
+          panel.grid.major.y = element_blank()) +
+    theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +
+    theme(legend.position = "none")
+  return(plot)
+}
+
