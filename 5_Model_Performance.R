@@ -204,7 +204,7 @@ for (i in 1:length(perf_table_list)){ #for each file
   
   
   
-  curr_File_perf <- perf_Mean_CI_Folds_func(EachFold_perf_table)
+  curr_File_perf <- perf_Mean_CI_func(EachFold_perf_table)
   colnames(curr_File_perf) <- gsub("/|.csv|_pred_table","",curr_file)
   File_perf[[i]] <- curr_File_perf
 }
