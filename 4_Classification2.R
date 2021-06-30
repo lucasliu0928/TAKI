@@ -11,7 +11,7 @@ main <- function(outdir,outdir2,UK_dir,UTSW_dir, feature_file,outcome_file,outco
   outcome_df <- read.csv(paste0(UK_dir,outcome_file),stringsAsFactors = F)
 
   #Add outcome to feature data
-  feature_df[,outcome_colname] <- outcome_df[match(outcome_df[,"STUDY_PATIENT_ID"],feature_df[,"STUDY_PATIENT_ID"]),outcome_colname]
+  feature_df[,outcome_colname] <- outcome_df[match(feature_df[,"STUDY_PATIENT_ID"],outcome_df[,"STUDY_PATIENT_ID"]),outcome_colname]
   rownames(feature_df) <- feature_df$STUDY_PATIENT_ID
   feature_df <- feature_df[,-1] #remove ID col
   
@@ -26,7 +26,7 @@ main <- function(outdir,outdir2,UK_dir,UTSW_dir, feature_file,outcome_file,outco
   UTSW_outcome_df <- read.csv(paste0(UTSW_dir,outcome_file),stringsAsFactors = F)
 
   #Add outcome to feature data
-  UTSW_feature_df[,outcome_colname] <- UTSW_outcome_df[match(UTSW_outcome_df[,"STUDY_PATIENT_ID"],UTSW_feature_df[,"STUDY_PATIENT_ID"]),outcome_colname]
+  UTSW_feature_df[,outcome_colname] <- UTSW_outcome_df[match(UTSW_feature_df[,"STUDY_PATIENT_ID"],UTSW_outcome_df[,"STUDY_PATIENT_ID"]),outcome_colname]
   rownames(UTSW_feature_df) <- UTSW_feature_df$STUDY_PATIENT_ID
   UTSW_feature_df <- UTSW_feature_df[,-1] #remove ID col
   
