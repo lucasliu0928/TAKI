@@ -35,7 +35,7 @@ main <- function(outdir,outdir2,UK_dir,UTSW_dir, feature_file,outcome_file,outco
   validation_df <- UTSW_feature_df
   
   #Get folds indexes table 
-  Idxes_fold_df <- create_fold_func(analysis_df)
+  Idxes_fold_df <- create_fold_func(analysis_df,10)
   
   #################################################
   ####### 10-fold cv Training And prediction ####### 
