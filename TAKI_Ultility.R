@@ -5,6 +5,7 @@ library(ggplot2)
 library(openxlsx)
 library(dplyr)
 library(caTools)
+library(randomForest)
 ##############  Time correction functions ############## 
 reformat_10char_dates_func <- function(date_to_modify){
   date_to_modify <- as.character(date_to_modify)
@@ -1576,32 +1577,36 @@ cv_func <- function(analysis_df,Idxes_fold_df,outcome_colname,model_name,validat
 
 
 #CV updated 0630, only for training data
-cv2_func <- function(analysis_df,outcome_colname,model_name,upsample_flag,N_sampling,NFolds){
+cv2_func <- function(analysis_df,outcome_colname,model_name,upsample_flag,N_sampling,NFolds,n_tress_RF=500,svmkernel = 'svmLinear'){
   # analysis_df <- model_data
   # upsample_flag <- 0
   # N_sampling <- 2
-  # model_name <- "SVM"
-  # outcome_colname <- "Death_inHOSP"
-  
+  # model_name <- "RF"
+  # outcome_colname <- "MAKE_HOSP120_Drop50"
+
   #Get folds indexes table 
   Idxes_fold_df <- create_fold_func(analysis_df,NFolds)
   
   #Training and prediction
   All_sampling_results_perFold <- list(NA)
+  All_sampling_importance_matrix_perFold <- list(NA)
   for (i in 1:NFolds){ #10 Fold
     curr_test_data  <-  analysis_df[which(Idxes_fold_df[,"Fold"] == i),]
     curr_train_data <-  analysis_df[which(Idxes_fold_df[,"Fold"] != i),]
     
     #sampling for traning data
     sampling_pred_table_list <- list(NA)
+    sampling_importance_matrix_list <- list(NA)
     for (s in 1:N_sampling){
       print(paste0("Fold",i,": Sampling",s))
       seed_num <- s*i
       sampled_train_data <- Data_Sampling_Func(upsample_flag,curr_train_data,outcome_colname,seed_num)
       
       #train on sample data
-      res <- train_models(sampled_train_data,outcome_colname,model_name)
+      res <- train_models(sampled_train_data,outcome_colname,model_name,n_tress_RF,svmkernel)
       curr_model <- res[[1]]
+      curr_importance_matrix <- res[[2]]
+      sampling_importance_matrix_list[[s]] <- curr_importance_matrix
       
       #predicted prob
       pred_prob <- prediction_usingTrainedModels(curr_test_data,outcome_colname,curr_model,model_name)
@@ -1619,24 +1624,97 @@ cv2_func <- function(analysis_df,outcome_colname,model_name,upsample_flag,N_samp
       sampling_pred_table_list[[s]] <- pred_table
       
     } 
+    All_sampling_importance_matrix_perFold[[i]] <- do.call(rbind,sampling_importance_matrix_list)
     
     All_sampling_results_perFold[[i]] <- do.call(rbind,sampling_pred_table_list)
   }
   
   final_pred <- do.call(rbind,All_sampling_results_perFold)
+  final_importance_matrix<- do.call(rbind,All_sampling_importance_matrix_perFold)
   
-  return(final_pred)
+  return(list(final_pred,final_importance_matrix))
 }
 
+
+#prediction using model of choose
+prediction_usingTrainedModels <- function(test_data,outcome_colname,trained_model,model_name){
+  # test_data <- curr_test_data
+  # trained_model <- curr_model
+  # 
+  #Outcome index 
+  outcome_index <- which(colnames(test_data) == outcome_colname)
+  
+  #test data part
+  if (ncol(test_data) == 2){ ##For data has one feature column, must add as.data.frame, and rename col
+    test_X <- as.data.frame(test_data[,-outcome_index])
+    colnames(test_X) <- colnames(test_data)[1]
+  }else{
+    test_X <- test_data[,-outcome_index]
+  }
+  
+  #test label
+  test_Y <-  test_data[,outcome_index]
+  
+  if (model_name == "SVM" | model_name == "RF"){
+    #prediction 
+    pred_res <- predict(trained_model, newdata = test_X,type = "prob")  
+    pred_prob <- pred_res[,"Y"] #use the prob for Y or 1
+    
+  }else if (model_name == "LogReg"){
+    pred_res <- predict(trained_model, test_data, type='response')  #do not need exclude label name from test here, it will not use it for prediciton
+    pred_prob <- as.numeric(pred_res)
+  }else if (model_name == "XGB"){
+    pred_prob <- predict_xgboost(trained_model,test_X,test_Y,"prob")
+  }
+  return(pred_prob)
+}
+
+
+
+
 ##Performance functions
+#compute average importance for each feature cross each train step (e.g, fold or sample)
+compute_avg_importance <- function(all_importance_matrix,features,model_name){
+  average_importance_df <- as.data.frame(matrix(NA, nrow = length(features), ncol = 2))
+  colnames(average_importance_df) <- c("Feature","AVG_Importance")
+  for (f in 1:length(features)){
+    curr_f <- features[f]
+    curr_f_importances_matrix <- all_importance_matrix[which(all_importance_matrix[,"Feature"] == curr_f),]
+    if (nrow(curr_f_importances_matrix)  == 0){ #it is possible in XGB, the feature did not show up in importance matrix, cuz it is not importance
+      curr_f_avg_importances <- 0
+    }else{
+      curr_f_avg_importances <- mean(curr_f_importances_matrix[,2])
+    }
+    average_importance_df[f,"Feature"] <- curr_f
+    average_importance_df[f,"AVG_Importance"] <- curr_f_avg_importances
+    
+  }
+  
+  #scale 0 to 100
+  if (model_name != "LogReg"){
+    average_importance_df <- scale_0to100_func(average_importance_df,"AVG_Importance") #scale 0-100
+  }
+  
+  #Reorder
+  average_importance_df <- average_importance_df[order(abs(average_importance_df[,"AVG_Importance"]),decreasing = T),]
+  return(average_importance_df)
+}
+
+
+
 #compute calibration slope and Intercept
 compute_calibration_func <-function(perf_table){
-  #perf_table <- curr_table
+  #perf_table <- curr_perf_table
+  
+  #This issue manly for RF when only one predictor
+  #Convert prediction of 1 = 0.9999 , and 0 = 0.00000001 so that the calibration can be computed
+  perf_table[which(perf_table$pred_prob == 1),"pred_prob"] <- 0.99999
+  perf_table[which(perf_table$pred_prob == 0),"pred_prob"] <- 0.00001
   
   #compute calibration Intercept and slope and plot
   pred_p <-   perf_table[,"pred_prob"]
   acutal <- as.numeric(as.vector(perf_table[,"Label"]))
-  res = val.prob(pred_p,acutal, pl=FALSE)
+  res = val.prob(p = pred_p,y= acutal, pl=FALSE)
   calib_res <- res[c("Intercept","Slope")]
   
   #Note: This is what val.prb actually doing
@@ -1656,7 +1734,6 @@ compute_calibration_func <-function(perf_table){
 
 #Compute AUC, ACC, Precision, Sensitivity and...
 compute_performance_func <- function(prediction_table){
-  #prediction_table <- curr_v_tab
   prediction_table[,"pred_class"] <- as.factor(prediction_table[,"pred_class"])
   prediction_table[,"Label"] <- as.factor(prediction_table[,"Label"])
   
@@ -1733,8 +1810,6 @@ compute_performance_TrainCV_func <- function(N_sampling, NFolds,prediction_table
 
 #Compute report mean and CI for all folds
 perf_Mean_CI_func <-function(Fold_perf_table){
-  #Fold_perf_table <- EachFold_perf_table
-  
   mean_CI_perf <- as.data.frame(matrix(NA,nrow = ncol(Fold_perf_table),ncol = 1))
   colnames(mean_CI_perf) <- "Mean_(95CI)"
   rownames(mean_CI_perf) <-  colnames(Fold_perf_table)
@@ -2328,6 +2403,30 @@ get_feature_importance_for_SVMRF <- function(trained_model,scale_flag){
   return(importance_matrix)
 }
 
+
+get_feature_importance_for_RF <- function(trained_model,scale_flag){
+
+  #get importance matrix
+  importance_matrix <- as.data.frame(trained_model$importance)
+  
+  #Add feature name and remove rownames
+  importance_matrix$Feature <- rownames(importance_matrix)
+  rownames(importance_matrix) <- NULL
+  #change column name
+  if (scale_flag == T){
+    importance_matrix <- scale_0to100_func(importance_matrix,"Y")
+    colnames(importance_matrix)[2] <- "Importance_Scaled0_100"
+    importance_matrix <- importance_matrix[,c("Feature","Importance_Scaled0_100")]
+    
+  }else{
+    colnames(importance_matrix)[2] <- "Importance_NOT_Scaled"
+    importance_matrix <- importance_matrix[,c("Feature","Importance_NOT_Scaled")]
+    
+  }
+  
+  return(importance_matrix)
+}
+
 get_feature_importance_for_Logreg <- function(trained_model){
   #get model coeffient
   model_coef <- as.data.frame(trained_model$coefficients)
@@ -2341,13 +2440,16 @@ get_feature_importance_for_Logreg <- function(trained_model){
 }
 
 scale_0to100_func <- function(importance_matrix,importance_col){
-  #importance_col <- "Gain"
-    
-  col_value <- importance_matrix[,importance_col]
-  minv <- min(col_value,na.rm = T)
-  maxv <- max(col_value,na.rm = T)
-  normed_col_value <- (col_value - minv) / (maxv - minv) * 100
-  importance_matrix[,importance_col] <- normed_col_value
+  
+  if (nrow(importance_matrix) > 1){
+    col_value <- importance_matrix[,importance_col]
+    minv <- min(col_value,na.rm = T)
+    maxv <- max(col_value,na.rm = T)
+    normed_col_value <- (col_value - minv) / (maxv - minv) * 100
+    importance_matrix[,importance_col] <- normed_col_value
+  }else if (nrow(importance_matrix) == 1){ #only one feature
+    importance_matrix[,importance_col] <- 100 #just make it as 100
+  }
   return(importance_matrix)
 }
 
@@ -2399,21 +2501,33 @@ construct_model_data_func <- function(data_dir,feature_file,outcome_file,outcome
 }
 
 #Train model of choice and return model and important matrix
-train_models <- function(train_data,outcome_colname,model_name){
+train_models <- function(train_data,outcome_colname,model_name,n_tress_RF,svmkernel){
+  #train_data <- sampled_train_data
+  #svmkernel <- 'svmLinear'
   
   #Outcome index 
   outcome_index <- which(colnames(train_data) == outcome_colname)
   
   #Train data part
-  train_X <-  train_data[,-outcome_index]
+  if (ncol(train_data) == 2){ ##For data has one feature column, must add as.data.frame, and rename col
+    train_X <- as.data.frame(train_data[,-outcome_index])
+    colnames(train_X) <- colnames(train_data)[1]
+  }else{
+    train_X <- train_data[,-outcome_index]
+  }
+
   #Train label
   train_Y <-  train_data[,outcome_index]
   
   if (model_name == "SVM"){
-    trained_model  <- train(train_X, train_Y,method='svmRadial' , trControl = trainControl("none", classProbs = TRUE),verbose=F) # Support Vector Machines
+    trained_model  <- train(train_X, train_Y,method= svmkernel , trControl = trainControl("none", classProbs = TRUE),verbose=F) # Support Vector Machines
     importance_matrix <- get_feature_importance_for_SVMRF(trained_model,scale_flag=T)
   }else if (model_name == "RF"){
-    trained_model <- train(train_X, train_Y, method='rf', trControl = trainControl("none", classProbs = TRUE), verbose=F) # Random Forest
+    #option 1
+    #trained_model <- randomForest(as.formula(paste0(eval(outcome_colname) ,"~.")), data=train_data, importance=TRUE,proximity=TRUE,ntree= 100)
+    #importance_matrix <- get_feature_importance_for_RF(trained_model,scale_flag=T)
+    #option2
+    trained_model <- train(train_X, train_Y, method='rf',ntree= n_tress_RF, trControl = trainControl("none",classProbs = TRUE), verbose=F) # Random Forest
     importance_matrix <- get_feature_importance_for_SVMRF(trained_model,scale_flag=T)
   }else if (model_name == "LogReg"){
     trained_model <- glm(as.formula(paste0(eval(outcome_colname) ,"~.")), data = train_data, family = binomial)
