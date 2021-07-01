@@ -152,7 +152,7 @@ for (i in 1:length(analysis_ID)){
   SOFA_SCORE_df[i,"STUDY_PATIENT_ID"] <- curr_id
   curr_feature_df <- SOFA_APACHE_Feature_df[which(SOFA_APACHE_Feature_df[,"STUDY_PATIENT_ID"] == curr_id),]
   
-   curr_PO2_D1_HIGH <- curr_feature_df[,"PO2_D1_HIGH"]
+   curr_PO2_D1_LOW <- curr_feature_df[,"PO2_D1_LOW"]
    curr_FI02_D1_HIGH <- curr_feature_df[,"FI02_D1_HIGH"]
    curr_onMV <- curr_feature_df[,"onMV_inICU_D0toD3"]
    curr_gcs <- curr_feature_df[,"GCS"]
@@ -162,9 +162,8 @@ for (i in 1:length(analysis_ID)){
    curr_Bilirubin_D1_HIGH <- curr_feature_df[,"Bilirubin_D1_HIGH"]
    curr_Platelets_D1_LOW <- curr_feature_df[,"Platelets_D1_LOW"]
    curr_Peak_SCr_inICU_D0toD3 <- curr_feature_df[,"Peak_SCr_inICU_D0toD3"]
-   
 
-   SOFA_SCORE_df[i,"SOFA_pO2_FiO2"] <-  sofa1_func(curr_PO2_D1_HIGH,curr_FI02_D1_HIGH,curr_onMV)
+   SOFA_SCORE_df[i,"SOFA_pO2_FiO2"] <-  sofa1_func(curr_PO2_D1_LOW,curr_FI02_D1_HIGH,curr_onMV)
    SOFA_SCORE_df[i,"SOFA_GCS"] <-  sofa2_func(curr_gcs)
    SOFA_SCORE_df[i,"SOFA_MAP_Pressors"] <-  sofa3_func(curr_map,curr_Use_DDM,curr_Use_ENPV)
    SOFA_SCORE_df[i,"SOFA_Bilirubin"] <-  sofa4_func(curr_Bilirubin_D1_HIGH)
