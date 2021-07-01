@@ -16,10 +16,44 @@ Inclusion_df <-read.csv(paste0(outdir,"Inclusion_IDs.csv"),stringsAsFactors = F)
 #2. Corrected Time df for analysis ID
 All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
 
+#3. ADMISSION_INDX.csv
+ADMISSION_INDX_df <-read.csv(paste0(raw_dir,"ADMISSION_INDX.csv"),stringsAsFactors = F)
+
+
 ##########################################################################################
 #2. Analysis Id for pts has corrected HOSP ADMISSION time
 ##########################################################################################
 analysis_ID <- unique(Inclusion_df[,"STUDY_PATIENT_ID"])
+
+
+##########################################################################################
+#3. Check mistach between dease date and disposition
+##########################################################################################
+dispostion_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 4))
+colnames(dispostion_df) <- c("STUDY_PATIENT_ID","Updated_HOSP_DISCHARGE_DATE","DECEASED_DATE","DISCHARGE_DISPOSITION")
+
+for (i in 1:length(analysis_ID)){
+  if (i %% 1000 ==0){print(i)}
+  curr_id <- analysis_ID[i]
+  dispostion_df[i,"STUDY_PATIENT_ID"] <- curr_id
+  #Time info
+  curr_time_df <- ADMISSION_INDX_df[which(ADMISSION_INDX_df[,"STUDY_PATIENT_ID"] == curr_id),]
+  dispostion_df[i,"DECEASED_DATE"] <- curr_time_df[,"DECEASED_DATE"]
+  dispostion_df[i,"Updated_HOSP_DISCHARGE_DATE"] <- curr_time_df[,"Updated_HOSP_DISCHARGE_DATE"]
+  
+  #disposition
+  curr_ADMISSION_INDX_df <- ADMISSION_INDX_df[which(ADMISSION_INDX_df[,"STUDY_PATIENT_ID"] == curr_id),]
+  dispostion_df[i,"DISCHARGE_DISPOSITION"] <- unique(curr_ADMISSION_INDX_df[, "DISCHARGE_DISPOSITION"])
+  
+}
+
+
+
+check_idxes <- which(grepl("Expired|Hospice",disposition_deceasedate_df[,"DISCHARGE_DISPOSITION"],ignore.case = T) == T)
+check_df <- disposition_deceasedate_df[check_idxes,]
+
+check_idxes <- which(mdy(disposition_deceasedate_df$DECEASED_DATE) <=  ymd_hms(disposition_deceasedate_df$Updated_HOSP_DISCHARGE_DATE))
+check_df <- disposition_deceasedate_df[check_idxes,]
 
 ##########################################################################################
 #3. Death or alive in the first 3 days of ICU D0,D1,D3, even if patient died outside ICU (e.g, D3 not in ICU)
