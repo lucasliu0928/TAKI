@@ -21,6 +21,9 @@ analysis_ID <- unique(analysis_ID_df[,"STUDY_PATIENT_ID"]) #7354
 All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
 All_time_df <- All_time_df[which(All_time_df$STUDY_PATIENT_ID %in% analysis_ID),] #filter for anlaysis Id only
 
+#3. SOFA APACHE
+All_SOFA_APACHE_df <- read.csv(paste0(outdir,"All_SOFA_APACHE_With_NotImputedFeature.csv"),stringsAsFactors = F)
+
 #3.Load feature not imputed data
 All_Scr_df <-read.csv(paste0(outdir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df.csv"),stringsAsFactors = F)
 All_Demo_df <-read.csv(paste0(outdir,"All_RACE_GENDER_AGE_df.csv"),stringsAsFactors = F)
@@ -59,7 +62,7 @@ All_Demo_df$RACE <- as.numeric(All_Demo_df$RACE)
 table(All_Demo_df$RACE)
 
 ##########################################################################################
-#1. Get feature df
+#1. Get All Clinical feature df
 ##########################################################################################
 Feature_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 72))
 colnames(Feature_df) <- c("STUDY_PATIENT_ID",
@@ -244,3 +247,27 @@ for (j in 1:length(features_cols)){
 }
 
 write.csv(Feature_df_normed,paste0(outdir,"Model_Feature_Outcome/All_Feature_imputed_normed.csv"),row.names = F)
+
+
+##########################################################################################
+#2. Get MAX KIDGO ICUD0_D3
+##########################################################################################
+MAX_KDIGO_ICUD0toD3 <- Feature_df_normed[,c("STUDY_PATIENT_ID","MAX_KDIGO_ICU_D0toD3")]
+write.csv(MAX_KDIGO_ICUD0toD3,paste0(outdir,"Model_Feature_Outcome/All_MAX_KDIGO_ICUD0toD3_normed.csv"),row.names = F)
+
+##########################################################################################
+#2. Get SOFA and APACHE
+##########################################################################################
+#6.Max min norm
+All_SOFA_APACHE_df_normed <- All_SOFA_APACHE_df[,c("STUDY_PATIENT_ID","SOFA_TOTAL","APACHE_TOTAL")]
+features_cols <- c("SOFA_TOTAL","APACHE_TOTAL")
+for (j in 1:length(features_cols)){
+  curr_f <- features_cols[j]
+  All_SOFA_APACHE_df_normed[,curr_f] <- min_max_func(All_SOFA_APACHE_df_normed[,curr_f])
+}
+
+SOFA_TOTAL_normed <- All_SOFA_APACHE_df_normed[,c("STUDY_PATIENT_ID","SOFA_TOTAL")]
+APACHE_TOTAL_normed <- All_SOFA_APACHE_df_normed[,c("STUDY_PATIENT_ID","APACHE_TOTAL")]
+
+write.csv(SOFA_TOTAL_normed,paste0(outdir,"Model_Feature_Outcome/All_SOFA_TOTAL_normed.csv"),row.names = F)
+write.csv(APACHE_TOTAL_normed,paste0(outdir,"Model_Feature_Outcome/All_APACHE_TOTAL_normed.csv"),row.names = F)
