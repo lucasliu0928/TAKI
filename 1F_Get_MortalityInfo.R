@@ -17,6 +17,7 @@ Inclusion_df <-read.csv(paste0(outdir,"Inclusion_IDs.csv"),stringsAsFactors = F)
 All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
 
 
+#'@TODO
 ##########################################################################################
 #2. Check if mistach between DECEASED_DATE and disposition (Expired|Hospice) 
 #   If expired or hospice, should have a  deceased date <= HOSP_DISCHARGE_DATE + 24h
@@ -29,7 +30,7 @@ check_idxes <- which(mdy(expired_orhospice_df[,"DECEASED_DATE"]) >  ymd_hms(expi
 check_df <- expired_orhospice_df[check_idxes,]
 colnames(check_df)[3] <- "HOSP_DISCHARGE_DATE"
 
-write.csv(check_df,"/Users/lucasliu/Desktop/DISCHARGE_DISPOSITION_And_DECEASED_DATE_Check.csv")
+write.csv(check_df,"/Users/lucasliu/Desktop/DISCHARGE_DISPOSITION_And_DECEASED_DATE_Check.csv",row.names = F)
 ##########################################################################################
 #3. Analysis Id for pts has corrected HOSP ADMISSION time
 ##########################################################################################
@@ -71,9 +72,11 @@ for (i in 1:length(analysis_ID)){
 
 table(Death_ICU_D0toD3_df$Death_ICU_D0toD3) #34973  1044 
 
+#'@TODO:
 ##########################################################################################
 #3. Death or alive in Hospital
-#hosp_start  <=  decease_date <= hosp_end
+#1.if has disease date, hosp_start  <=  decease_date <= hosp_end + 24 hours
+#2.if NO disease date,  if disposition contains expried/hopice,treat it as died in hosp
 ##########################################################################################
 Death_inHOSP <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 2))
 colnames(Death_inHOSP) <- c("STUDY_PATIENT_ID","Death_inHOSP")
@@ -88,11 +91,18 @@ for (i in 1:length(analysis_ID)){
   curr_hosp_start <- ymd_hms(curr_time_df[,"Updated_HOSP_ADMIT_DATE"])
   curr_hosp_end   <- ymd_hms(curr_time_df[,"Updated_HOSP_DISCHARGE_DATE"])
   curr_decease_date <- mdy(curr_time_df[,"DECEASED_DATE"])
+  curr_disposition <- curr_time_df[,"DISCHARGE_DISPOSITION"]
   
   if (is.na(curr_decease_date) == T){ #no death date
-    Death_inHOSP[i,"Death_inHOSP"] <- 0
-  }else {
-    if (curr_decease_date >= curr_hosp_start  & curr_decease_date <= curr_hosp_end ){
+    #check if disposition contains hospice or expired
+    if (grepl("Expired|Hospice",curr_disposition,ignore.case = T)==T){
+      Death_inHOSP[i,"Death_inHOSP"] <- 1
+    }else{
+      Death_inHOSP[i,"Death_inHOSP"] <- 0
+    }
+    
+  }else {#if has death date
+    if (curr_decease_date >= curr_hosp_start  & curr_decease_date <= curr_hosp_end + hours(24)){
       Death_inHOSP[i,"Death_inHOSP"] <- 1
     }else{
       Death_inHOSP[i,"Death_inHOSP"] <- 0
@@ -101,7 +111,7 @@ for (i in 1:length(analysis_ID)){
   
 }
 
-table(Death_inHOSP$Death_inHOSP) #33685  2332
+table(Death_inHOSP$Death_inHOSP) #33685  2332 #after udpate 31073 vs 4944
 
 ##########################################################################################
 #4. Death or alive within 120 days post HOSP discharge + Death in HOSP
