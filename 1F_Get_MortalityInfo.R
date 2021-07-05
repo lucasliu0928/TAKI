@@ -20,17 +20,43 @@ All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFact
 #'@TODO
 ##########################################################################################
 #2. Check if mistach between DECEASED_DATE and disposition (Expired|Hospice) 
-#   If expired or hospice, should have a  deceased date <= HOSP_DISCHARGE_DATE + 24h
+#   If Hospice, and no decease date, always assume decease date = HOSP_DISCHARGE_DATE 
+
+#   If expired, should have a  deceased date <= HOSP_DISCHARGE_DATE + 24h
 ##########################################################################################
-expired_orhospice_indexes <- which(grepl("Expired|Hospice",All_time_df[,"DISCHARGE_DISPOSITION"],ignore.case = T)==T)
-expired_orhospice_df <- All_time_df[expired_orhospice_indexes,c("STUDY_PATIENT_ID","DISCHARGE_DISPOSITION","Updated_HOSP_DISCHARGE_DATE","DECEASED_DATE")]
+All_time_df_copy <- All_time_df[,c("STUDY_PATIENT_ID","DISCHARGE_DISPOSITION","Updated_HOSP_DISCHARGE_DATE","DECEASED_DATE")]
+colnames(All_time_df_copy)[3] <- "HOSP_DISCHARGE_DATE"
 
-#Get pt whoes deceased date > HOSP_DISCHARGE_DATE + 24h
-check_idxes <- which(mdy(expired_orhospice_df[,"DECEASED_DATE"]) >  ymd_hms(expired_orhospice_df[,"Updated_HOSP_DISCHARGE_DATE"]) + hours(24))
-check_df <- expired_orhospice_df[check_idxes,]
-colnames(check_df)[3] <- "HOSP_DISCHARGE_DATE"
+#1.Expired
+expired_indexes <- which(grepl("Expired",All_time_df_copy[,"DISCHARGE_DISPOSITION"],ignore.case = T)==T)
+expired_df <- All_time_df_copy[expired_indexes,c("STUDY_PATIENT_ID","DISCHARGE_DISPOSITION","HOSP_DISCHARGE_DATE","DECEASED_DATE")]
 
-write.csv(check_df,"/Users/lucasliu/Desktop/DISCHARGE_DISPOSITION_And_DECEASED_DATE_Check.csv",row.names = F)
+#1.1 Get pt discharged to "expired" and whoes deceased date > HOSP_DISCHARGE_DATE + 24h
+#In this example, it is likely an EHR error that the date of discharge does not match date of death. When that happens, please assume date of discharge as date of death. 
+expired_deathAfterDC_idxes <- which(mdy(expired_df[,"DECEASED_DATE"]) >  ymd_hms(expired_df[,"HOSP_DISCHARGE_DATE"]) + hours(24))
+expired_deathAfterDC_df <- expired_df[expired_deathAfterDC_idxes,]
+
+#1.2 Get pt discharged to "expired" and has missing DECEASED_DATE
+expired_NAdeathdate_idxes <- which(is.na(expired_df[,"DECEASED_DATE"]==T))
+expired_NAdeathdate_df <- expired_df[expired_NAdeathdate_idxes,]
+write.csv(expired_NAdeathdate_df,"/Users/lucasliu/Desktop/1_Expired_ButNoDeceaseddate.csv",row.names = F)
+
+#1.3 Get pt has DECEASED_DATE in hosp, but blank disposition label
+cond1  <- mdy(All_time_df_copy[,"DECEASED_DATE"]) <=  ymd_hms(All_time_df_copy[,"HOSP_DISCHARGE_DATE"]) + hours(24)
+cond2  <- All_time_df_copy[,"DISCHARGE_DISPOSITION"] == ""
+hasdeathdate_NAdispostion_df <- All_time_df_copy[which(cond1 & cond2),]
+write.csv(hasdeathdate_NAdispostion_df,"/Users/lucasliu/Desktop/2_NoLabel_ButHasDeceaseddateInHOSP.csv",row.names = F)
+
+
+#2.Hospice
+hospice_idxes <- which(grepl("Hospice",All_time_df_copy[,"DISCHARGE_DISPOSITION"],ignore.case = T)==T)
+hospice_df <- All_time_df_copy[hospice_idxes,c("STUDY_PATIENT_ID","DISCHARGE_DISPOSITION","HOSP_DISCHARGE_DATE","DECEASED_DATE")]
+hospice_df$Days_fromDCtoDecease <- difftime(mdy(hospice_df[,"DECEASED_DATE"]),ymd_hms(hospice_df[,"HOSP_DISCHARGE_DATE"]),units = "days")
+hospice_df <- hospice_df[order(hospice_df$Days_fromDCtoDecease,decreasing = T),]
+write.csv(hospice_df,"/Users/lucasliu/Desktop/3_All_Hospice.csv",row.names = F)
+
+
+
 ##########################################################################################
 #3. Analysis Id for pts has corrected HOSP ADMISSION time
 ##########################################################################################
