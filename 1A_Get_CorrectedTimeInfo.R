@@ -552,8 +552,6 @@ write.csv(updated_TimeInfo_df,paste0(outdir,"All_Corrected_Timeinfo.csv"),row.na
 ##########################################################################################
 #### Add Acutal ICU hours in D0-D3
 ##########################################################################################
-updated_TimeInfo_df <- read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
-
 updated_TimeInfo_df$Actual_ICUHours_D0toD3 <- NA
 for (i in 1:nrow(updated_TimeInfo_df)){
   if (i %% 1000 == 0) {print(i)}
