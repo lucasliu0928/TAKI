@@ -16,44 +16,26 @@ Inclusion_df <-read.csv(paste0(outdir,"Inclusion_IDs.csv"),stringsAsFactors = F)
 #2. Corrected Time df for analysis ID
 All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
 
-#3. ADMISSION_INDX.csv
-ADMISSION_INDX_df <-read.csv(paste0(raw_dir,"ADMISSION_INDX.csv"),stringsAsFactors = F)
-
 
 ##########################################################################################
-#2. Analysis Id for pts has corrected HOSP ADMISSION time
+#2. Check if mistach between DECEASED_DATE and disposition (Expired|Hospice) 
+#   If expired or hospice, should have a  deceased date <= HOSP_DISCHARGE_DATE + 24h
+##########################################################################################
+expired_orhospice_indexes <- which(grepl("Expired|Hospice",All_time_df[,"DISCHARGE_DISPOSITION"],ignore.case = T)==T)
+expired_orhospice_df <- All_time_df[expired_orhospice_indexes,c("STUDY_PATIENT_ID","DISCHARGE_DISPOSITION","Updated_HOSP_DISCHARGE_DATE","DECEASED_DATE")]
+
+#Get pt whoes deceased date > HOSP_DISCHARGE_DATE + 24h
+check_idxes <- which(mdy(expired_orhospice_df[,"DECEASED_DATE"]) >  ymd_hms(expired_orhospice_df[,"Updated_HOSP_DISCHARGE_DATE"]) + hours(24))
+check_df <- expired_orhospice_df[check_idxes,]
+colnames(check_df)[3] <- "HOSP_DISCHARGE_DATE"
+
+write.csv(check_df,"/Users/lucasliu/Desktop/DISCHARGE_DISPOSITION_And_DECEASED_DATE_Check.csv")
+##########################################################################################
+#3. Analysis Id for pts has corrected HOSP ADMISSION time
 ##########################################################################################
 analysis_ID <- unique(Inclusion_df[,"STUDY_PATIENT_ID"])
 
 
-##########################################################################################
-#3. Check mistach between dease date and disposition
-##########################################################################################
-dispostion_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 4))
-colnames(dispostion_df) <- c("STUDY_PATIENT_ID","Updated_HOSP_DISCHARGE_DATE","DECEASED_DATE","DISCHARGE_DISPOSITION")
-
-for (i in 1:length(analysis_ID)){
-  if (i %% 1000 ==0){print(i)}
-  curr_id <- analysis_ID[i]
-  dispostion_df[i,"STUDY_PATIENT_ID"] <- curr_id
-  #Time info
-  curr_time_df <- ADMISSION_INDX_df[which(ADMISSION_INDX_df[,"STUDY_PATIENT_ID"] == curr_id),]
-  dispostion_df[i,"DECEASED_DATE"] <- curr_time_df[,"DECEASED_DATE"]
-  dispostion_df[i,"Updated_HOSP_DISCHARGE_DATE"] <- curr_time_df[,"Updated_HOSP_DISCHARGE_DATE"]
-  
-  #disposition
-  curr_ADMISSION_INDX_df <- ADMISSION_INDX_df[which(ADMISSION_INDX_df[,"STUDY_PATIENT_ID"] == curr_id),]
-  dispostion_df[i,"DISCHARGE_DISPOSITION"] <- unique(curr_ADMISSION_INDX_df[, "DISCHARGE_DISPOSITION"])
-  
-}
-
-
-
-check_idxes <- which(grepl("Expired|Hospice",disposition_deceasedate_df[,"DISCHARGE_DISPOSITION"],ignore.case = T) == T)
-check_df <- disposition_deceasedate_df[check_idxes,]
-
-check_idxes <- which(mdy(disposition_deceasedate_df$DECEASED_DATE) <=  ymd_hms(disposition_deceasedate_df$Updated_HOSP_DISCHARGE_DATE))
-check_df <- disposition_deceasedate_df[check_idxes,]
 
 ##########################################################################################
 #3. Death or alive in the first 3 days of ICU D0,D1,D3, even if patient died outside ICU (e.g, D3 not in ICU)
