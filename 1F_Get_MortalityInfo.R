@@ -16,6 +16,24 @@ Inclusion_df <-read.csv(paste0(outdir,"Inclusion_IDs.csv"),stringsAsFactors = F)
 #2. Corrected Time df for analysis ID
 All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
 
+#3. MRN and ENCNTR ID dataframe
+matchingID_df <-read.xlsx("/Volumes/LJL_ExtPro/Data/AKI_Data/Victors_data/Matching_big_dataset.xlsx",sheet = 1)
+
+#4.Add encnter Id and MRN to All_time_df
+All_time_df$PATIENT_MRN <- NA
+All_time_df$ENCOUNTER_ID <- NA
+
+for (i in 1:nrow(All_time_df)){
+  curr_id <- All_time_df[i,"STUDY_PATIENT_ID"]
+  curr_matching_df <- matchingID_df[which(matchingID_df$PATIENT_ID == curr_id),]
+  
+  if (nrow(curr_matching_df) != 0){
+  All_time_df[i,"ENCOUNTER_ID"] <- curr_matching_df[,"ENCOUNTER_ID"]
+  
+  All_time_df[i,"PATIENT_MRN"] <- curr_matching_df[,"PATIENT_MRN"]
+  }
+}
+
 
 #'@TODO
 ##########################################################################################
@@ -24,12 +42,12 @@ All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFact
 
 #   If expired, should have a  deceased date <= HOSP_DISCHARGE_DATE + 24h
 ##########################################################################################
-All_time_df_copy <- All_time_df[,c("STUDY_PATIENT_ID","DISCHARGE_DISPOSITION","Updated_HOSP_DISCHARGE_DATE","DECEASED_DATE")]
-colnames(All_time_df_copy)[3] <- "HOSP_DISCHARGE_DATE"
+All_time_df_copy <- All_time_df[,c("STUDY_PATIENT_ID","ENCOUNTER_ID","PATIENT_MRN","DISCHARGE_DISPOSITION","Updated_HOSP_DISCHARGE_DATE","DECEASED_DATE")]
+colnames(All_time_df_copy)[5] <- "HOSP_DISCHARGE_DATE"
 
 #1.Expired
 expired_indexes <- which(grepl("Expired",All_time_df_copy[,"DISCHARGE_DISPOSITION"],ignore.case = T)==T)
-expired_df <- All_time_df_copy[expired_indexes,c("STUDY_PATIENT_ID","DISCHARGE_DISPOSITION","HOSP_DISCHARGE_DATE","DECEASED_DATE")]
+expired_df <- All_time_df_copy[expired_indexes,]
 
 #1.1 Get pt discharged to "expired" and whoes deceased date > HOSP_DISCHARGE_DATE + 24h
 #In this example, it is likely an EHR error that the date of discharge does not match date of death. When that happens, please assume date of discharge as date of death. 
@@ -50,7 +68,7 @@ write.csv(hasdeathdate_NAdispostion_df,"/Users/lucasliu/Desktop/2_NoLabel_ButHas
 
 #2.Hospice
 hospice_idxes <- which(grepl("Hospice",All_time_df_copy[,"DISCHARGE_DISPOSITION"],ignore.case = T)==T)
-hospice_df <- All_time_df_copy[hospice_idxes,c("STUDY_PATIENT_ID","DISCHARGE_DISPOSITION","HOSP_DISCHARGE_DATE","DECEASED_DATE")]
+hospice_df <- All_time_df_copy[hospice_idxes,]
 hospice_df$Days_fromDCtoDecease <- difftime(mdy(hospice_df[,"DECEASED_DATE"]),ymd_hms(hospice_df[,"HOSP_DISCHARGE_DATE"]),units = "days")
 hospice_df <- hospice_df[order(hospice_df$Days_fromDCtoDecease,decreasing = T),]
 write.csv(hospice_df,"/Users/lucasliu/Desktop/3_All_Hospice.csv",row.names = F)
