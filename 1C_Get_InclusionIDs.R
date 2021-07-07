@@ -19,7 +19,9 @@ Demo_df <-read.csv(paste0(outdir,"All_RACE_GENDER_AGE_df.csv"),stringsAsFactors 
 #3.inclusion IDs
 inclusionIDs <-intersect(All_time_df[,"STUDY_PATIENT_ID"],Demo_df[,"STUDY_PATIENT_ID"])
 
-inclusionIDs <-as.data.frame(inclusionIDs)
-colnames(inclusionIDs) <- "STUDY_PATIENT_ID"
-nrow(inclusionIDs) #36094
-write.csv(inclusionIDs,paste0(outdir,"Inclusion_IDs.csv"),row.names = F)
+
+#5. add ENCNTER_ID and MRN
+inclusionIDs_df <- as.data.frame(inclusionIDs)
+colnames(inclusionIDs_df)[1] <- "STUDY_PATIENT_ID"
+nrow(inclusionIDs_df) #36017
+write.csv(inclusionIDs_df,paste0(outdir,"Inclusion_IDs.csv"),row.names = F)
