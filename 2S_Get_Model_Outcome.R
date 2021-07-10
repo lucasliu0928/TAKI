@@ -90,44 +90,8 @@ make_drop50_indexes <- which(outcome_df[,"Death_HOSPStartTo120"] == 1 |
 outcome_df[make_drop50_indexes,"MAKE_HOSP120_Drop50"] <- 1
 outcome_df[-make_drop50_indexes,"MAKE_HOSP120_Drop50"] <- 0
 
-table(outcome_df$MAKE_HOSP120_Drop30) #5384 1970 
-table(outcome_df$MAKE_HOSP120_Drop50) #5631 1723
-table(outcome_df$Death_inHOSP) #6715  639
+table(outcome_df$MAKE_HOSP120_Drop30) #4725 2629  
+table(outcome_df$MAKE_HOSP120_Drop50) #4972 2382 
+table(outcome_df$Death_inHOSP) #5742  1612 
 write.csv(outcome_df,paste0(outdir,"Model_Feature_Outcome/All_outcome.csv"),row.names=FALSE)
-
-
-#############################################################################################################################
-########################################## Check Taylors data ########################################## 
-#############################################################################################################################
-#'@Question: Other outomce sources?
-#User input
-#data dir
-data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/TAKI_Feature/features/"
-UK_data_dir <- paste0(data_dir,"uky/")
-UTSW_data_dir <- paste0(data_dir,"utsw/")
-
-outcome_df2 <- read.csv(paste0(UK_data_dir,"outcomes.csv"),stringsAsFactors = F)
-colnames(outcome_df2)[which(colnames(outcome_df2) == "id")] <- c("STUDY_PATIENT_ID")
-
-
-#ADD Make outcome
-outcome_df2$MAKE <- NA
-MAKE1_idxes <- which(outcome_df2[,"died_in_window"] == 1 |
-                       outcome_df2[,"gfr_drop_50"] == 1 |
-                       outcome_df2[,"rrt_48hr"] == 1 |
-                       outcome_df2[,"esrd_manual_revision"] == 1|
-                       outcome_df2[,"esrd_scm"] == 1|
-                       outcome_df2[,"esrd_usrds"] == 1)
-outcome_df2$MAKE[MAKE1_idxes] <- 1
-outcome_df2$MAKE[-MAKE1_idxes] <- 0
-
-
-#Load UK exclusion
-UK_exclusion_df <- read.csv("/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UKY/exclusion_criteria._taylor.csv",stringsAsFactors = F)
-UK_ID_left_df <- UK_exclusion_df[which(rowSums(UK_exclusion_df[,2:ncol(UK_exclusion_df)])==0),] #keep pt without "1" in any of the column
-
-#Update outcome df with ID left
-updated_outcome_df <- outcome_df2[which(outcome_df2[,"STUDY_PATIENT_ID"] %in% UK_ID_left_df[,"STUDY_PATIENT_ID"]),c("STUDY_PATIENT_ID","died_inp","MAKE")]
-table(updated_outcome_df$MAKE)   #4257 2594
-table(updated_outcome_df$died_inp) #5233 1618 
 
