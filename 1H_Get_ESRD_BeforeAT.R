@@ -164,10 +164,10 @@ for (i in 1:length(analysis_ID)){
   Final_ESRD_BEFORE_AT_df[i,"ESRD_BEFORE_AT"] <- final_flag
 }
 
-table(Final_ESRD_BEFORE_AT_df$ESRD_BEFORE_AT)
+table(Final_ESRD_BEFORE_AT_df$ESRD_BEFORE_AT) #7354  447 
 
 
-write.csv(Final_ESRD_BEFORE_AT_df,paste0(outdir,"ESRD_Before_AT.csv"),row.names = F)
+#write.csv(Final_ESRD_BEFORE_AT_df,paste0(outdir,"ESRD_Before_AT.csv"),row.names = F)
 
 
 ############################################################################################################
