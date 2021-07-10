@@ -14,7 +14,7 @@ library(caret)
 data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
 
 #out dir
-out_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0629/"
+out_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/CV_performance/"
 #feature file and outcome file names
 outcome_file <- "All_outcome.csv"
 
@@ -261,10 +261,10 @@ N_sampling <- 10
 NFolds <- 10
 
 model_name_list <- c("SVM","RF","LogReg","XGB")
-for (m in 1:length(model_name_list)){
+for (m in 1:1){
   model_name <- model_name_list[m]
   #CV
-  cv_res <- cv2_func(model_data,outcome_colname,model_name,upsample_flag,N_sampling,NFolds)
+  cv_res <- cv2_func(model_data,outcome_colname,model_name,upsample_flag,N_sampling,NFolds,svmkernel = "svmLinear2") #svmPoly, svmLinear,svmLinear2
   final_pred <- cv_res[[1]]
   write.csv(final_pred, paste0(outdir1,"Prediction_", model_name, ".csv"),row.names = F)
   
@@ -406,7 +406,7 @@ outcome_colname <- "MAKE_HOSP120_Drop30"
 
 #1.Get model data
 model_data <- construct_model_data_func(data_dir,feature_file,outcome_file,outcome_colname)
-table(model_data$MAKE_HOSP120_Drop50)
+table(model_data$MAKE_HOSP120_Drop30)
 colnames(model_data)
 
 #2.CV
