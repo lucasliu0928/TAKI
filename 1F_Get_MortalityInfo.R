@@ -16,64 +16,6 @@ Inclusion_df <-read.csv(paste0(outdir,"Inclusion_IDs.csv"),stringsAsFactors = F)
 #2. Corrected Time df for analysis ID
 All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
 
-#3. MRN and ENCNTR ID dataframe
-matchingID_df <-read.xlsx("/Volumes/LJL_ExtPro/Data/AKI_Data/Victors_data/Matching_big_dataset.xlsx",sheet = 1)
-
-#4.Add encnter Id and MRN to All_time_df
-All_time_df$PATIENT_MRN <- NA
-All_time_df$ENCOUNTER_ID <- NA
-
-for (i in 1:nrow(All_time_df)){
-  curr_id <- All_time_df[i,"STUDY_PATIENT_ID"]
-  curr_matching_df <- matchingID_df[which(matchingID_df$PATIENT_ID == curr_id),]
-  
-  if (nrow(curr_matching_df) != 0){
-  All_time_df[i,"ENCOUNTER_ID"] <- curr_matching_df[,"ENCOUNTER_ID"]
-  
-  All_time_df[i,"PATIENT_MRN"] <- curr_matching_df[,"PATIENT_MRN"]
-  }
-}
-
-
-#'@TODO
-##########################################################################################
-#2. Check if mistach between DECEASED_DATE and disposition (Expired|Hospice) 
-#   If Hospice, and no decease date, always assume decease date = HOSP_DISCHARGE_DATE 
-
-#   If expired, should have a  deceased date <= HOSP_DISCHARGE_DATE + 24h
-##########################################################################################
-All_time_df_copy <- All_time_df[,c("STUDY_PATIENT_ID","ENCOUNTER_ID","PATIENT_MRN","DISCHARGE_DISPOSITION","Updated_HOSP_DISCHARGE_DATE","DECEASED_DATE")]
-colnames(All_time_df_copy)[5] <- "HOSP_DISCHARGE_DATE"
-
-#1.Expired
-expired_indexes <- which(grepl("Expired",All_time_df_copy[,"DISCHARGE_DISPOSITION"],ignore.case = T)==T)
-expired_df <- All_time_df_copy[expired_indexes,]
-
-#1.1 Get pt discharged to "expired" and whoes deceased date > HOSP_DISCHARGE_DATE + 24h
-#In this example, it is likely an EHR error that the date of discharge does not match date of death. When that happens, please assume date of discharge as date of death. 
-expired_deathAfterDC_idxes <- which(mdy(expired_df[,"DECEASED_DATE"]) >  ymd_hms(expired_df[,"HOSP_DISCHARGE_DATE"]) + hours(24))
-expired_deathAfterDC_df <- expired_df[expired_deathAfterDC_idxes,]
-
-#1.2 Get pt discharged to "expired" and has missing DECEASED_DATE
-expired_NAdeathdate_idxes <- which(is.na(expired_df[,"DECEASED_DATE"]==T))
-expired_NAdeathdate_df <- expired_df[expired_NAdeathdate_idxes,]
-write.csv(expired_NAdeathdate_df,"/Users/lucasliu/Desktop/1_Expired_ButNoDeceaseddate.csv",row.names = F)
-
-#1.3 Get pt has DECEASED_DATE in hosp, but blank disposition label
-cond1  <- mdy(All_time_df_copy[,"DECEASED_DATE"]) <=  ymd_hms(All_time_df_copy[,"HOSP_DISCHARGE_DATE"]) + hours(24)
-cond2  <- All_time_df_copy[,"DISCHARGE_DISPOSITION"] == ""
-hasdeathdate_NAdispostion_df <- All_time_df_copy[which(cond1 & cond2),]
-write.csv(hasdeathdate_NAdispostion_df,"/Users/lucasliu/Desktop/2_NoLabel_ButHasDeceaseddateInHOSP.csv",row.names = F)
-
-
-#2.Hospice
-hospice_idxes <- which(grepl("Hospice",All_time_df_copy[,"DISCHARGE_DISPOSITION"],ignore.case = T)==T)
-hospice_df <- All_time_df_copy[hospice_idxes,]
-hospice_df$Days_fromDCtoDecease <- difftime(mdy(hospice_df[,"DECEASED_DATE"]),ymd_hms(hospice_df[,"HOSP_DISCHARGE_DATE"]),units = "days")
-hospice_df <- hospice_df[order(hospice_df$Days_fromDCtoDecease,decreasing = T),]
-write.csv(hospice_df,"/Users/lucasliu/Desktop/3_All_Hospice.csv",row.names = F)
-
-
 
 ##########################################################################################
 #3. Analysis Id for pts has corrected HOSP ADMISSION time
@@ -81,9 +23,9 @@ write.csv(hospice_df,"/Users/lucasliu/Desktop/3_All_Hospice.csv",row.names = F)
 analysis_ID <- unique(Inclusion_df[,"STUDY_PATIENT_ID"])
 
 
-
 ##########################################################################################
 #3. Death or alive in the first 3 days of ICU D0,D1,D3, even if patient died outside ICU (e.g, D3 not in ICU)
+#'@NOTE: only use original DECEASED_DATE date here, not the update ones for exclusion purpose
 ##########################################################################################
 Death_ICU_D0toD3_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 2))
 colnames(Death_ICU_D0toD3_df) <- c("STUDY_PATIENT_ID","Death_ICU_D0toD3")
@@ -116,11 +58,10 @@ for (i in 1:length(analysis_ID)){
 
 table(Death_ICU_D0toD3_df$Death_ICU_D0toD3) #34973  1044 
 
-#'@TODO:
 ##########################################################################################
 #3. Death or alive in Hospital
 #1.if has disease date, hosp_start  <=  decease_date <= hosp_end + 24 hours
-#2.if NO disease date,  if disposition contains expried/hopice,treat it as died in hosp
+#'@NOTE: use updated DECEASED_DATE(expired/hospice)
 ##########################################################################################
 Death_inHOSP <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 2))
 colnames(Death_inHOSP) <- c("STUDY_PATIENT_ID","Death_inHOSP")
@@ -134,7 +75,13 @@ for (i in 1:length(analysis_ID)){
   curr_time_df <- All_time_df[which(All_time_df[,"STUDY_PATIENT_ID"] == curr_id),]
   curr_hosp_start <- ymd_hms(curr_time_df[,"Updated_HOSP_ADMIT_DATE"])
   curr_hosp_end   <- ymd_hms(curr_time_df[,"Updated_HOSP_DISCHARGE_DATE"])
-  curr_decease_date <- mdy(curr_time_df[,"DECEASED_DATE"])
+  if (is.na(curr_time_df[,"Updated_DECEASED_DATE"])==T){
+    curr_decease_date <- NA
+  }else if (nchar(curr_time_df[,"Updated_DECEASED_DATE"]) == 19){
+    curr_decease_date <- ymd_hms(curr_time_df[,"Updated_DECEASED_DATE"])
+  }else{
+    curr_decease_date <- mdy(curr_time_df[,"Updated_DECEASED_DATE"])
+  }
   curr_disposition <- curr_time_df[,"DISCHARGE_DISPOSITION"]
   
   if (is.na(curr_decease_date) == T){ #no death date
@@ -155,11 +102,12 @@ for (i in 1:length(analysis_ID)){
   
 }
 
-table(Death_inHOSP$Death_inHOSP) #33685  2332 #after udpate 31073 vs 4944
+table(Death_inHOSP$Death_inHOSP) #33685  2332 #after udpate 31040 vs 4977
 
 ##########################################################################################
 #4. Death or alive within 120 days post HOSP discharge + Death in HOSP
 # HOSP_Start <= death date <= (HOSP DC + 120 days)
+#'@NOTE: use updated DECEASED_DATE(expired/hospice)
 ##########################################################################################
 Death_HOSP120_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 2))
 colnames(Death_HOSP120_df) <- c("STUDY_PATIENT_ID","Death_HOSPStartTo120")
@@ -173,7 +121,14 @@ for (i in 1:length(analysis_ID)){
   curr_time_df <- All_time_df[which(All_time_df[,"STUDY_PATIENT_ID"] == curr_id),]
   curr_hosp_start <- ymd_hms(curr_time_df[,"Updated_HOSP_ADMIT_DATE"])
   curr_hosp_end   <- ymd_hms(curr_time_df[,"Updated_HOSP_DISCHARGE_DATE"])
-  curr_decease_date <- mdy(curr_time_df[,"DECEASED_DATE"])
+  
+  if (is.na(curr_time_df[,"Updated_DECEASED_DATE"])==T){
+    curr_decease_date <- NA
+  }else if (nchar(curr_time_df[,"Updated_DECEASED_DATE"]) == 19){
+    curr_decease_date <- ymd_hms(curr_time_df[,"Updated_DECEASED_DATE"])
+  }else{
+    curr_decease_date <- mdy(curr_time_df[,"Updated_DECEASED_DATE"])
+  }  
   
   #Get HOSP DC + 120 days
   HOSP_120_time <- curr_hosp_end + days(120)
@@ -190,7 +145,7 @@ for (i in 1:length(analysis_ID)){
   
 }
 
-table(Death_HOSP120_df$Death_HOSPStartTo120) #32330  3687 
+table(Death_HOSP120_df$Death_HOSPStartTo120) #29884   6133  
 
 ##########################################################################################
 ###Combine above 3 dataframe
@@ -205,8 +160,8 @@ write.csv(comb_death_df,paste0(outdir,"All_Mortality.csv"),row.names=FALSE)
 
 #Check
 #1. died in ICU d0-d3, but not in hosp
-#the D3 date can outise the hosp, these patient hosp dc date < D3  dates
-which(comb_death_df[,"Death_ICU_D0toD3"] == 1 & comb_death_df[,"Death_inHOSP"]==0) #43
+#the D3 date can outside the hosp, these patient hosp dc date < D3  dates
+which(comb_death_df[,"Death_ICU_D0toD3"] == 1 & comb_death_df[,"Death_inHOSP"]==0) #8
 #2. died in ICU d0-d3, but not within hosp + 120 days 
 which(comb_death_df[,"Death_ICU_D0toD3"] == 1 & comb_death_df[,"Death_HOSPStartTo120"]==0) #0
 #3. died in hosp, but not within hosp + 120 days 
