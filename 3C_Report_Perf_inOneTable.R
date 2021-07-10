@@ -20,7 +20,7 @@ get_allmethods_performance <- function(folder_name,file_names,feature_set_name){
 ##### Cross Validation Mortality performance
 #######################################################################################
 #Perf dir
-perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0629/"
+perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/"
 folder_name <- paste0(perf_dir,"CV_performance/mortality/")
 method_names <- c("LogReg","RF","SVM","XGB")
 perf_file_names <- paste0("Performance_AVG_CI_",method_names,".csv")
@@ -86,7 +86,7 @@ write.csv(Final_all_perfs, paste0(folder_name,"Performance_AVG_CI_Altogether.csv
 ##### Cross Validation Mortality MAKE drop 30
 #######################################################################################
 rm() #clear all vairbales
-perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0629/"
+perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/"
 folder_name <- paste0(perf_dir,"CV_performance/make120_drop30/")
 method_names <- c("LogReg","RF","SVM","XGB")
 perf_file_names <- paste0("Performance_AVG_CI_",method_names,".csv")
@@ -150,7 +150,7 @@ write.csv(Final_all_perfs, paste0(folder_name,"Performance_AVG_CI_Altogether.csv
 ##### Cross Validation Mortality MAKE drop 50
 #######################################################################################
 rm() #clear all vairbales
-perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0629/"
+perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/"
 folder_name <- paste0(perf_dir,"CV_performance/make120_drop50/")
 method_names <- c("LogReg","RF","SVM","XGB")
 perf_file_names <- paste0("Performance_AVG_CI_",method_names,".csv")
