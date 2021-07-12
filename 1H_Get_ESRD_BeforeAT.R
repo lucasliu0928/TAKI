@@ -165,15 +165,52 @@ for (i in 1:length(analysis_ID)){
 }
 
 table(Final_ESRD_BEFORE_AT_df$ESRD_BEFORE_AT) #7354  447 
-
-
 #write.csv(Final_ESRD_BEFORE_AT_df,paste0(outdir,"ESRD_Before_AT.csv"),row.names = F)
+
+#'@todo Change to this, need to include 498 more pts
+############################################################################################################
+#6. Final before/AT status
+#If == 1 in either one
+############################################################################################################
+Final_ESRD_BEFORE_AT_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID), ncol = 2))
+colnames(Final_ESRD_BEFORE_AT_df) <- c("STUDY_PATIENT_ID","ESRD_BEFORE_AT")
+for (i in 1:length(analysis_ID)){
+  if (i %% 1000 == 0) {print(i)}
+  curr_id <- analysis_ID[i]
+  Final_ESRD_BEFORE_AT_df[i,"STUDY_PATIENT_ID"] <- curr_id
+  
+  #source 1: USRDs
+  curr_USRDs <- ESRD_BEFORE_AT_Indicator_df1[which(ESRD_BEFORE_AT_Indicator_df1[,"STUDY_PATIENT_ID"] == curr_id),]
+  curr_USRDs_flag <- curr_USRDs[,"BEFORE_AT_ADMISSION_USRDS"]
+  curr_USRDs_source <- curr_USRDs[,"SOURCE"]
+  
+  #source 2: status table
+  curr_status_tb <- ESRD_BEFORE_AT_Indicator_df2[which(ESRD_BEFORE_AT_Indicator_df2[,"STUDY_PATIENT_ID"] == curr_id),]
+  curr_status_flag <- curr_status_tb[,"BEFORE_AT_ADMISSION_STATUS"]
+  curr_status_source<- curr_status_tb[,"SOURCE"]
+  
+  if (curr_USRDs_flag == 1 | curr_status_flag==1){
+    final_flag <- 1
+  }else{
+    final_flag <- 0
+  }
+  
+  Final_ESRD_BEFORE_AT_df[i,"ESRD_BEFORE_AT"] <- final_flag
+}
+
+table(Final_ESRD_BEFORE_AT_df$ESRD_BEFORE_AT) #7354  498  
+
+#analysis_ID_df <-read.csv(paste0(outdir,"Final_Analysis_ID.csv"),stringsAsFactors = F)
+#analysis_ID <- unique(analysis_ID_df[,"STUDY_PATIENT_ID"]) #7354
+#length(which(analysis_ID %in% Final_ESRD_BEFORE_AT_df$STUDY_PATIENT_ID[which(Final_ESRD_BEFORE_AT_df$ESRD_BEFORE_AT == 1)]))
+#write.csv(Final_ESRD_BEFORE_AT_df,paste0(outdir,"ESRD_Before_AT_V2.csv"),row.names = F)
 
 
 ############################################################################################################
 #check how many status_flag=1, but usrd_flag=0, and they are actually in USRDS: 51
 #so the final =1 , should equal status_yes (155-51) + USRDS_yes(48+295) = 447
 ############################################################################################################
+table(USRD_BeforeAT,STATUS_BeforeAT)
 length(which(ESRD_BEFORE_AT_Indicator_df_Comb$ESRD_BEFORE_AT_STATUS== 1 & 
                ESRD_BEFORE_AT_Indicator_df_Comb$ESRD_BEFORE_AT_USRDS==0 &
                ESRD_BEFORE_AT_Indicator_df_Comb$SOURCE_USRDS == "in_USRDS" ))
