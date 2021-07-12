@@ -1,33 +1,30 @@
 library(lubridate)
-library(openxlsx)
 source("/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/TAKI_Code/TAKI_Ultility.R")
 
 #Raw data dir
 raw_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UTSW/raw_csv_files/"
 outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/"
+
+
 ##########################################################################################
 #Load Raw Data
+#'@NOTE: SEX_ID == 1 (MALE), SEX_ID == 0 (non_MALE)
 ##########################################################################################
-#1. Load xilong file
-xilong_exlcusion_df <- read.xlsx(paste0("/Users/lucasliu/Downloads/Patient list of deleting 07062021.xlsx"),sheet = 1)
-
 #1.Load raw demo data
 raw_demo_df <- read.csv(paste0(raw_dir,"tPatients.csv"),stringsAsFactors = F)
 
-#3. Corrected Time df for analysis ID
-All_time_df <-read.csv(paste0(raw_dir,"tIndexedIcuAdmission.csv"),stringsAsFactors = F)
-All_time_df <- All_time_df[!duplicated(All_time_df[,c("PATIENT_NUM","ICU_DISCH_TIME","HSP_DISCH_TIME")]),] ##remove duplicate rows
+#2.Change column name
+col_to_change_indxes <- which(colnames(raw_demo_df) %in% c("PATIENT_NUM"))
+colnames(raw_demo_df)[col_to_change_indxes] <- c("STUDY_PATIENT_ID")
 
-check_df <- All_time_df[duplicated(All_time_df$PATIENT_NUM),]
-check_idxes <- which(ymd_hms(All_time_df$ICU_DISCH_TIME) > ymd_hms(All_time_df$HSP_DISCH_TIME) +hours(24))
-check_df <- All_time_df[check_idxes,c("PATIENT_NUM","ICU_DISCH_TIME","HSP_DISCH_TIME")]
+#3.remove duplicates
+raw_demo_df <- raw_demo_df[!duplicated(raw_demo_df[,c("STUDY_PATIENT_ID","SEX_ID","RACE_BLACK","DOB")]),] ##remove duplicate rows
 
-#4.RRT time
-RRT_df <-read.csv(paste0(raw_dir,"tDialysis.csv"),stringsAsFactors = F)
+#4.Code NA race_black as 0
+raw_demo_df[which(is.na(raw_demo_df$RACE_BLACK)==T),"RACE_BLACK"] <- 0
 
-#5.Scr
-All_Scr_df <-read.csv(paste0(raw_dir,"all_scr_data.csv"),stringsAsFactors = F)
-
+#4. Corrected Time df for analysis ID
+All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
 
 ##########################################################################################
 #anlaysis Id for pts has corrected HOSP ADMISSION time
@@ -44,35 +41,48 @@ analysis_ID <- unique(All_time_df[,"STUDY_PATIENT_ID"])
 #                       2.Compute Age at admision
 ##########################################################################################
 #compute Age
-raw_DOB_df$AGE <- NA
-for (i in 1:nrow(raw_DOB_df)){
+raw_demo_df$AGE <- NA
+for (i in 1:nrow(raw_demo_df)){
   if (i %% 1000 ==0){print(i)}
-  curr_id <- raw_DOB_df[i,"STUDY_PATIENT_ID"]
-  curr_DOB <- raw_DOB_df[i,"DOB"]
+  curr_id <- raw_demo_df[i,"STUDY_PATIENT_ID"]
+  curr_DOB <- raw_demo_df[i,"DOB"]
   
   curr_idxes <- which(All_time_df[,"STUDY_PATIENT_ID"] == curr_id)
   if (length(curr_idxes) > 0){
     curr_hosp_start <- All_time_df[curr_idxes,"Updated_HOSP_ADMIT_DATE"]
-    raw_DOB_df[i,"AGE"] <-  as.numeric(difftime(ymd_hms(curr_hosp_start) , ymd_hms(curr_DOB),units = "days"))/365
+    raw_demo_df[i,"AGE"] <-  as.numeric(difftime(ymd_hms(curr_hosp_start) , ymd_hms(curr_DOB),units = "days"))/365
   }
   
 }
 
 #Get Features
-GENDER <- get_raw_var_values_1option_func(raw_demo_df,analysis_ID,"GENDER","GENDER")
-RACE <- get_raw_var_values_1option_func(raw_demo_df,analysis_ID,"RACE","RACE")
-AGE <- get_raw_var_values_1option_func(raw_DOB_df,analysis_ID,"AGE","AGE")
+Gender_Male <- get_raw_var_values_1option_func(raw_demo_df,analysis_ID,"SEX_ID","SEX_ID")
+Race_Black <- get_raw_var_values_1option_func(raw_demo_df,analysis_ID,"RACE_BLACK","RACE_BLACK")
+Race <- get_raw_var_values_1option_func(raw_demo_df,analysis_ID,"SEX","SEX")
 
-All_RACE_GENDER_df <- cbind(GENDER,RACE,AGE)
+AGE <- get_raw_var_values_1option_func(raw_demo_df,analysis_ID,"AGE","AGE")
+
+All_RACE_GENDER_df <- cbind(Gender_Male,Race_Black,AGE)
 All_RACE_GENDER_df <- All_RACE_GENDER_df[,-c(3,5)] #remove duplicated columns
-#code blank as NA
-All_RACE_GENDER_df[which(All_RACE_GENDER_df[,"GENDER"] ==""),"GENDER"] <- NA
-All_RACE_GENDER_df[which(All_RACE_GENDER_df[,"GENDER"] == "U"),"GENDER"] <- NA
-All_RACE_GENDER_df[which(All_RACE_GENDER_df[,"RACE"] ==""),"RACE"] <- NA
+colnames(All_RACE_GENDER_df)[c(2,3)] <- c("Gender_Male","Race_Black")
 
-#exclude pts has no gender or no race or age
-no_demo_indexes <- which(is.na(All_RACE_GENDER_df$GENDER)== T |
-                           is.na(All_RACE_GENDER_df$RACE)== T | 
+#exclude pts has no gender or no race or age (0)
+no_demo_indexes <- which(is.na(All_RACE_GENDER_df$Gender_Male)== T |
+                           is.na(All_RACE_GENDER_df$Race_Black)== T | 
                            is.na(All_RACE_GENDER_df$AGE)==T)
+if(length(no_demo_indexes) >0){
 All_RACE_GENDER_df <- All_RACE_GENDER_df[-no_demo_indexes,]
+}
+
+#add non-coded gender and race for EPI function use later
+All_RACE_GENDER_df$GENDER <- NA
+male_indxes <- which(All_RACE_GENDER_df$Gender_Male == 1)
+All_RACE_GENDER_df$GENDER[male_indxes] <- "M"
+All_RACE_GENDER_df$GENDER[-male_indxes] <- "F"
+
+All_RACE_GENDER_df$RACE <- NA
+black_indxes <- which(All_RACE_GENDER_df$Race_Black == 1)
+All_RACE_GENDER_df$RACE[black_indxes] <- "BLACK/AFR AMERI"
+All_RACE_GENDER_df$RACE[-black_indxes] <- "Others"
+
 write.csv(All_RACE_GENDER_df,paste0(outdir,"All_RACE_GENDER_AGE_df.csv"),row.names = F) #36017
