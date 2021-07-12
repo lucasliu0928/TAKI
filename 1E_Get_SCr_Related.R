@@ -70,7 +70,7 @@ for (i in 1:length(analysis_ID)){
   curr_scr_df <- raw_SCR_df[which(raw_SCR_df[,"STUDY_PATIENT_ID"] == curr_id),]
   
   #baseline Scr
-  curr_bl_scr <- get_baseline_scr_func(curr_hosp_start,curr_scr_df)
+  curr_bl_scr <- get_baseline_scr_func(curr_hosp_start,curr_scr_df,"SCR_ENCOUNTER_TYPE")
   Final_SCR_df[i,"Baseline_SCr"] <- curr_bl_scr
   
   #Get actual days/times in ICU D0-D3
