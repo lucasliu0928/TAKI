@@ -51,25 +51,42 @@ IDs_inxilong <- unique(xilong_exclusion_file$PATIENT_NUM)
 exclusionFeature_df <- as.data.frame(matrix(NA, nrow = length(IDs_inxilong), ncol = 9))
 colnames(exclusionFeature_df) <- c("PATIENT_NUM","AGE","ESRD_BEOFRE","Baseline_eGFR","KidneyTrans_BEFOREorDURING",
                             "NUM_SCr_inICU_D0toD3","MAX_KDIGO_ICU_D0toD3","ICU_LOS_Hours","Death_ICU_D0toD3")
-for (i in 1:length(IDs_inxilong)){
+for (i in  1:length(IDs_inxilong)){
   curr_id <- IDs_inxilong[i]
-  exclusion_df[i,"PATIENT_NUM"] <- curr_id
+  exclusionFeature_df[i,"PATIENT_NUM"] <- curr_id
   
   if (curr_id %in% Inclusion_df$STUDY_PATIENT_ID){
-      exclusion_df[i,"AGE"] <- Demo_df[which(Demo_df[,"STUDY_PATIENT_ID"] == curr_id),"AGE"]
-      exclusion_df[i,"ESRD_BEOFRE"] <- Final_ESRD_BEFORE_AT_df[which(Final_ESRD_BEFORE_AT_df[,"STUDY_PATIENT_ID"] == curr_id),"ESRD_BEFORE_AT"]
-      exclusion_df[i,"Baseline_eGFR"] <- Baseline_EGFR_df[which(Baseline_EGFR_df[,"STUDY_PATIENT_ID"] == curr_id),"Baseline_eGFR"]
-      exclusion_df[i,"KidneyTrans_BEFOREorDURING"] <- KidneyTransplant_df[which(KidneyTransplant_df[,"STUDY_PATIENT_ID"] == curr_id),"KidneyTrans_BEFOREorDURING"]
+      exclusionFeature_df[i,"AGE"] <- Demo_df[which(Demo_df[,"STUDY_PATIENT_ID"] == curr_id),"AGE"]
+      exclusionFeature_df[i,"ESRD_BEOFRE"] <- Final_ESRD_BEFORE_AT_df[which(Final_ESRD_BEFORE_AT_df[,"STUDY_PATIENT_ID"] == curr_id),"ESRD_BEFORE_AT"]
+      exclusionFeature_df[i,"Baseline_eGFR"] <- Baseline_EGFR_df[which(Baseline_EGFR_df[,"STUDY_PATIENT_ID"] == curr_id),"Baseline_eGFR"]
+      exclusionFeature_df[i,"KidneyTrans_BEFOREorDURING"] <- KidneyTransplant_df[which(KidneyTransplant_df[,"STUDY_PATIENT_ID"] == curr_id),"KidneyTrans_BEFOREorDURING"]
       
-      exclusion_df[i,"NUM_SCr_inICU_D0toD3"] <- Src_df[which(Src_df[,"STUDY_PATIENT_ID"] == curr_id),"NUM_SCr_inICU_D0_D3"]
+      exclusionFeature_df[i,"NUM_SCr_inICU_D0toD3"] <- Src_df[which(Src_df[,"STUDY_PATIENT_ID"] == curr_id),"NUM_SCr_inICU_D0_D3"]
       
-      exclusion_df[i,"MAX_KDIGO_ICU_D0toD3"]<- KIDGO_df[which(KIDGO_df[,"STUDY_PATIENT_ID"] == curr_id),"MAX_KDIGO_ICU_D0toD3"]
+      exclusionFeature_df[i,"MAX_KDIGO_ICU_D0toD3"]<- KIDGO_df[which(KIDGO_df[,"STUDY_PATIENT_ID"] == curr_id),"MAX_KDIGO_ICU_D0toD3"]
       
-      exclusion_df[i,"ICU_LOS_Hours"]<- All_time_df[which(All_time_df[,"STUDY_PATIENT_ID"] == curr_id),"ICU_LOS_Hours"]
+      exclusionFeature_df[i,"ICU_LOS_Hours"]<- All_time_df[which(All_time_df[,"STUDY_PATIENT_ID"] == curr_id),"ICU_LOS_Hours"]
       
-      exclusion_df[i,"Death_ICU_D0toD3"]<- All_Mortality_df[which(All_Mortality_df[,"STUDY_PATIENT_ID"] == curr_id),"Death_ICU_D0toD3"]
+      exclusionFeature_df[i,"Death_ICU_D0toD3"]<- All_Mortality_df[which(All_Mortality_df[,"STUDY_PATIENT_ID"] == curr_id),"Death_ICU_D0toD3"]
   }
 }
+
+#This pateint are excluded before this process:
+#1.CRRT/HD start = CRRT/HD end
+#2.ICU dates does not cover CRRT date 
+#3.HOSP date does not cover CRRT/HD/ICU date
+#4.DOD dates before HOSP admission
+length(which(is.na(exclusionFeature_df$AGE) == T)) #107
+
+write.csv(exclusionFeature_df,paste0(outdir,"Exclusion_Feature_Check.csv"),row.names = F)
+
+#Compare
+xilongID <- xilong_exclusion_file$PATIENT_NUM[which(xilong_exclusion_file$ESRD_BEFORE_INDEXED_ADT_USRDS==1)]
+xilongID <- xilongID[-which(xilongID %in% exclusionFeature_df$PATIENT_NUM[which(is.na(exclusionFeature_df$AGE) == T)])]
+myID <- exclusionFeature_df$PATIENT_NUM[which(exclusionFeature_df$ESRD_BEOFRE ==1)]
+xilongID[-which(xilongID %in% myID)]
+myID[-which(myID %in% xilongID)]
+
 
 ##########################################################################################
 #2. Analysis Id for pts has corrected HOSP ADMISSION time and has all demo info
@@ -96,7 +113,7 @@ ExclusionID1 <- Demo_df[which(Demo_df[,"AGE"] < 18),"STUDY_PATIENT_ID"]
 res <- exclude_pts_func(inclusion_ID,ExclusionID1)
 actual_exclusion_IDs1 <- res[[1]] 
 updated_inclusion_IDs1 <- res[[2]]
-length(actual_exclusion_IDs1) #3
+length(actual_exclusion_IDs1) #0
 length(updated_inclusion_IDs1) #10503
 
 #Exclude 2- Baseline eGFR <15
@@ -128,8 +145,8 @@ ExclusionID5 <- KIDGO_df[which(KIDGO_df[,"MAX_KDIGO_ICU_D0toD3"] == 0 |is.na(KID
 res <- exclude_pts_func(updated_inclusion_IDs4,ExclusionID5)
 actual_exclusion_IDs5 <- res[[1]] 
 updated_inclusion_IDs5 <- res[[2]]
-length(actual_exclusion_IDs5) #969
-length(updated_inclusion_IDs5) # 9085
+length(actual_exclusion_IDs5) #7515
+length(updated_inclusion_IDs5) # 2539
 
 #Exclude 6- <24 hours of ICU stay
 ExclusionID6 <- All_time_df[which(All_time_df[,"ICU_LOS_Hours"] < 24),"STUDY_PATIENT_ID"]
@@ -137,23 +154,23 @@ res <- exclude_pts_func(updated_inclusion_IDs5,ExclusionID6)
 actual_exclusion_IDs6 <- res[[1]] 
 updated_inclusion_IDs6 <- res[[2]]
 length(actual_exclusion_IDs6) #0
-length(updated_inclusion_IDs6) # 9085
+length(updated_inclusion_IDs6) # 2539
 
 #Exclude 7- Died in the first 3 days (D0 to D3) of ICU admission
 ExclusionID7 <- All_Mortality_df[which(All_Mortality_df[,"Death_ICU_D0toD3"] == 1),"STUDY_PATIENT_ID"]
 res <- exclude_pts_func(updated_inclusion_IDs6,ExclusionID7)
 actual_exclusion_IDs7 <- res[[1]] 
 updated_inclusion_IDs7 <- res[[2]]
-length(actual_exclusion_IDs7) # 130
-length(updated_inclusion_IDs7) #8955
+length(actual_exclusion_IDs7) # 91
+length(updated_inclusion_IDs7) # 2448
 
 #Exclude 8 - ESRD (ESKD) diagnosis before hospitalization
 ExclusionID8 <- Final_ESRD_BEFORE_AT_df[which(Final_ESRD_BEFORE_AT_df[,"ESRD_BEFORE_AT"] == 1),"STUDY_PATIENT_ID"]
 res <- exclude_pts_func(updated_inclusion_IDs7,ExclusionID8)
 actual_exclusion_IDs8 <- res[[1]] 
 updated_inclusion_IDs8 <- res[[2]]
-length(actual_exclusion_IDs8) # 230
-length(updated_inclusion_IDs8) # 8725
+length(actual_exclusion_IDs8) # 195
+length(updated_inclusion_IDs8) #2253
 
 # #Exclude 8- Patient has no outpatient sCr after hospital discharge within 120 days
 # ExclusionID8 <- eGFR_df[which(eGFR_df[,"n_OutptScr_AfterHOSP_Before120d"] == 0),"STUDY_PATIENT_ID"]
@@ -166,5 +183,5 @@ length(updated_inclusion_IDs8) # 8725
 #analysis ID before exlusion of ESRD before and at
 Final_Anlaysis_ID <-as.data.frame(updated_inclusion_IDs8)
 colnames(Final_Anlaysis_ID) <- "STUDY_PATIENT_ID"
-nrow(Final_Anlaysis_ID) #7801
+nrow(Final_Anlaysis_ID) #2253
 write.csv(Final_Anlaysis_ID,paste0(outdir,"Final_Analysis_ID.csv"),row.names = F)
