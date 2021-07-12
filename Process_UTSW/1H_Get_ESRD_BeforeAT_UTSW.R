@@ -175,7 +175,7 @@ table(USRD_BeforeAT,STATUS_BeforeAT)
 
 ############################################################################################################
 #6. Final before/AT status
-#USE USRDs first, then if patient not in USRDS, use status table
+# has a 1 in either table
 ############################################################################################################
 Final_ESRD_BEFORE_AT_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID), ncol = 2))
 colnames(Final_ESRD_BEFORE_AT_df) <- c("STUDY_PATIENT_ID","ESRD_BEFORE_AT")
@@ -194,30 +194,24 @@ for (i in 1:length(analysis_ID)){
   curr_status_flag <- curr_status_tb[,"BEFORE_AT_ADMISSION_STATUS"]
   curr_status_source<- curr_status_tb[,"SOURCE"]
   
-  if (curr_USRDs_source == "in_USRDS"){ #as long as it is in USRDS
-    final_flag <- curr_USRDs_flag
-  }else if(curr_USRDs_source == "notin_USRDS" & curr_status_source == "in_STATUS_TABLE"){ #if not in USRDS, but in status
-    final_flag <- curr_status_flag
-  }else if (curr_USRDs_source == "notin_USRDS" & curr_status_source == "notin_STATUS_TABLE"){#if not in both, both has the same flag
-    final_flag <- unique(c(curr_USRDs_flag,curr_status_flag))
+  if (curr_USRDs_flag == 1 | curr_status_flag==1){
+    final_flag <- 1
   }else{
-    final_flag <- NA
+    final_flag <- 0
   }
   
   Final_ESRD_BEFORE_AT_df[i,"ESRD_BEFORE_AT"] <- final_flag
 }
 
-table(Final_ESRD_BEFORE_AT_df$ESRD_BEFORE_AT) #10068   435 
+table(Final_ESRD_BEFORE_AT_df$ESRD_BEFORE_AT) #10068   465  
 
 
 write.csv(Final_ESRD_BEFORE_AT_df,paste0(outdir,"ESRD_Before_AT.csv"),row.names = F)
 
 
 ############################################################################################################
-#check how many status_flag=1, but usrd_flag=0, and they are has dates in USRDS: 30
-#so the final =1 , should equal status_yes (151-30) + USRDS_yes(44+270) = 435
+#Final :44+270+151
 ############################################################################################################
-length(which(ESRD_BEFORE_AT_Indicator_df_Comb$ESRD_BEFORE_AT_STATUS== 1 & 
-               ESRD_BEFORE_AT_Indicator_df_Comb$ESRD_BEFORE_AT_USRDS==0 &
-               ESRD_BEFORE_AT_Indicator_df_Comb$SOURCE_USRDS == "in_USRDS" ))
+table(USRD_BeforeAT,STATUS_BeforeAT)
+
 
