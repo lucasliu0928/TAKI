@@ -740,6 +740,11 @@ get_D0toD3_dates_func <- function(icu_start,icu_end){
 
 #get Scr df in window
 get_value_df_inWindow_func <- function(pt_df,window_start, window_end,time_col){
+  # pt_df <- pt_scr_df
+  # window_start <- curr_window_start
+  # window_end <- curr_window_end
+  # time_col <- "SCR_ENTERED"
+  # 
   inWindow_idxes <- which(ymd_hms(pt_df[,time_col]) >= window_start & 
                           ymd_hms(pt_df[,time_col]) <= window_end)
   pt_df_inWindow <- pt_df[inWindow_idxes,]
@@ -749,16 +754,17 @@ get_value_df_inWindow_func <- function(pt_df,window_start, window_end,time_col){
 }
 
 #get baseline Scr (Without revolve)
-get_baseline_scr_func <- function(hosp_start_time,pt_scr_df){
+get_baseline_scr_func <- function(hosp_start_time,pt_scr_df,inoutpt_flag_col){
   # hosp_start_time <- curr_hosp_start
   # pt_scr_df <- curr_scr_df
-  
+  # inoutpt_flag_col <- "IP_FLAG"
+  # 
   #1.Baseline Scr (The outpatient sCr value closest to 7 day before hospital admission up to 1 year. 
   #                If no outpatient sCr, use the inpatient sCr value closet to 7 days before index hospital admission up to 1 year. 
   curr_window_start <- hosp_start_time - days(365)
   curr_window_end <- hosp_start_time - days(7)
   curr_scrdf_inWindow <- get_value_df_inWindow_func(pt_scr_df,curr_window_start,curr_window_end,"SCR_ENTERED")
-  curr_scr_inWindow_outpt_df <- curr_scrdf_inWindow[which(grepl("Outpatient",curr_scrdf_inWindow[,"SCR_ENCOUNTER_TYPE"])==T),]
+  curr_scr_inWindow_outpt_df <- curr_scrdf_inWindow[which(grepl("Outpatient",curr_scrdf_inWindow[,inoutpt_flag_col],ignore.case = T)==T),]
   
   if (nrow(curr_scr_inWindow_outpt_df) > 0){
     cloest_out_indx <- which(curr_scr_inWindow_outpt_df[,"SCR_ENTERED"] == max(curr_scr_inWindow_outpt_df[,"SCR_ENTERED"]))
@@ -771,7 +777,7 @@ get_baseline_scr_func <- function(hosp_start_time,pt_scr_df){
   curr_window_start <- hosp_start_time - days(365)
   curr_window_end <- hosp_start_time - days(7)
   curr_scrdf_inWindow <- get_value_df_inWindow_func(pt_scr_df,curr_window_start,curr_window_end,"SCR_ENTERED")
-  curr_scr_inWindow_inpt_df <- curr_scrdf_inWindow[which(grepl("Inpatient",curr_scrdf_inWindow[,"SCR_ENCOUNTER_TYPE"])==T),]
+  curr_scr_inWindow_inpt_df <- curr_scrdf_inWindow[which(grepl("Inpatient",curr_scrdf_inWindow[,inoutpt_flag_col],ignore.case = T)==T),]
   if (nrow(curr_scr_inWindow_inpt_df) > 0 ){
     cloest_in_indx <- which(curr_scr_inWindow_inpt_df[,"SCR_ENTERED"] == max(curr_scr_inWindow_inpt_df[,"SCR_ENTERED"]))
     cloest_in_val <- curr_scr_inWindow_inpt_df[cloest_in_indx,"SCR_VALUE"]
