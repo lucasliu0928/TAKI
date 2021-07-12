@@ -125,7 +125,7 @@ for (i in 1:nrow(Final_SCR_df)){
 write.csv(Final_SCR_df,paste0(outdir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df.csv"),row.names = F)
 
 
-length(no_bl_scr_IDs) ##N of Resolved baseline by EPI: 25488
+length(no_bl_scr_IDs) ##N of Resolved baseline by EPI: 5212
 
 
 ##########################################################################################
@@ -172,6 +172,13 @@ for (i in  1:length(analysis_ID)){
     #current KIDGO for all Scr in window
     curr_SCR_KDIGO_df    <- get_KDIGO_Score_forScrdf_func(curr_baseline_scr,curr_scr_inICUD0D3)
     colnames(curr_SCR_KDIGO_df)[1] <- "Time"
+    
+    #make sure time has the correct format for converting later
+    time_indxes <- which(nchar(curr_SCR_KDIGO_df$Time) == 10)
+    if (length(time_indxes) > 0){
+      curr_SCR_KDIGO_df[time_indxes,"Time"] <- paste(curr_SCR_KDIGO_df[time_indxes,"Time"],"00:00:00")
+    }
+    
   }else {
     curr_SCR_KDIGO_df <- NULL
   }
