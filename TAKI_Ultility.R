@@ -6,6 +6,7 @@ library(openxlsx)
 library(dplyr)
 library(caTools)
 library(randomForest)
+library(PredictABEL)
 ##############  Time correction functions ############## 
 reformat_10char_dates_func <- function(date_to_modify){
   date_to_modify <- as.character(date_to_modify)
@@ -2559,3 +2560,235 @@ compute_ROCAUC_bootstrap_CI <- function(pred_table){
   rownames(res) <- NULL
   return(res)
 }    
+
+#for each Id, compute averge the predick probability cross all down-sampling cohorts
+get_avg_pred_func <- function(analysis_df){
+  unique_Ids <- unique(analysis_df[,"ID"])
+  avg_pred_tb <- as.data.frame(matrix(NA, nrow = length(unique_Ids),ncol = 4))
+  colnames(avg_pred_tb) <- c("ID" ,"AVG_pred_prob" , "pred_class","Label")
+  for (i in 1:length(unique_Ids)){
+    curr_id <- unique_Ids[i]
+    curr_df <- analysis_df[which(analysis_df[,"ID"] == curr_id),]
+    curr_avg_pred_prob <- mean(curr_df[,"pred_prob"])
+    if (curr_avg_pred_prob >= 0.5){
+      curr_avg_pred_class <- 1
+    }else{
+      curr_avg_pred_class <- 0
+    }
+    avg_pred_tb[i,"ID"] <- curr_id
+    avg_pred_tb[i,"AVG_pred_prob"] <- curr_avg_pred_prob
+    avg_pred_tb[i,"pred_class"] <- curr_avg_pred_class
+    avg_pred_tb[i,"Label"] <- unique(curr_df[,"Label"])
+  }
+  return(avg_pred_tb)
+}
+
+
+count_risk_category <- function(risk_df){
+  risk_category <- c(0.1,0.5)
+  Risk_Count_Table <- as.data.frame(matrix(NA, nrow = length(risk_category) + 1, ncol = 3))
+  colnames(Risk_Count_Table) <- c("Risk_Category","N_andPerc_PredictedInCategory","N_andPerc_AcutalLabel1")
+  
+  for (i in 1: 3){
+    
+    if (i == 1){
+      cond <- risk_df[,"AVG_pred_prob"] < risk_category[i]
+      
+    }else if (i == 3){
+      cond <- risk_df[,"AVG_pred_prob"] >= risk_category[i-1]
+      
+    }else{
+      cond <- (risk_df[,"AVG_pred_prob"] >= risk_category[i-1]) & (risk_df[,"AVG_pred_prob"] < risk_category[i])
+      
+    }
+    
+    curr_pred_df <- risk_df[which(cond == T),]  #Current prediction in this catogry 
+    nPredRisk_in_category <- nrow(curr_pred_df) #n of prediction in this catogry
+    perc_PredRisk <- round((nPredRisk_in_category/nrow(risk_df)*100),2) # / total n of pts
+    Risk_Count_Table[i,"N_andPerc_PredictedInCategory"] <- paste0(nPredRisk_in_category," (", perc_PredRisk, ")")
+    
+    min_risk <- round(min(curr_pred_df[,"AVG_pred_prob"]),4)*100 #actual min risk
+    max_risk <- round(max(curr_pred_df[,"AVG_pred_prob"]),4)*100 #actual max risk
+    Risk_Count_Table[i,"Risk_Category"] <- paste0(min_risk,"% - ", max_risk, "%")
+    
+    
+    nLabel1_in_category <- length(which(curr_pred_df[,"Label"] == 1)) #number of actual label 1 in current category
+    perc_label1 <- round(nLabel1_in_category/nPredRisk_in_category*100,2) # / number of predict risk in category
+    Risk_Count_Table[i,"N_andPerc_AcutalLabel1"] <- paste0(nLabel1_in_category," (", perc_label1, ")")
+    
+  }
+  return(Risk_Count_Table)
+}
+
+
+## compute reclassification measures
+compute_IDI_NRI_func <-function(perf_dir,b_model_file,comprison_model_file,cutoff = c(0,.50,1)){
+  # b_model_file <- baseline_model_file
+  # comprison_model_file <- comprison_model_file1
+  # 
+  # 
+  baseline_df <- read.csv(paste0(perf_dir,"/",b_model_file),stringsAsFactors = F)
+  comp_df <- read.csv(paste0(perf_dir,"/",comprison_model_file),stringsAsFactors = F)
+  
+  #get averge pred prob for each pt from  sampling
+  avg_baseline_df <- get_avg_pred_func(baseline_df)
+  avg_comp_df <- get_avg_pred_func(comp_df)
+  
+  #match ID order
+  avg_baseline_df <- avg_baseline_df[match(avg_baseline_df$ID,avg_comp_df$ID),]
+  
+  #Combine comparison models
+  model_comp_df <- cbind.data.frame(avg_baseline_df[,"Label"],
+                                    avg_baseline_df[,"AVG_pred_prob"],
+                                    avg_comp_df[,"AVG_pred_prob"])
+  colnames(model_comp_df) <- c("Label","pred_prob_Baseline","pred_prob_Compared")
+  
+  predRisk_initialModel <- model_comp_df$pred_prob_Baseline
+  predRisk_updatedModel <- model_comp_df$pred_prob_Compared
+  #cutoff <- c(0,.10,.50,1)
+  #cutoff <- c(0,.10,.30,1)
+  #cutoff <- c(0,0.5,1)
+  
+  #This function print res
+  reclassification(data=model_comp_df, cOutcome=1, predrisk1=predRisk_initialModel, predrisk2=predRisk_updatedModel, cutoff = cutoff)
+  #This function returns table of res
+  res2 <- reclassification_returnRes(data=model_comp_df, cOutcome=1, predrisk1=predRisk_initialModel, predrisk2=predRisk_updatedModel, cutoff = cutoff)
+  #this function get the no of events/nonevents reclassifed corerctly and do manualy check of NRI calculation
+  res3 <- reclassification_manually_cutoff05_func(model_comp_df)
+  
+  #add no of events/nonevents reclassifed corerctly to res2
+  res2[4:5,1:2] <- res3[4:5,1:2]
+
+  return(res2)
+}
+
+
+#This reclassification function source code from github, moditied it to return table results
+reclassification_returnRes <- function(data,cOutcome,predrisk1,predrisk2, cutoff) {
+  c1 <- cut(predrisk1,breaks = cutoff ,include.lowest=TRUE,right= FALSE)
+  c2 <- cut(predrisk2,breaks = cutoff ,include.lowest=TRUE,right= FALSE)
+  tabReclas <- table("Initial Model"=c1, "Updated Model"=c2)
+  # cat(" _________________________________________\n")
+  # cat(" \n     Reclassification table    \n")
+  # cat(" _________________________________________\n")
+  
+  ta<- table(c1, c2, data[,cOutcome])
+  
+  # cat ("\n Outcome: absent \n  \n" )
+  # TabAbs <- ta[,,1]
+  # tab1 <- cbind(TabAbs, " % reclassified"= round((rowSums(TabAbs)-diag(TabAbs))/rowSums(TabAbs),2)*100)
+  # names(dimnames(tab1)) <- c("Initial Model", "Updated Model")
+  # print(tab1)
+  # 
+  # cat ("\n \n Outcome: present \n  \n" )
+  # TabPre <- ta[,,2]
+  # tab2 <- cbind(TabPre, " % reclassified"= round((rowSums(TabPre)-diag(TabPre))/rowSums(TabPre),2)*100)
+  # names(dimnames(tab2)) <- c("Initial Model", "Updated Model")
+  # print(tab2)
+  # 
+  # cat ("\n \n Combined Data \n  \n" )
+  # Tab <- tabReclas
+  # tab <- cbind(Tab, " % reclassified"= round((rowSums(Tab)-diag(Tab))/rowSums(Tab),2)*100)
+  # names(dimnames(tab)) <- c("Initial Model", "Updated Model")
+  # print(tab)
+  # cat(" _________________________________________\n")
+  
+  c11 <-factor(c1, levels = levels(c1), labels = c(1:length(levels(c1))))
+  c22 <-factor(c2, levels = levels(c2), labels = c(1:length(levels(c2))))
+  library(Hmisc)
+  #Categorical
+  x<-improveProb(x1=as.numeric(c11)*(1/(length(levels(c11)))),
+                 x2=as.numeric(c22)*(1/(length(levels(c22)))), y=data[,cOutcome])
+  
+  #Continous
+  y<-improveProb(x1=predrisk1, x2=predrisk2, y=data[,cOutcome])
+  
+  
+  #return results in Data farme
+  res <- as.data.frame(matrix(NA, nrow = 3, ncol = 3))
+  colnames(res) <- c("Metrics","Score","P_value")
+  res[3,] <- c("NRI(Categorical) [95% CI]",paste0(round(x$nri,2),"[",round(x$nri-1.96*x$se.nri,2),"-",
+                                                  round(x$nri+1.96*x$se.nri,2), "]"), round(2*pnorm(-abs(x$z.nri)),5))
+  res[2,] <- c("NRI(Continuous) [95% CI]",paste0(round(y$nri,2),"[",round(y$nri-1.96*y$se.nri,2),"-",
+                                                 round(y$nri+1.96*y$se.nri,2), "]"), round(2*pnorm(-abs(y$z.nri)),5))
+  res[1,] <- c("IDI [95% CI]",paste0(round(y$idi,2),"[",round(y$idi-1.96*y$se.idi,2),"-",
+                                     round(y$idi+1.96*y$se.idi,2), "]"),round(2*pnorm(-abs(y$z.idi)),5) )
+  
+  return(res)
+}
+
+reclassification_manually_cutoff05_func <- function(model_comp_df){
+  #Manually computation notes:
+  #1. Categorica NRI = P(up|event)−P(down|event) + P(down|nonevent)−P(up|nonevent)
+  #   Outcome: present 
+  #   
+  #                 Updated Model
+  #   Initial Model [0,0.5) [0.5,1]  % reclassified
+  #      [0,0.5)     632     708              53
+  #      [0.5,1]      85     957               8
+  # P(up|event)−P(down|event) = (708-85)/(632+708+85+957)
+  # _________________________________________
+  # Outcome: absent  
+  #                 Updated Model
+  #   Initial Model [0,0.5) [0.5,1]  % reclassified
+  #      [0,0.5)     3245     765             19
+  #      [0.5,1]      364     598             38
+  #P(down|nonevent)−P(up|nonevent) =  (364-765)/(3245+765+364+598)
+  
+  #1.For outcome present
+  index1 <- which(model_comp_df$Label==1)
+  model_comp_df1 <- model_comp_df[index1,]
+  n_up1 <-    length(which(model_comp_df1[,"pred_prob_Baseline"] >= 0 & model_comp_df1[,"pred_prob_Baseline"] < 0.5 &
+                           model_comp_df1[,"pred_prob_Compared"] >= 0.5 & model_comp_df1[,"pred_prob_Compared"] <= 1 ))
+  n_down1 <- length(which(model_comp_df1[,"pred_prob_Baseline"] >= 0.5 & model_comp_df1[,"pred_prob_Baseline"] <=1 &
+                          model_comp_df1[,"pred_prob_Compared"] >=0 & model_comp_df1[,"pred_prob_Compared"] < 0.5 ) )
+  p_up1 <- n_up1/length(index1)
+  p_down1 <- n_down1/length(index1)
+  
+  #2.For outcome absent
+  index0 <- which(model_comp_df$Label==0)
+  model_comp_df0 <- model_comp_df[index0,]
+  n_up0 <-  length(which(model_comp_df0[,"pred_prob_Baseline"] >= 0 & model_comp_df0[,"pred_prob_Baseline"] < 0.5 &
+                           model_comp_df0[,"pred_prob_Compared"] >= 0.5 & model_comp_df0[,"pred_prob_Compared"] <= 1 ))
+  n_down0 <- length(which(model_comp_df0[,"pred_prob_Baseline"] >= 0.5 & model_comp_df0[,"pred_prob_Baseline"] <=1 &
+                            model_comp_df0[,"pred_prob_Compared"] >=0 & model_comp_df0[,"pred_prob_Compared"] < 0.5 ) )
+  p_up0 <- n_up0/length(index0)
+  p_down0 <- n_down0/length(index0)
+  
+  #NRI
+  NRI_Categorical <-  round(p_up1 - p_down1 +  p_down0 - p_up0,2)
+  
+  #For categorical Model:
+  #Events, No. (%):    # up|event   (correct) / total number of event
+  #nonEvents, No. (%): # down|nonevent (correct) / total number of nonevent
+  n_andPrec_CorrectReclassified_events   <- paste0(n_up1,"(",round(p_up1*100,2),"%)")
+  n_andPrec_CorrectReclassified_nonevents <-paste0(n_down0,"(",round(p_down0*100,2),"%)")
+    
+  #Continuous NRI, which does not require any discrete risk categories and 
+  #relies on the proportions of individuals with outcome correctly assigned a higher probability 
+  #and individuals without outcome correctly assigned a lower probability by an updated model compared with the initial model. 
+  p_higher1   <- length(which(model_comp_df1[,"pred_prob_Compared"] > model_comp_df1[,"pred_prob_Baseline"])) /length(index1)
+  p_lower1 <- length(which(model_comp_df1[,"pred_prob_Compared"] < model_comp_df1[,"pred_prob_Baseline"])) /length(index1)
+  
+  p_higher0 <-    length(which(model_comp_df0[,"pred_prob_Compared"] > model_comp_df0[,"pred_prob_Baseline"])) /length(index0)
+  p_lower0 <- length(which(model_comp_df0[,"pred_prob_Compared"] < model_comp_df0[,"pred_prob_Baseline"])) /length(index0)
+  
+  
+  NRI_continous <-  round(p_higher1 - p_lower1 +  p_lower0 - p_higher0,2)
+  
+  #IDI equal to x% means that the difference in average predicted risks between the individuals with and without the outcome increased by x% in the updated model
+  diff_bl <- mean(model_comp_df1$pred_prob_Baseline) - mean(model_comp_df0$pred_prob_Baseline)
+  diff_cp <- mean(model_comp_df1$pred_prob_Compared) - mean(model_comp_df0$pred_prob_Compared)
+  IDI <- round(diff_cp-diff_bl,4)
+  
+  res <- as.data.frame(t(cbind(NRI_Categorical,NRI_continous,IDI,
+                          n_andPrec_CorrectReclassified_events,n_andPrec_CorrectReclassified_nonevents)))
+  res$V2 <- rownames(res)
+  rownames(res) <- NULL
+  res <- res[,2:1]
+  colnames(res) <- c("Metrics","Score")
+  res$Score <- as.vector(res$Score)
+  return(res)
+
+}
+
