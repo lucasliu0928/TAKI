@@ -200,10 +200,7 @@ for (i in 1:length(analysis_ID)){
 
 table(Final_ESRD_BEFORE_AT_df$ESRD_BEFORE_AT) #7354  498  
 
-#analysis_ID_df <-read.csv(paste0(outdir,"Final_Analysis_ID.csv"),stringsAsFactors = F)
-#analysis_ID <- unique(analysis_ID_df[,"STUDY_PATIENT_ID"]) #7354
-#length(which(analysis_ID %in% Final_ESRD_BEFORE_AT_df$STUDY_PATIENT_ID[which(Final_ESRD_BEFORE_AT_df$ESRD_BEFORE_AT == 1)]))
-#write.csv(Final_ESRD_BEFORE_AT_df,paste0(outdir,"ESRD_Before_AT_V2.csv"),row.names = F)
+write.csv(Final_ESRD_BEFORE_AT_df,paste0(outdir,"ESRD_Before_AT_V2.csv"),row.names = F)
 
 
 ############################################################################################################
