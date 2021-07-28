@@ -758,7 +758,7 @@ get_value_df_inWindow_func <- function(pt_df,window_start, window_end,time_col){
 get_baseline_scr_func <- function(hosp_start_time,pt_scr_df,inoutpt_flag_col){
   # hosp_start_time <- curr_hosp_start
   # pt_scr_df <- curr_scr_df
-  # inoutpt_flag_col <- "IP_FLAG"
+  # inoutpt_flag_col <- "ADT_PAT_CLASS"
   # 
   #1.Baseline Scr (The outpatient sCr value closest to 7 day before hospital admission up to 1 year. 
   #                If no outpatient sCr, use the inpatient sCr value closet to 7 days before index hospital admission up to 1 year. 
@@ -787,10 +787,10 @@ get_baseline_scr_func <- function(hosp_start_time,pt_scr_df,inoutpt_flag_col){
   }
   
 
-  if (is.na(cloest_out_val) == F){ #if outptient avail
-    bl_val <- cloest_out_val
-  }else if(is.na(cloest_in_val) == F){
-    bl_val <- cloest_in_val
+  if (any(is.na(cloest_out_val)==T) == F){ #if any outpaitent value
+    bl_val <- mean(cloest_out_val,na.rm = T) #if multiple values at the same time, take the mean
+  }else if(any(is.na(cloest_in_val)==T) == F){#if any inpt value
+    bl_val <- mean(cloest_in_val,na.rm = T)
   }else{
     bl_val <- NA
   }
@@ -1725,6 +1725,7 @@ compute_calibration_func <-function(perf_table){
   calib_res <- res[c("Intercept","Slope")]
   
   #Note: This is what val.prb actually doing
+  #https://stats.stackexchange.com/questions/459358/how-is-slope-calculated-in-a-calibration-plot
   #check <- glm(acutal ~ log(pred_p/(1-pred_p)),family="binomial")
   #check$coefficients
   
