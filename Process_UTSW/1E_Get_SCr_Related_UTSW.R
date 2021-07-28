@@ -1,4 +1,5 @@
 library(lubridate)
+library(data.table)
 source("/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/TAKI_Code/TAKI_Ultility.R")
 
 #Raw data dir
@@ -20,7 +21,7 @@ raw_SCR_df <- read.csv(paste0(raw_dir,"all_scr_data.csv"),stringsAsFactors = F)
 cols_name_tochange <- which(colnames(raw_SCR_df) %in% c("PATIENT_NUM","RESULT_TIME","ORD_VALUE"))
 colnames(raw_SCR_df)[cols_name_tochange] <- c("STUDY_PATIENT_ID","SCR_ENTERED","SCR_VALUE")
 ##remove duplicated entry
-raw_SCR_df <- raw_SCR_df[!duplicated(raw_SCR_df[,c("STUDY_PATIENT_ID","SCR_ENTERED")]),] #remove duplicated entry
+#raw_SCR_df <- raw_SCR_df[!duplicated(raw_SCR_df[,c("STUDY_PATIENT_ID","SCR_ENTERED")]),] #remove duplicated entry
 
 #3. Load demo for resolve EPI
 All_RACE_GENDER_df <-read.csv(paste0(outdir,"All_RACE_GENDER_AGE_df.csv"),stringsAsFactors = F)
@@ -29,6 +30,7 @@ All_RACE_GENDER_df <-read.csv(paste0(outdir,"All_RACE_GENDER_AGE_df.csv"),string
 #anlaysis Id for pts has corrected HOSP ADMISSION time
 ##########################################################################################
 analysis_ID <- unique(Inclusion_df[,"STUDY_PATIENT_ID"])
+
 
 ##########################################################################################
 #Features to extract :
@@ -47,6 +49,8 @@ colnames(Final_SCR_df) <- c("STUDY_PATIENT_ID","Baseline_SCr","AdmitICU_SCr","Ad
                             "Peak_SCr_inICU_D0_D3","NUM_SCr_inICU_D0_D3","Lowest_SCr_inICU_D0_D3")
 for (i in 1:length(analysis_ID)){
   if (i %% 1000 ==0){print(i)}
+  #' #'@TOdelete
+  # i <- which(analysis_ID == 8438917)
   
   curr_id <- analysis_ID[i]
   Final_SCR_df[i,"STUDY_PATIENT_ID"] <- curr_id
@@ -80,8 +84,8 @@ for (i in 1:length(analysis_ID)){
     curr_1st_scr_afterICU_idx <- which(curr_scr_inICUD0D3[,"SCR_ENTERED"] == min(curr_scr_inICUD0D3[,"SCR_ENTERED"]))
     curr_admit_scr <- curr_scr_inICUD0D3[curr_1st_scr_afterICU_idx,"SCR_VALUE"]
     curr_admit_scr_time <- curr_scr_inICUD0D3[curr_1st_scr_afterICU_idx,"SCR_ENTERED"]
-    Final_SCR_df[i,"AdmitICU_SCr"] <- curr_admit_scr
-    Final_SCR_df[i,"AdmitICU_SCr_TIME"] <- curr_admit_scr_time
+    Final_SCR_df[i,"AdmitICU_SCr"] <- mean(curr_admit_scr,na.rm = T) #if multiple at the same time, take the mean
+    Final_SCR_df[i,"AdmitICU_SCr_TIME"] <- unique(curr_admit_scr_time)
     
     #peak Scr in ICU D0 -D3
     curr_peak_scr <- max(curr_scr_inICUD0D3[,"SCR_VALUE"])
@@ -123,8 +127,6 @@ for (i in 1:nrow(Final_SCR_df)){
 }
 
 write.csv(Final_SCR_df,paste0(outdir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df.csv"),row.names = F)
-
-
 length(no_bl_scr_IDs) ##N of Resolved baseline by EPI: 5212
 
 
@@ -134,8 +136,8 @@ length(no_bl_scr_IDs) ##N of Resolved baseline by EPI: 5212
 #2.Maximum KDIGO 	(Maximum KDIGO score in ICU D0 to D3)
 #3.Last    KDIGO  (Last KDIGO score    in ICU D0 to D3)
 ##########################################################################################
-KDIGO_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 4))
-colnames(KDIGO_df) <- c("STUDY_PATIENT_ID","Admit_KDIGO_ICU","MAX_KDIGO_ICU_D0toD3","LAST_KDIGO_ICU_D0toD3")
+KDIGO_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 6))
+colnames(KDIGO_df) <- c("STUDY_PATIENT_ID","Admit_KDIGO_ICU","MAX_KDIGO_ICU_D0toD3","LAST_KDIGO_ICU_D0toD3","All_Unique_KDIGO_SCORE_D0toD3","KDIGO_4")
 for (i in  1:length(analysis_ID)){
   if (i %% 1000 ==0){print(i)}
   
@@ -205,11 +207,41 @@ for (i in  1:length(analysis_ID)){
       SCR_idxes_inHD <- NULL
     }
     comb_idxes <- unique(c(SCR_idxes_inCRRT,SCR_idxes_inHD))
+    
   }else{
     crrt_kdigo_df <- NULL
     hd_kdigo_df <- NULL
     comb_idxes <- NULL #if never on CRRT or HD
   }
+  
+  #2.2 Another way for RRT KDIGO check (this should be the same as 2.)
+  if (is.na(curr_crrt_start)== F){
+     if ( curr_crrt_start <= curr_last_ICU_time & (curr_crrt_end + hours(48)) >= curr_icu_start ){
+       curr_kdigo_crrt <- 1
+     }else{
+       curr_kdigo_crrt <- 0
+     }
+    
+  }else{
+      curr_kdigo_crrt <- 0
+  }
+  
+  #2.2 
+  if (is.na(curr_hd_start)== F){
+    if ( curr_hd_start <= curr_last_ICU_time & (curr_hd_end + hours(48)) >= curr_icu_start ){
+      curr_kdigo_hd <- 1
+    }else{
+      curr_kdigo_hd <- 0
+    }
+  }else{
+    curr_kdigo_hd <- 0
+  }
+  
+  KDIGO_df[i,"KDIGO_4"] <- max(curr_kdigo_crrt,curr_kdigo_hd,na.rm = T)
+    
+  #combine and record current SCR KDIGO and RRT KDIGO score
+  KDIGO_df[i,"All_Unique_KDIGO_SCORE_D0toD3"] <- paste0(c(sort(unique(curr_SCR_KDIGO_df[,"KDIGO"])),unique(crrt_kdigo_df[,"KDIGO"]),unique(hd_kdigo_df[,"KDIGO"])),collapse = "$$$")
+  
   
   #3. exclude the Scr_KDIGO_Df with the dates on RRT if any, becuase this dates will be covered in RRT_KDIGO_df
   if (length(comb_idxes) > 0 ){
@@ -218,6 +250,7 @@ for (i in  1:length(analysis_ID)){
     curr_SCR_KDIGO_df_filtered <- curr_SCR_KDIGO_df
   }
   
+
   #4.Combine KDIGO from Scr and CRRT and HD (If any one of them is ampty is fine, just add an empty)
   Comb_KDIGO_df <- rbind(curr_SCR_KDIGO_df_filtered,crrt_kdigo_df,hd_kdigo_df)
   
@@ -245,6 +278,7 @@ for (i in  1:length(analysis_ID)){
 }
 
 write.csv(KDIGO_df,paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"))
+
 
 ########################################################################################
 #'@NOTE_CHECK: Check all on RRT inICU_D0_D3 must has KDIGO=4, not on RRT IDs must not have KDIGO=4
@@ -313,7 +347,7 @@ ScrUsed_120_df <- res[[2]]
 write.csv(ScrUsed_120_df,paste0(outdir,"EGFR_ScrUsed_120.csv"),row.names=FALSE) #All Scr in Time Window less than 30 days apar
 
 length(which(is.na(EGFR_120_df$EGFR_120d)==T))
-length(which(EGFR_120_df$n_OutptScr_AfterHOSP_Before120d==0)) ##28135
+length(which(EGFR_120_df$n_OutptScr_AfterHOSP_Before120d==0)) ##  6331
 
 ########################################################################################
 ##           5. EGFR drop > 50% and 30% of baseline HOSP_DC to 120 days
@@ -357,8 +391,8 @@ for (p in 1:length(analysis_ID)){
   
 }
 
-table(EGFR_Drop_df$eGFR_Drop50) #4004  159 
-table(EGFR_Drop_df$eGFR_Drop30) #3645  518
-length(which(is.na(EGFR_Drop_df$eGFR_Drop50)==T)) # 6340
+table(EGFR_Drop_df$eGFR_Drop50) #4010  161
+table(EGFR_Drop_df$eGFR_Drop30) #3648  523
+length(which(is.na(EGFR_Drop_df$eGFR_Drop50)==T)) # 6331
 
 write.csv(EGFR_Drop_df,paste0(outdir,"EGFR_Drop_120_df.csv"),row.names=FALSE)
