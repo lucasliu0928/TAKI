@@ -10,14 +10,14 @@ proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Pro
 perf_dir <- paste0(proj_dir,"CV_performance/mortality/")
 baseline_model_file  <- "/SOFA/Prediction_RF.csv"
 comprison_model_file1 <- "/APACHE/Prediction_RF.csv"
-comprison_model_file2 <- "/SelectedClinicalFeature/Prediction_RF.csv"
+comprison_model_file2 <- "/SelectedClinicalFeature2/Prediction_RF.csv"
 
 reclass_res1 <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file1,cutoff = c(0,0.5,1))
 colnames(reclass_res1)[2] <- paste0("APACHEvsSOFA_",colnames(reclass_res1)[2])
 reclass_res2 <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file2,cutoff = c(0,0.5,1))
-colnames(reclass_res2)[2] <- paste0("SelectedClinicalvsSOFA_",colnames(reclass_res2)[2])
+colnames(reclass_res2)[2] <- paste0("SelectedClinicalFeature2vsSOFA_",colnames(reclass_res2)[2])
 comb_res <- cbind(reclass_res1,reclass_res2)
-write.csv(comb_res,paste0(perf_dir,"UK_Mortality_ReclassResults_RF.csv"))
+write.csv(comb_res,paste0(perf_dir,"UK_SelectedClinicalFeature2_Mortality_ReclassResults_RF.csv"))
 
 #2. UTSW
 
@@ -27,11 +27,11 @@ write.csv(comb_res,paste0(perf_dir,"UK_Mortality_ReclassResults_RF.csv"))
 #1.UK
 perf_dir <- paste0(proj_dir,"CV_performance/make120_drop50/")
 baseline_model_file  <- "/KDIGO/Prediction_RF.csv"
-comprison_model_file1 <- "/SelectedClinicalFeature/Prediction_RF.csv"
+comprison_model_file1 <- "/SelectedClinicalFeature2/Prediction_RF.csv"
 
 reclass_res <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file1,cutoff = c(0,0.5,1))
-colnames(reclass_res)[2] <- paste0("SelectedClinicalvsKDIGO_",colnames(reclass_res)[2])
-write.csv(reclass_res,paste0(perf_dir,"UK_MAKE50_ReclassResults_RF.csv"))
+colnames(reclass_res)[2] <- paste0("SelectedClinical2vsKDIGO_",colnames(reclass_res)[2])
+write.csv(reclass_res,paste0(perf_dir,"UK_SelectedClinical2_MAKE_ReclassResults_RF.csv"))
 
 #UTSW
 
