@@ -175,7 +175,7 @@ table(USRD_BeforeAT,STATUS_BeforeAT)
 
 ############################################################################################################
 #6. Final before/AT status
-# has a 1 in either table
+# has a 1 in either table (This is donw different than UK to Match Xilong's formula)
 ############################################################################################################
 Final_ESRD_BEFORE_AT_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID), ncol = 2))
 colnames(Final_ESRD_BEFORE_AT_df) <- c("STUDY_PATIENT_ID","ESRD_BEFORE_AT")
@@ -203,7 +203,7 @@ for (i in 1:length(analysis_ID)){
   Final_ESRD_BEFORE_AT_df[i,"ESRD_BEFORE_AT"] <- final_flag
 }
 
-table(Final_ESRD_BEFORE_AT_df$ESRD_BEFORE_AT) #10068   465  
+table(Final_ESRD_BEFORE_AT_df$ESRD_BEFORE_AT) #10037   465  
 
 
 write.csv(Final_ESRD_BEFORE_AT_df,paste0(outdir,"ESRD_Before_AT.csv"),row.names = F)
