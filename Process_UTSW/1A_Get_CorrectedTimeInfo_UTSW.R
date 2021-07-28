@@ -281,7 +281,7 @@ TimeInfo_df <- TimeInfo_df[,-which(colnames(TimeInfo_df) %in% c("CRRT_START_DATE
 ##########################################################################################
 #Correction of CRRT,HD, ICU, HOSP
 #'@NOTE1:  exclude 10 patient who has CRRT start 24 hours before ICU start, corrected 65
-#'@NOTE2: exclude 1 patient who has CRRT/HD/ICU start  24 hours before hosp start,corrected 92
+#'@NOTE2:  exclude 1 patient who has CRRT/HD/ICU start  24 hours before hosp start,corrected 92
 #1. If CRRT start is before ICU start, but less than 24 hours, set ICU start = CRRT Start; otherwise, exclude pts
 #   If CRRT End is after ICU end, but less than 24 hours, set ICU End = CRRT End; otherwise, exclude 
 
@@ -436,6 +436,7 @@ TimeInfo_df <- TimeInfo_df[,-which(colnames(TimeInfo_df) %in% c("HOSP_ADMIT_DATE
 # Add decease date IN TimeInfo_df
 #two source tPatients.csv, and tUSRDS_CORE_Patients.csv
 #use the max of all possible dates
+#'@Exclude died before HOSP admit or before ICU admit (5)
 ##########################################################################################
 #Mortality time df 1
 outcome_df <-read.csv(paste0(raw_dir,"tPatients.csv"),stringsAsFactors = F)
@@ -506,13 +507,16 @@ curr_idxes_tochange <- which(nchar(TimeInfo_df[,"DECEASED_DATE"]) == 10)
 TimeInfo_df[curr_idxes_tochange,"DECEASED_DATE"] <-  paste(TimeInfo_df[curr_idxes_tochange,"DECEASED_DATE"],"00:00:00")
 
 
-#exclude patients died before HOSP admit (4)
-exclude_idxes <- which(ymd_hms(TimeInfo_df$DECEASED_DATE) < ymd_hms(TimeInfo_df$Updated_HOSP_ADMIT_DATE))
+#exclude patients died before HOSP admit or died before ICU start (5)
+exclude_idxes <- which(ymd_hms(TimeInfo_df$DECEASED_DATE) < ymd_hms(TimeInfo_df$Updated_HOSP_ADMIT_DATE) |
+                       ymd_hms(TimeInfo_df$DECEASED_DATE) < ymd_hms(TimeInfo_df$Updated_ICU_ADMIT_DATE))
 if (length(exclude_idxes) > 0){
  updated_TimeInfo_df <- TimeInfo_df[-exclude_idxes,]
 }else{
   updated_TimeInfo_df <- TimeInfo_df
 }
+
+
 
 ##########################################################################################
 #Check valid date after correction
@@ -547,7 +551,7 @@ which(check_df$Updated_HOSP_ADMIT_DATE >= check_df$Updated_HOSP_DISCHARGE_DATE)
 #### D1 Start  == D0 end + 1 sec, D1 End == the same day of D1 start at 23:59:59
 #### D2 Start  == D1 end + 1 sec, D2 End == the same day of D2 start at 23:59:59
 #### D3 Start  == D2 end + 1 sec, D3 End == the same day of D3 start at 23:59:59
-#'@NOTE: D1 or D2 or D3 can be no in ICU, if the duration of ICU is less than certain hours
+#'@NOTE: D1 or D2 or D3 can be not in ICU, if the duration of ICU is less than certain hours
 ##########################################################################################
 updated_TimeInfo_df$D0_Start <- NA
 updated_TimeInfo_df$D0_End <-  NA
