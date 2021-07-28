@@ -31,10 +31,11 @@ prediction_file_names <- paste0("Prediction_",method_names,".csv")
 SOFA_perfs <- get_allmethods_performance(folder_name,perf_file_names,"SOFA")
 APACHE_perfs <- get_allmethods_performance(folder_name,perf_file_names,"APACHE")
 SelectedClinicalFeature_perfs <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature")
+SelectedClinicalFeature_perfs2 <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature2")
 AllClinicalFeature_perfs <- get_allmethods_performance(folder_name,perf_file_names,"AllClinicalFeature")
 
-all_perfs <- cbind(SOFA_perfs,APACHE_perfs,SelectedClinicalFeature_perfs,AllClinicalFeature_perfs)
-all_perfs <- all_perfs[-c(6,11,16)]
+all_perfs <- cbind(SOFA_perfs,APACHE_perfs,SelectedClinicalFeature_perfs,SelectedClinicalFeature_perfs2,AllClinicalFeature_perfs)
+all_perfs <- all_perfs[-c(6,11,16,21)]
 
 #2.For each featuresets and each method, compare with baseline AUC diff
 AUC_diff <- as.data.frame(matrix(NA, nrow = 2, ncol = ncol(all_perfs)))
@@ -96,10 +97,11 @@ prediction_file_names <- paste0("Prediction_",method_names,".csv")
 #1. Performances using different feature
 KDIGO_perfs <- get_allmethods_performance(folder_name,perf_file_names,"KDIGO")
 SelectedClinicalFeature_perfs <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature")
+SelectedClinicalFeature_perfs2 <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature2")
 AllClinicalFeature_perfs <- get_allmethods_performance(folder_name,perf_file_names,"AllClinicalFeature")
 
-all_perfs <- cbind(KDIGO_perfs,SelectedClinicalFeature_perfs,AllClinicalFeature_perfs)
-all_perfs <- all_perfs[-c(6,11)]
+all_perfs <- cbind(KDIGO_perfs,SelectedClinicalFeature_perfs,SelectedClinicalFeature_perfs2,AllClinicalFeature_perfs)
+all_perfs <- all_perfs[-c(6,11,16)]
 
 #2.For each featuresets and each method, compare with baseline AUC diff
 AUC_diff <- as.data.frame(matrix(NA, nrow = 2, ncol = ncol((all_perfs))))
