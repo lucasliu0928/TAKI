@@ -17,10 +17,17 @@ risk_mortality_UK <- get_avg_pred_func(pred_df)
 write.csv(risk_mortality_UK,paste0(UK_mortality_dir,"UK_",featureset_folder,"_Mortality_AVG_Pred_Risk_",method_name,".csv"))
 
 #3.Count risk category
-risk_mortality_UK_count <- count_risk_category(risk_mortality_UK)
-write.csv(risk_mortality_UK_count,paste0(UK_mortality_dir,"UK_",featureset_folder,"_Mortality_Risk_Catogory_",method_name,".csv"))
+risk_category <- c(0.2,0.5)
+risk_mortality_UK_count1 <- count_risk_category(risk_mortality_UK,risk_category)
+write.csv(risk_mortality_UK_count1,paste0(UK_mortality_dir,"UK_",featureset_folder,"_Mortality_Risk_Catogory1_",method_name,".csv"))
+
+risk_category <- c(0.1,0.3,0.5)
+risk_mortality_UK_count2 <- count_risk_category(risk_mortality_UK,risk_category)
+write.csv(risk_mortality_UK_count2,paste0(UK_mortality_dir,"UK_",featureset_folder,"_Mortality_Risk_Catogory2_",method_name,".csv"))
+
 
 #2.UTSW
+
 
 ################################################################################################## 
 ############## MAKE ############## 
@@ -28,7 +35,7 @@ write.csv(risk_mortality_UK_count,paste0(UK_mortality_dir,"UK_",featureset_folde
 #1. UK
 UK_MAKE_dir <- paste0(proj_dir,"CV_performance/make120_drop50/")
 method_name <- "RF"
-featureset_folder <- "SelectedClinicalFeature2"
+featureset_folder <- "SelectedClinicalFeature"
 #1. Load pred table
 pred_df <- read.csv(paste0(UK_MAKE_dir,featureset_folder,"/Prediction_",method_name,".csv"),stringsAsFactors = F)
 
@@ -37,7 +44,13 @@ risk_make_UK <- get_avg_pred_func(pred_df)
 write.csv(risk_make_UK,paste0(UK_MAKE_dir,"UK_",featureset_folder,"_MAKE_AVG_Pred_Risk_",method_name,".csv"))
 
 #3.Count risk category
-risk_make_UK_count <- count_risk_category(risk_make_UK)
-write.csv(risk_make_UK_count,paste0(UK_MAKE_dir,"UK_",featureset_folder,"_MAKE_Risk_Catogory_",method_name,".csv"))
+risk_category <- c(0.2,0.5)
+risk_make_UK_count1 <- count_risk_category(risk_make_UK,risk_category)
+write.csv(risk_make_UK_count1,paste0(UK_MAKE_dir,"UK_",featureset_folder,"_MAKE_Risk_Catogory1_",method_name,".csv"))
+
+risk_category <- c(0.1,0.3,0.5)
+risk_make_UK_count2 <- count_risk_category(risk_make_UK,risk_category)
+write.csv(risk_make_UK_count2,paste0(UK_MAKE_dir,"UK_",featureset_folder,"_MAKE_Risk_Catogory2_",method_name,".csv"))
+
 
 #UTSW
