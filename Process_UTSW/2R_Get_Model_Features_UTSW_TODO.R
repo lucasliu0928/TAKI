@@ -172,8 +172,7 @@ for (i in 1:length(analysis_ID)){
   
   #All_UrineOutput_df
   #'@Question: is "UOP_wtmissing" for urine output?
-  #'Thought I find URINEFLOW_ml_Kg_Hr in Xilong_df3, but no Missing values, imputed? need not imputed feature for missing value count report
-  #'#UrineFlow
+  #'UrineFlow? Thought I find URINEFLOW_ml_Kg_Hr in Xilong_df3, but no Missing values, imputed? need not imputed feature for missing value count report
   Feature_df[i,"UrineOutput_D0toD3"] <- get_feature_forPt2(curr_id,Xilong_df2,"UOP_wtmissing","patient_num")
   Feature_df[i,"UrineFlow_D0toD3"] <- NA
   
