@@ -1,4 +1,4 @@
-library(pROC)
+library(pROC) ##can also use this one for delong's methods
 library(caret)
 library(xgboost)
 library(ggplot2)
@@ -7,6 +7,9 @@ library(dplyr)
 library(caTools)
 library(randomForest)
 library(PredictABEL)
+library(rms)
+library(Rmisc)
+
 ##############  Time correction functions ############## 
 reformat_10char_dates_func <- function(date_to_modify){
   date_to_modify <- as.character(date_to_modify)
@@ -1187,7 +1190,7 @@ create_fold_func <- function(analysis_df,NFolds){
 }
 
 #Sampling function
-Data_Sampling_Func <- function(upsample_flag,train_data,label_col_name,seed_num){
+Data_Sampling_Func <- function(upsample_flag,train_data,label_col_name,seed_num,random_perc = 0.8){
   # upsample_flag <- 0
   # train_data <- curr_train_data
   # label_col_name <- outcome_colname
@@ -1209,6 +1212,10 @@ Data_Sampling_Func <- function(upsample_flag,train_data,label_col_name,seed_num)
                              y = as.factor(train_data[,label_col_name]), yname = label_col_name)      
     sampled_train_data <- down_train
     
+  }else if(upsample_flag==2){ #random sample 90% of orignal data
+    set.seed(seed_num)
+    sampled_indxes <- sample(nrow(train_data), nrow(train_data)*random_perc, replace = TRUE, prob = NULL)
+    sampled_train_data <- train_data[sampled_indxes,]
   }else{
     original_train <- train_data
     sampled_train_data <- original_train
@@ -1711,19 +1718,23 @@ compute_avg_importance <- function(all_importance_matrix,features,model_name){
 
 #compute calibration slope and Intercept
 compute_calibration_func <-function(perf_table){
-  #perf_table <- curr_perf_table
+  #perf_table <- final_pred[which(final_pred$TrainingSample_Index == "S2"),]
   
   #This issue manly for RF when only one predictor
   #Convert prediction of 1 = 0.9999 , and 0 = 0.00000001 so that the calibration can be computed
-  perf_table[which(perf_table$pred_prob == 1),"pred_prob"] <- 0.99999
+  perf_table[which(perf_table$pred_prob == 1),"pred_prob"] <- 0.99990
   perf_table[which(perf_table$pred_prob == 0),"pred_prob"] <- 0.00001
   
   #compute calibration Intercept and slope and plot
-  pred_p <-   perf_table[,"pred_prob"]
+  pred_p <-   round(perf_table[,"pred_prob"],5)
   acutal <- as.numeric(as.vector(perf_table[,"Label"]))
-  res = val.prob(p = pred_p,y= acutal, pl=FALSE)
-  calib_res <- res[c("Intercept","Slope")]
-  
+  if(length(unique(pred_p)) == 1){ #if only one pred prob, val.prob error:  Error in solvet(info.matrix, tol = tol) : apparently singular matrix 
+    calib_res <- c(NA,NA)
+  }else{
+    res = val.prob(p = pred_p,y= acutal, pl=FALSE)
+    calib_res <- res[c("Intercept","Slope")]
+  }
+
   #Note: This is what val.prb actually doing
   #https://stats.stackexchange.com/questions/459358/how-is-slope-calculated-in-a-calibration-plot
   #check <- glm(acutal ~ log(pred_p/(1-pred_p)),family="binomial")
@@ -2585,17 +2596,17 @@ get_avg_pred_func <- function(analysis_df){
 }
 
 
-count_risk_category <- function(risk_df){
-  risk_category <- c(0.1,0.5)
+count_risk_category <- function(risk_df,risk_category){
+  #risk_category <- c(0.1,0.5)
   Risk_Count_Table <- as.data.frame(matrix(NA, nrow = length(risk_category) + 1, ncol = 3))
   colnames(Risk_Count_Table) <- c("Risk_Category","N_andPerc_PredictedInCategory","N_andPerc_AcutalLabel1")
   
-  for (i in 1: 3){
+  for (i in 1: (length(risk_category) + 1)){
     
     if (i == 1){
       cond <- risk_df[,"AVG_pred_prob"] < risk_category[i]
       
-    }else if (i == 3){
+    }else if (i == (length(risk_category) + 1)){
       cond <- risk_df[,"AVG_pred_prob"] >= risk_category[i-1]
       
     }else{
@@ -2793,3 +2804,82 @@ reclassification_manually_cutoff05_func <- function(model_comp_df){
 
 }
 
+
+external_validation_func <- function(train_data,Validation_data,outcome_colname,model_name, upsample_flag,N_sampling,n_tress_RF=500,svmkernel = 'svmLinear2',random_perc=0.8){
+  sampling_pred_table_list <- list(NA)
+  importance_matrix_list <- list(NA)
+  for (s in 1:N_sampling){
+    if(s %% 10 == 0){print(paste0("Sampling Step:",s))}
+    seed_num <- s
+    #Get sampled data
+    train_data_sampled <- Data_Sampling_Func(upsample_flag,train_data,outcome_colname,seed_num,random_perc)
+    #train model
+    res <- train_models(train_data_sampled,outcome_colname,model_name,n_tress_RF,svmkernel)
+    curr_model <- res[[1]]
+    
+    #Get curre model imporatance matrix
+    curr_importance_matrix <- res[[2]]
+    curr_importance_matrix$Sample_Indxes <- s
+    importance_matrix_list[[s]] <- curr_importance_matrix
+    
+    pred_prob <- prediction_usingTrainedModels(Validation_data,outcome_colname,curr_model,model_name)
+    
+    #Prediction class
+    pred_class <- get_pred_class_func(pred_prob) 
+    
+    #Code outcome of test back to 1 and 0
+    Validation_data <- code_Label_10_func(Validation_data,outcome_colname)
+    
+    #combine pred prob, pred class, acutal label, and fold index
+    #Testing results
+    pred_table <- cbind.data.frame(rownames(Validation_data),pred_prob,pred_class,as.numeric(Validation_data[,outcome_colname]),paste0("S",s))
+    colnames(pred_table) <- c("ID","pred_prob","pred_class","Label","TrainingSample_Index")
+    sampling_pred_table_list[[s]] <- pred_table
+  }
+  
+  
+  final_pred <- do.call(rbind,sampling_pred_table_list)
+  final_importance_matrix<- do.call(rbind,importance_matrix_list)
+  
+  return(list(final_pred,final_importance_matrix))
+  
+}
+
+compute_performance_ExternalValidation_func <- function(N_sampling,prediction_table){
+  #Compute performance for each fold with each sampling
+  EachSampling_perf_table <- as.data.frame(matrix(NA, nrow =N_sampling ,ncol = 13))
+  colnames(EachSampling_perf_table) <-c("DownSample_Indxes","AUC","Accuracy",
+                                        "Precision","Sensitivity","Specificity","PPV","NPV",
+                                        "Calibration_Intercept","Calibration_Slope",
+                                        "Taylor_Calibration_Intercept","Taylor_Calibration_Slope","F1")
+  
+  for (j in 1:N_sampling){
+    curr_sample <-  paste0("S",j)
+    EachSampling_perf_table[j,"DownSample_Indxes"] <- curr_sample
+    
+    curr_perf_idxes <- which(prediction_table[,"TrainingSample_Index"] == curr_sample)
+    curr_perf_table <- prediction_table[curr_perf_idxes,]
+    
+    #calibration
+    calib_res <- compute_calibration_func(curr_perf_table)
+    my_calib_res <- calib_res[[1]]
+    taylors_res <- c(calib_res[[2]],calib_res[[3]])
+    EachSampling_perf_table[j,"Calibration_Intercept"] <- my_calib_res[1]
+    EachSampling_perf_table[j,"Calibration_Slope"] <- my_calib_res[2]
+    EachSampling_perf_table[j,"Taylor_Calibration_Intercept"] <- taylors_res[1]
+    EachSampling_perf_table[j,"Taylor_Calibration_Slope"] <- taylors_res[2]
+    
+    #Other perforamnce:
+    other_res <- compute_performance_func(curr_perf_table)
+    EachSampling_perf_table[j,"AUC"] <- as.numeric(other_res[1])
+    EachSampling_perf_table[j,"Accuracy"] <- other_res["Accuracy"]
+    EachSampling_perf_table[j,"Precision"] <- other_res["Precision"]
+    EachSampling_perf_table[j,"Sensitivity"] <- other_res["Sensitivity"]
+    EachSampling_perf_table[j,"Specificity"] <- other_res["Specificity"]
+    EachSampling_perf_table[j,"PPV"] <- other_res["Pos Pred Value"]
+    EachSampling_perf_table[j,"NPV"] <- other_res["Neg Pred Value"]
+    EachSampling_perf_table[j,"F1"] <- other_res["F1"]
+  }
+  
+  return(EachSampling_perf_table)
+}
