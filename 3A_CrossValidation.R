@@ -271,7 +271,6 @@ for (m in 1:length(model_name_list)){
   
   #Compute perforamnce for each fold with each sampling
   eachfold_eachSample_perf_tb <- compute_performance_TrainCV_func(N_sampling,NFolds,final_pred)
-  
   write.csv(eachfold_eachSample_perf_tb, paste0(outdir1,"Performance_PerFoldPerSample_", model_name, ".csv"),row.names = F)
   
   #get CI and mean perforamnce
