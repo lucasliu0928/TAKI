@@ -1,146 +1,202 @@
 source("TAKI_Ultility.R")
 #this script use entire UK data, and validation on utsw data (Use down sampling for CI )
+main_func <-function(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list,n_tress_RF=500,svmkernel = 'svmLinear2',random_perc=0.8){
+  for (m in 1:length(method_list)){
+    model_name <- method_list[m]
+    
+    #External validation training with downsampled UK data 10 times and validate on UTSW data
+    res <- external_validation_func(train_data,Validation_data,outcome_colname,model_name,upsample_flag,N_sampling,n_tress_RF,svmkernel,random_perc)
+    final_pred <- res[[1]]
+    write.csv(final_pred, paste0(outdir1,"Prediction_", model_name, ".csv"),row.names = F)
+    
+    #compute avg performance
+    final_importance_matrix <- res[[2]]
+    features <- colnames(train_data)[which(colnames(train_data) != outcome_colname)]
+    avg_importance_matrix <- compute_avg_importance(final_importance_matrix,features,model_name)
+    write.csv(avg_importance_matrix, paste0(outdir1,"Importance_AVG_", model_name, ".csv"),row.names = F)
+    
+    #Compute perforamnce for each sampling
+    eachSample_perf_tb <- compute_performance_ExternalValidation_func(N_sampling,final_pred)
+    write.csv(eachSample_perf_tb, paste0(outdir1,"Performance_PerFoldPerSample_", model_name, ".csv"),row.names = F)
+    
+    #get CI and mean perforamnce
+    eachSample_perf_tb[which(is.na(eachSample_perf_tb)==T,arr.ind = T)] <- 0 #basicaly prediction only 1 class in these samples
+    CI_perf_tb <- perf_Mean_CI_func(eachSample_perf_tb[,2:13])
+    write.csv(CI_perf_tb, paste0(outdir1,"Performance_AVG_CI_", model_name, ".csv"),row.names = T)
+  }
+  
+}
+
+
+
 #Data dir
 UK_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
-UTSW_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/xilong_extracted/"
+UTSW_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/Model_Feature_Outcome/"
 
 #out dir
-out_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0629/"
+out_dir <- "//Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/ExternalV_performance/"
 
-#feature file and outcome file names
-feature_file <- c("All_Feature_imputed_normed.csv")
-outcome_file <- "All_outcome.csv"
 
 ####################################################################################### 
-######                           Mortality Prediction                      ############
-#feature file: All_Feature_imputed_normed.csv
+######                           Mortality Prediction   1                  ############
+#feature file: SOFA.csv, 
 #Outcome file: All_outcome.csv
 ####################################################################################### 
-#Outdir for mortality
-outdir1 <- paste0(out_dir,"mortality/All_Clinical_Feature/importance/")
+#1.Feature file
+feature_file <- "All_SOFA_TOTAL_normed.csv"
 
-#Outcome column name
+#2.Outcome column name
+outcome_file <- "All_outcome.csv"
 outcome_colname <- "Death_inHOSP"
 
+#3.Outdir for mortality
+outdir1 <- paste0(out_dir,"mortality/SOFA/")
+
+
 #1.Get model data
-train_data <- construct_model_data_func(data_dir,feature_file,outcome_file,outcome_colname)
-Validation_data <- read.csv()
-table(train_data$Death_inHOSP)
+train_data <- construct_model_data_func(UK_data_dir,feature_file,outcome_file,outcome_colname)
+Validation_data <- construct_model_data_func(UTSW_data_dir,feature_file,outcome_file,outcome_colname)
+table(train_data$Death_inHOSP) #5742 1612
+table(Validation_data$Death_inHOSP) #2011  222 
 
-#2.For each method, do down sampling 10 times on entire UK data, get the average importance matrix
-upsample_flag <- 0 #down sample
-model_name_list <- c("SVM","RF","LogReg","XGB")
-for (m in 1:length(model_name_list)){
-  model_name <- model_name_list[m]
-  importance_matrix_list <- list(NA)
-  for (s in 1:10){
-    seed_num <- s
-    #Get sampled data
-    train_data_sampled <- Data_Sampling_Func(upsample_flag,train_data,outcome_colname,seed_num)
-    #train model
-    res <- train_models(train_data_sampled,outcome_colname,model_name)
-    curr_model <- res[[1]]
-    curr_importance_matrix <- res[[2]]
-    curr_importance_matrix$Sample_Indxes <- s
-    importance_matrix_list[[s]] <- curr_importance_matrix
-  }
-  
-  #3.get importance matrix for every sampling results
-  all_importance_matrix <- do.call(rbind,importance_matrix_list)
-  table(all_importance_matrix$Feature)
-  
-  #4.compute average importance for each feature
-  feature_indexes<- which(colnames(train_data) != outcome_colname)
-  average_importance_df <- as.data.frame(matrix(NA, nrow = length(feature_indexes), ncol = 2))
-  colnames(average_importance_df) <- c("Feature","AVG_Importance")
-  for (f in 1:length(feature_indexes)){
-    curr_f <- colnames(train_data)[f]
-    curr_f_importances_matrix <- all_importance_matrix[which(all_importance_matrix[,"Feature"] == curr_f),]
-    if (nrow(curr_f_importances_matrix)  == 0){ #it is possible in XGB, the feature did not show up in importance matrix, cuz it is not importance
-      curr_f_avg_importances <- 0
-    }else{
-       curr_f_avg_importances <- mean(curr_f_importances_matrix[,2])
-    }
-    average_importance_df[f,"Feature"] <- curr_f
-    average_importance_df[f,"AVG_Importance"] <- curr_f_avg_importances
-    
-}
-  
-  #scale 0 to 100
-  if (model_name != "LogReg"){
-    average_importance_df <- scale_0to100_func(average_importance_df,"AVG_Importance") #scale 0-100
-  }
-  
-  #Reorder
-  average_importance_df <- average_importance_df[order(abs(average_importance_df$AVG_Importance),decreasing = T),]
-  
-  write.csv(average_importance_df, paste0(outdir1,"importance_matrix_", model_name, ".csv"))
-}
-
+#2.For each method, do boostraps 10 times on entire UK data, and valdition on UTSW data
+upsample_flag <- 2 #random sample 0.8 of train data for bootstrapping
+N_sampling <- 10
+method_list <- c("SVM","RF","LogReg","XGB")
+main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list)
 
 
 
 ####################################################################################### 
-######              MAKE 120 with drop 50   Prediction                     ############
-#feature file: All_Feature_imputed_normed.csv
+######                           Mortality Prediction   2                  ############
+#feature file: APACHE.csv, 
 #Outcome file: All_outcome.csv
 ####################################################################################### 
-#Outdir for mortality
-outdir3 <- paste0(out_dir,"/make120_drop50/All_Clinical_Feature/importance/")
+#1.Feature file
+feature_file <- "All_APACHE_TOTAL_normed.csv"
 
-#Outcome column name
-outcome_colname <- "MAKE_HOSP120_Drop50"
+#2.Outcome column name
+outcome_file <- "All_outcome.csv"
+outcome_colname <- "Death_inHOSP"
+
+#3.Outdir for mortality
+outdir1 <- paste0(out_dir,"mortality/APACHE/")
+
 
 #1.Get model data
-train_data <- construct_model_data_func(data_dir,feature_file,outcome_file,outcome_colname)
-table(train_data$MAKE_HOSP120_Drop50)
+train_data <- construct_model_data_func(UK_data_dir,feature_file,outcome_file,outcome_colname)
+Validation_data <- construct_model_data_func(UTSW_data_dir,feature_file,outcome_file,outcome_colname)
+table(train_data$Death_inHOSP) #5742 1612
+table(Validation_data$Death_inHOSP) #2011  222 
 
-#2.For each model, do down sampling 10 times on entire UK data, get the average importance matrix
-upsample_flag <- 0 #down sample
-model_name_list <- c("SVM","RF","LogReg","XGB")
-for (m in 1:length(model_name_list)){
-  model_name <- model_name_list[m]
-  importance_matrix_list <- list(NA)
-  for (s in 1:10){
-    seed_num <- s
-    #Get sampled data
-    train_data_sampled <- Data_Sampling_Func(upsample_flag,train_data,outcome_colname,seed_num)
-    #train model
-    res <- train_models(train_data_sampled,outcome_colname,model_name)
-    curr_model <- res[[1]]
-    curr_importance_matrix <- res[[2]]
-    curr_importance_matrix$Sample_Indxes <- s
-    importance_matrix_list[[s]] <- curr_importance_matrix
-  }
-  
-  #3.get importance matrix for every sampling results
-  all_importance_matrix <- do.call(rbind,importance_matrix_list)
-  table(all_importance_matrix$Feature)
-  
-  #4.compute average importance for each feature
-  feature_indexes<- which(colnames(train_data) != outcome_colname)
-  average_importance_df <- as.data.frame(matrix(NA, nrow = length(feature_indexes), ncol = 2))
-  colnames(average_importance_df) <- c("Feature","AVG_Importance")
-  for (f in 1:length(feature_indexes)){
-    curr_f <- colnames(train_data)[f]
-    curr_f_importances_matrix <- all_importance_matrix[which(all_importance_matrix[,"Feature"] == curr_f),]
-    if (nrow(curr_f_importances_matrix)  == 0){ #it is possible in XGB, the feature did not show up in importance matrix, cuz it is not importance
-      curr_f_avg_importances <- 0
-    }else{
-      curr_f_avg_importances <- mean(curr_f_importances_matrix[,2])
-    }
-    average_importance_df[f,"Feature"] <- curr_f
-    average_importance_df[f,"AVG_Importance"] <- curr_f_avg_importances
-    
-  }
-  
-  #scale 0 to 100
-  if (model_name != "LogReg"){
-    average_importance_df <- scale_0to100_func(average_importance_df,"AVG_Importance") #scale 0-100
-  }
-  
-  #Reorder
-  average_importance_df <- average_importance_df[order(abs(average_importance_df$AVG_Importance),decreasing = T),]
-  
-  write.csv(average_importance_df, paste0(outdir3,"importance_matrix_", model_name, ".csv"))
-}
+#2.For each method, do boostraps 10 times on entire UK data, and valdition on UTSW data
+upsample_flag <- 2 #random sample 0.8 of train data for bootstrapping
+N_sampling <- 10
+method_list <- c("SVM","RF","LogReg","XGB")
+main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list)
+
+
+
+####################################################################################### 
+######                           Mortality Prediction   3                  ############
+#feature file: Selected features2 
+#Outcome file: All_outcome.csv
+####################################################################################### 
+##1.Feature file
+feature_file <- c("All_Feature_imputed_normed.csv")
+selected_features <- c("UrineOutput_D0toD3" , "Vasopressor_ICUD0toD3","FI02_D1_HIGH","Platelets_D1_LOW","AGE",
+                       "BUN_D0toD3_HIGH","HR_D1_HIGH","LAST_KDIGO_ICU_D0toD3","PH_D1_LOW","Bilirubin_D1_HIGH",
+                       "MAX_KDIGO_ICU_D0toD3","ECMO_ICUD0toD3","Hours_inICUD0toD3", "Temperature_D1_LOW", "Temperature_D1_HIGH")
+#2.Outcome column name
+outcome_file <- "All_outcome.csv"
+outcome_colname <- "Death_inHOSP"
+
+#3.Outdir for mortality
+outdir1 <- paste0(out_dir,"mortality/SelectedClinicalFeature2/")
+
+
+#1.Get model data
+train_data <- construct_model_data_func(UK_data_dir,feature_file,outcome_file,outcome_colname)
+train_data <- train_data[,c(selected_features,outcome_colname)]
+
+Validation_data <- construct_model_data_func(UTSW_data_dir,feature_file,outcome_file,outcome_colname)
+Validation_data <- Validation_data[,c(selected_features,outcome_colname)]
+
+table(train_data$Death_inHOSP) #5742 1612
+table(Validation_data$Death_inHOSP) #2011  222 
+
+colnames(train_data)
+colnames(Validation_data)
+
+#2.For each method, do boostraps 10 times on entire UK data, and valdition on UTSW data
+upsample_flag <- 2 #random sample 0.8 of train data for bootstrapping
+N_sampling <- 10
+method_list <- c("SVM","RF","LogReg","XGB")
+main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list)
+
+
+
+####################################################################################### 
+######                MAKE with drop50 Prediction   1                      ############
+#feature file: 1. KDIGO.csv, 
+#Outcome file: All_outcome.csv
+####################################################################################### 
+#1.Feature file
+feature_file <- c("All_MAX_KDIGO_ICUD0toD3_normed.csv")
+
+#2.Outcome column name
+outcome_file <- "All_outcome.csv"
+outcome_colname <- "MAKE_HOSP120_Drop50"
+
+#3.Outdir for mortality
+outdir1 <- paste0(out_dir,"make120_drop50/KDIGO/")
+
+
+#1.Get model data
+train_data <- construct_model_data_func(UK_data_dir,feature_file,outcome_file,outcome_colname)
+Validation_data <- construct_model_data_func(UTSW_data_dir,feature_file,outcome_file,outcome_colname)
+table(train_data$MAKE_HOSP120_Drop50) #4972 2382 
+table(Validation_data$MAKE_HOSP120_Drop50) #1659  574 
+
+#2.For each method, do boostraps 10 times on entire UK data, and valdition on UTSW data
+upsample_flag <- 2 #random sample 0.8 of train data for bootstrapping
+N_sampling <- 10
+method_list <- c("SVM","RF","LogReg","XGB")
+main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list,n_tress_RF=500,svmkernel = 'svmLinear2',random_perc=0.8)
+
+
+
+####################################################################################### 
+######                MAKE with drop50 Prediction   2                      ############
+#feature file: Selected Features1
+#Outcome file: All_outcome.csv
+####################################################################################### 
+#1.Feature file
+feature_file <- c("All_Feature_imputed_normed.csv")
+selected_features <- c("LAST_KDIGO_ICU_D0toD3","UrineOutput_D0toD3","MAX_KDIGO_ICU_D0toD3","Bilirubin_D1_HIGH",
+                        "AGE","BUN_D0toD3_HIGH","Hemoglobin_D1_LOW","Platelets_D1_LOW","FI02_D1_HIGH",
+                        "Vasopressor_ICUD0toD3","HR_D1_HIGH","PH_D1_LOW")
+
+#2.Outcome column name
+outcome_file <- "All_outcome.csv"
+outcome_colname <- "MAKE_HOSP120_Drop50"
+
+#3.Outdir for mortality
+outdir1 <- paste0(out_dir,"make120_drop50/SelectedClinicalFeature/")
+
+
+#1.Get model data
+train_data <- construct_model_data_func(UK_data_dir,feature_file,outcome_file,outcome_colname)
+train_data <- train_data[,c(selected_features,outcome_colname)]
+
+Validation_data <- construct_model_data_func(UTSW_data_dir,feature_file,outcome_file,outcome_colname)
+Validation_data <- Validation_data[,c(selected_features,outcome_colname)]
+
+table(train_data$MAKE_HOSP120_Drop50) #4972 2382 
+table(Validation_data$MAKE_HOSP120_Drop50) #1659  574 
+
+#2.For each method, do boostraps 10 times on entire UK data, and valdition on UTSW data
+upsample_flag <- 2 #random sample 0.8 of train data for bootstrapping
+N_sampling <- 10
+method_list <- c("SVM","RF","LogReg","XGB")
+main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list)
