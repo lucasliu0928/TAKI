@@ -85,7 +85,7 @@ for (i in 1:length(analysis_ID)){
   
 }
 
-table(Death_inHOSP$Death_inHOSP) #9898  605 
+table(Death_inHOSP$Death_inHOSP) 
 
 ##########################################################################################
 #4. Death or alive within 120 days post HOSP discharge + Death in HOSP
