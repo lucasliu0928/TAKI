@@ -60,7 +60,7 @@ table(train_data$Death_inHOSP) #5742 1612
 table(Validation_data$Death_inHOSP) #2011  222 
 
 #2.For each method, do boostraps 10 times on entire UK data, and valdition on UTSW data
-upsample_flag <- 2 #random sample 0.8 of train data for bootstrapping
+upsample_flag <- 3 #random sample 0.8 of train data with replacement for bootstrapping and then down sample for training
 N_sampling <- 10
 method_list <- c("SVM","RF","LogReg","XGB")
 main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list)
@@ -90,7 +90,7 @@ table(train_data$Death_inHOSP) #5742 1612
 table(Validation_data$Death_inHOSP) #2011  222 
 
 #2.For each method, do boostraps 10 times on entire UK data, and valdition on UTSW data
-upsample_flag <- 2 #random sample 0.8 of train data for bootstrapping
+upsample_flag <- 3 #random sample 0.8 of train data with replacement for bootstrapping and then down sample for training
 N_sampling <- 10
 method_list <- c("SVM","RF","LogReg","XGB")
 main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list)
@@ -129,7 +129,7 @@ colnames(train_data)
 colnames(Validation_data)
 
 #2.For each method, do boostraps 10 times on entire UK data, and valdition on UTSW data
-upsample_flag <- 2 #random sample 0.8 of train data for bootstrapping
+upsample_flag <- 3 #random sample 0.8 of train data with replacement for bootstrapping and then down sample for training
 N_sampling <- 10
 method_list <- c("SVM","RF","LogReg","XGB")
 main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list)
@@ -159,7 +159,7 @@ table(train_data$MAKE_HOSP120_Drop50) #4972 2382
 table(Validation_data$MAKE_HOSP120_Drop50) #1659  574 
 
 #2.For each method, do boostraps 10 times on entire UK data, and valdition on UTSW data
-upsample_flag <- 2 #random sample 0.8 of train data for bootstrapping
+upsample_flag <- 3 #random sample 0.8 of train data with replacement for bootstrapping and then down sample for training
 N_sampling <- 10
 method_list <- c("SVM","RF","LogReg","XGB")
 main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list,n_tress_RF=500,svmkernel = 'svmLinear2',random_perc=0.8)
@@ -196,7 +196,7 @@ table(train_data$MAKE_HOSP120_Drop50) #4972 2382
 table(Validation_data$MAKE_HOSP120_Drop50) #1659  574 
 
 #2.For each method, do boostraps 10 times on entire UK data, and valdition on UTSW data
-upsample_flag <- 2 #random sample 0.8 of train data for bootstrapping
+upsample_flag <- 3 #random sample 0.8 of train data with replacement for bootstrapping and then down sample for training
 N_sampling <- 10
 method_list <- c("SVM","RF","LogReg","XGB")
 main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list)
