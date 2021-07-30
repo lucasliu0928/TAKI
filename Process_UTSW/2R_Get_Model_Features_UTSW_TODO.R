@@ -51,7 +51,6 @@ Xilong_df1[-c(white_idxes,black_idxes),"RACE"] <- 2
 Xilong_df1$RACE <- as.numeric(Xilong_df1$RACE)
 table(Xilong_df1$RACE)
 
-#'@Question: is Height originally in Inches
 #Convert Height to Meters
 Xilong_df2$AVG_HEIGHT_Meters <- (Xilong_df2$AVG_HEIGHT)*0.0254
 
@@ -152,11 +151,20 @@ for (i in 1:length(analysis_ID)){
   curr_BMI <- curr_weight/(curr_height^2)
   Feature_df[i,"BMI"] <- curr_BMI
 
-  #Fluid Overload (NET_wmissing is in ml so divided by 1000 to convert it to L)
-  #'@Quesiton: which one to use "NET_wmissing","NET_wtmissing","Net_wMissing_L","Net_wtMissing_L"
-  curr_net <- get_feature_forPt2(curr_id,Xilong_df2,"NET_wmissing","patient_num")/1000
+  #Fluid Overload (Net_wMissing_L is in ml so divided by 1000 to convert it to L)
+  curr_net <- get_feature_forPt2(curr_id,Xilong_df2,"Net_wMissing_L","patient_num")/1000
   Feature_df[i,"FluidOverload_inPercentage"] <-  curr_net*100 /(curr_weight)
   
+  #"Hours_inICUD0toD3"
+  Feature_df[i,"Hours_inICUD0toD3"] <- get_feature_forPt2(curr_id,Xilong_df1,"ICU_hour_D0_D3orDIS","PATIENT_NUM")
+  
+  #UrineOutput : Total urine output ICU D0-D3 / measurement time (ml / hr)
+  #Urine Flow :  Total urine output ICU D0-D3 / weight / measurement time (ml / kg / hr)
+  #Use "UOP_wmissing" in ml, time: ICU_hour_D0_D3orDIS, weight: AVG_WEIGHT
+  curr_uop <- get_feature_forPt2(curr_id,Xilong_df2,"UOP_wmissing","patient_num")
+  curr_m_time <-  Feature_df[i,"Hours_inICUD0toD3"]
+  Feature_df[i,"UrineOutput_D0toD3"] <- curr_uop/curr_m_time
+  Feature_df[i,"UrineFlow_D0toD3"] <- curr_uop/curr_weight/curr_m_time
   
   #All_MAP_TEMP_HR_df
   Feature_df[i,"HR_D1_LOW"] <- get_feature_forPt2(curr_id,Xilong_df2,"MIN_HEARTRATE","patient_num")
@@ -167,14 +175,7 @@ for (i in 1:length(analysis_ID)){
   Feature_df[i,"Temperature_D1_HIGH"] <- get_feature_forPt2(curr_id,Xilong_df2,"MAX_TEMPERATURE","patient_num")
   
   #Septic
-  #'@Question: is "sepsis_F" for Sepsis_Before_or_At_Admission
   Feature_df[i,"Sepsis_Before_or_At_Admission"] <-get_feature_forPt2(curr_id,Xilong_df1,"sepsis_F","PATIENT_NUM")
-  
-  #All_UrineOutput_df
-  #'@Question: is "UOP_wtmissing" for urine output?
-  #'UrineFlow? Thought I find URINEFLOW_ml_Kg_Hr in Xilong_df3, but no Missing values, imputed? need not imputed feature for missing value count report
-  Feature_df[i,"UrineOutput_D0toD3"] <- get_feature_forPt2(curr_id,Xilong_df2,"UOP_wtmissing","patient_num")
-  Feature_df[i,"UrineFlow_D0toD3"] <- NA
   
   #All_onRRT_df
   Feature_df[i,"onRRT_ICUD0toD3"] <- get_feature_forPt2(curr_id,All_onRRT_df,"onRRT_ICUD0toD3","STUDY_PATIENT_ID")
@@ -232,13 +233,10 @@ for (i in 1:length(analysis_ID)){
   Feature_df[i,"Anemia_D1"] <- curr_flag
   
   #All_ELIX_df
-  #'@Question: Used Xilong_df3 for ELX
   elix_names <- c("ELX_GRP_1","ELX_GRP_5","ELX_GRP_6","ELX_GRP_7","ELX_GRP_10","ELX_GRP_11","ELX_GRP_12",
                   "ELX_GRP_15","ELX_GRP_16","ELX_GRP_17","ELX_GRP_19","ELX_GRP_21","ELX_GRP_31")
   Feature_df[i,elix_names] <- get_feature_forPt2(curr_id,Xilong_df3,elix_names,"STUDY_PATIENT_ID")
-  
-  #"Hours_inICUD0toD3"
-  Feature_df[i,"Hours_inICUD0toD3"] <- get_feature_forPt2(curr_id,Xilong_df1,"ICU_hour_D0_D3orDIS","PATIENT_NUM")
+
   
   #Unplanned_Admission
   Feature_df[i,"Unplanned_Admission"] <- get_feature_forPt2(curr_id,Xilong_df1,"unPlannedAdmission","PATIENT_NUM")
@@ -310,7 +308,6 @@ write.csv(MAX_KDIGO_ICUD0toD3,paste0(outdir,"All_MAX_KDIGO_ICUD0toD3_normed.csv"
 
 ##########################################################################################
 #2. Get SOFA and APACHE
-#'@Question: SOFA and APAHCE is in XILONG3?
 ##########################################################################################
 All_SOFA_APACHE_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID) ,ncol = 3))
 colnames(All_SOFA_APACHE_df) <- c("STUDY_PATIENT_ID","SOFA_TOTAL","APACHE_TOTAL")
