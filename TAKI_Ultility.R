@@ -1216,6 +1216,13 @@ Data_Sampling_Func <- function(upsample_flag,train_data,label_col_name,seed_num,
     set.seed(seed_num)
     sampled_indxes <- sample(nrow(train_data), nrow(train_data)*random_perc, replace = TRUE, prob = NULL)
     sampled_train_data <- train_data[sampled_indxes,]
+  }else if (upsample_flag == 3){ #random sample then down sample
+    set.seed(seed_num)
+    sampled_indxes <- sample(nrow(train_data), nrow(train_data)*random_perc, replace = TRUE, prob = NULL)
+    randomsampled_train_data <- train_data[sampled_indxes,]
+    down_train <- downSample(x = randomsampled_train_data[, -label_col_index],
+                             y = as.factor(randomsampled_train_data[,label_col_name]), yname = label_col_name)      
+    sampled_train_data <- down_train
   }else{
     original_train <- train_data
     sampled_train_data <- original_train
