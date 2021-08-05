@@ -28,6 +28,8 @@ All_SOFA_APACHE_df <- read.csv(paste0(outdir,"All_SOFA_APACHE_With_NotImputedFea
 All_Scr_df <-read.csv(paste0(outdir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df.csv"),stringsAsFactors = F)
 All_Demo_df <-read.csv(paste0(outdir,"All_RACE_GENDER_AGE_df.csv"),stringsAsFactors = F)
 All_Anemia_df <-read.csv(paste0(outdir,"All_Anemia_usingImputedLabs.csv"),stringsAsFactors = F)
+All_Anemia_usingNotimputedLabs_df <-read.csv(paste0(outdir,"All_Anemia_using_NOTImputedLabs.csv"),stringsAsFactors = F)
+
 All_LAB_df <-read.csv(paste0(outdir,"All_LAB_NOTimputed.csv"),stringsAsFactors = F)
 All_BMI_df <-read.csv(paste0(outdir,"All_BMI_NOTimputed.csv"),stringsAsFactors = F)
 All_HT_WT_RESP_FIO2_df <-read.csv(paste0(outdir,"All_HT_WT_RESP_FIO2_NOTimputed.csv"),stringsAsFactors = F)
@@ -123,7 +125,7 @@ for (i in 1:length(analysis_ID)){
   Feature_df[i,"GENDER"] <- get_feature_forPt(curr_id,All_Demo_df,"GENDER")
   
   #anemia
-  Feature_df[i,"Anemia_D1"] <- get_feature_forPt(curr_id,All_Anemia_df,"Anemia")
+  Feature_df[i,"Anemia_D1"] <- get_feature_forPt(curr_id,All_Anemia_usingNotimputedLabs_df,"Anemia")
   
   #Fluid Overload
   Feature_df[i,"FluidOverload_inPercentage"] <- get_feature_forPt(curr_id,All_Fluid_Overload_df,"FluidOverload_inPercentage")
@@ -231,11 +233,22 @@ missing_table <- get_missing_rate_table(Feature_df,colnames(Feature_df))
 missing_table
 write.csv(Feature_df,paste0(outdir,"Model_Feature_Outcome/All_Feature_NOTimputed.csv"),row.names = F)
 
-#5.imputation median
-features_cols <- colnames(Feature_df)[-which(colnames(Feature_df) == "STUDY_PATIENT_ID")]
+#5.imputation median except Anemia and ID
+features_cols <- colnames(Feature_df)[-which(colnames(Feature_df) %in% c("STUDY_PATIENT_ID","Anemia_D1"))]
 Final_Feature_df <- median_imputation_func(Feature_df,features_cols)
-missing_table2 <- get_missing_rate_table(Final_Feature_df,features_cols)
+missing_table2 <- get_missing_rate_table(Final_Feature_df,colnames(Feature_df))
 missing_table2
+
+#6.Update missing Anemia using impuated labs
+missing_idxes<- which(is.na(Final_Feature_df$Anemia_D1) == T)
+for (i in 1:length(missing_idxes)){
+  curr_indxes <- missing_idxes[i]
+  curr_id <- Final_Feature_df[curr_indxes,"STUDY_PATIENT_ID"]
+  
+  curr_flag <- All_Anemia_df[which(All_Anemia_df$STUDY_PATIENT_ID == curr_id),"Anemia"]
+  
+  Final_Feature_df[curr_indxes,"Anemia_D1"] <- curr_flag
+}
 
 write.csv(Final_Feature_df,paste0(outdir,"Model_Feature_Outcome/All_Feature_imputed.csv"),row.names = F)
 
