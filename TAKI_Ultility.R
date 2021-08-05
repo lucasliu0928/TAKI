@@ -2890,3 +2890,26 @@ compute_performance_ExternalValidation_func <- function(N_sampling,prediction_ta
   
   return(EachSampling_perf_table)
 }
+
+
+###Combine feature and outcome for discriptive stats
+Combine_featureAndoutcomes_func <-function(data_dir,feature_file,outcome_file,outcome_colname_list){
+  #1. Load feature data
+  feature_df <- read.csv(paste0(data_dir,feature_file),stringsAsFactors = F)
+  #2. Load Outcome data
+  outcome_df <- read.csv(paste0(data_dir,outcome_file),stringsAsFactors = F)
+  outcome_df <- outcome_df[match(feature_df[,"STUDY_PATIENT_ID"],outcome_df[,"STUDY_PATIENT_ID"]),] #  #reorder outcome to match ID
+  
+  #3.Check if IDs order are matched, if so process
+  if(identical(outcome_df[,"STUDY_PATIENT_ID"],feature_df[,"STUDY_PATIENT_ID"])==T){
+    #4.Add outcome to feature data as train data
+    comb_data <- feature_df
+    comb_data[,outcome_colname_list] <- outcome_df[,outcome_colname_list]
+    
+  }else{
+    comb_data <- NULL
+    print("Feature and Outcome IDs does not match")
+  }
+  
+  return(comb_data)
+}
