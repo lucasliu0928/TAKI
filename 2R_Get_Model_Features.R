@@ -39,7 +39,7 @@ All_MAP_TEMP_HR_df <-read.csv(paste0(outdir,"All_MAP_TEMP_HR_NOTimputed.csv"),st
 
 All_Nephrotoxin_Vasopressor_df <-read.csv(paste0(outdir,"All_Nephrotoxin_Vasopressor.csv"),stringsAsFactors = F)
 All_pO2_pCO2_pH_df <-read.csv(paste0(outdir,"All_pO2_pCO2_pH_NOTimputed.csv"),stringsAsFactors = F)
-All_septic_df <-read.csv(paste0(outdir,"All_sepsis_Before_Or_At_Admission.csv"),stringsAsFactors = F)
+All_septic_df <-read.csv(paste0(outdir,"All_sepsis_Before_Or_At_Admission_0805.csv"),stringsAsFactors = F)
 All_UrineOutput_df <-read.csv(paste0(outdir,"All_UrineOutput_NOTimputed.csv"),stringsAsFactors = F)
 All_onRRT_df <-read.csv(paste0(outdir,"All_onRRT_ICUD0toD3.csv"),stringsAsFactors = F)
 All_KDIGO_df <-read.csv(paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"),stringsAsFactors = F)
@@ -231,7 +231,7 @@ for (i in 1:length(analysis_ID)){
 #4. Compute missing before imputation
 missing_table <- get_missing_rate_table(Feature_df,colnames(Feature_df))
 missing_table
-write.csv(Feature_df,paste0(outdir,"Model_Feature_Outcome/All_Feature_NOTimputed.csv"),row.names = F)
+write.csv(Feature_df,paste0(outdir,"Model_Feature_Outcome/All_Feature_NOTimputed_updatedSeptic.csv"),row.names = F)
 
 #5.imputation median except Anemia and ID
 features_cols <- colnames(Feature_df)[-which(colnames(Feature_df) %in% c("STUDY_PATIENT_ID","Anemia_D1"))]
@@ -253,7 +253,7 @@ for (i in 1:length(missing_idxes)){
 missing_table2 <- get_missing_rate_table(Final_Feature_df,colnames(Feature_df))
 missing_table2
 
-write.csv(Final_Feature_df,paste0(outdir,"Model_Feature_Outcome/All_Feature_imputed.csv"),row.names = F)
+write.csv(Final_Feature_df,paste0(outdir,"Model_Feature_Outcome/All_Feature_imputed_updatedSeptic.csv"),row.names = F)
 
 #6.Max min norm
 features_cols <- colnames(Final_Feature_df)[-which(colnames(Final_Feature_df) %in% c("STUDY_PATIENT_ID"))]
@@ -263,7 +263,7 @@ for (j in 1:length(features_cols)){
   Feature_df_normed[,curr_f] <- min_max_func(Feature_df_normed[,curr_f])
 }
 
-write.csv(Feature_df_normed,paste0(outdir,"Model_Feature_Outcome/All_Feature_imputed_normed.csv"),row.names = F)
+write.csv(Feature_df_normed,paste0(outdir,"Model_Feature_Outcome/All_Feature_imputed_normed_updatedSeptic.csv"),row.names = F)
 
 
 ##########################################################################################
