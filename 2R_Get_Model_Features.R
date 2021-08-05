@@ -250,9 +250,13 @@ for (i in 1:length(missing_idxes)){
   Final_Feature_df[curr_indxes,"Anemia_D1"] <- curr_flag
 }
 
+missing_table2 <- get_missing_rate_table(Final_Feature_df,colnames(Feature_df))
+missing_table2
+
 write.csv(Final_Feature_df,paste0(outdir,"Model_Feature_Outcome/All_Feature_imputed.csv"),row.names = F)
 
 #6.Max min norm
+features_cols <- colnames(Final_Feature_df)[-which(colnames(Final_Feature_df) %in% c("STUDY_PATIENT_ID"))]
 Feature_df_normed <- Final_Feature_df
 for (j in 1:length(features_cols)){
   curr_f <- features_cols[j]
