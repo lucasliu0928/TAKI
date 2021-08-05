@@ -68,3 +68,48 @@ KDIGO4_IDs <- KDIGO_df[which(KDIGO_df$MAX_KDIGO_ICU_D0toD3==4),"STUDY_PATIENT_ID
 which(!onRRT_D0D3_IDs %in% KDIGO4_IDs)
 #check  KDIGO= 4 but not on RRT, because the 48 hours extension for KDIGO score
 length(which(!KDIGO4_IDs %in% onRRT_D0D3_IDs)) #0
+
+
+
+##########################################################################################
+#Features to extract :  1. no RRT                                   
+#                       2. on HD only in ICU D0-D3                   
+#                       3. on CRRT only in ICU D0-D3                 
+#                       4. both CRRT and HD in ICU D0-D3               
+#                       5. CRRT days in ICU D0-D3
+#                       6. HD days in ICU D0-D3
+
+##########################################################################################
+onRRT_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID), ncol = 4))
+colnames(onRRT_df) <- c("STUDY_PATIENT_ID", "RRTinfo_ICUD0toD3","CRRT_Days_inICUD0toD3","HD_Days_inICUD0toD3")
+for (i in 1: length(analysis_ID)){
+  
+  if (i %% 1000== 0){print(i)}
+  curr_id <- analysis_ID[i]
+  onRRT_df[i,"STUDY_PATIENT_ID"] <- curr_id
+  
+  onCRRT_res <- get_onMachine_flag_ICUD0_D3_v2(onCRRT_df,All_time_df,curr_id,"Updated_CRRT_Start","Updated_CRRT_End")
+  on_CRRT_ICUD0toD3 <- onCRRT_res[[1]]
+  on_CRRT_days_ICUD0toD3 <- onCRRT_res[[2]]
+  
+  onHD_res <-  get_onMachine_flag_ICUD0_D3_v2(onHD_df,All_time_df,curr_id,"Updated_HD_Start","Updated_HD_End")
+  
+  on_HD_ICUD0toD3 <-  onHD_res[[1]]
+  on_HD_days_ICUD0toD3 <- onHD_res[[2]]
+  
+  onRRT_df[i,"CRRT_Days_inICUD0toD3"] <- on_CRRT_days_ICUD0toD3
+  onRRT_df[i,"HD_Days_inICUD0toD3"] <- on_HD_days_ICUD0toD3
+  
+  if (on_HD_ICUD0toD3 == 1 &  on_CRRT_ICUD0toD3 == 0){
+    onRRT_df[i,"RRTinfo_ICUD0toD3"] <- "HD_only"
+  }else if( on_HD_ICUD0toD3 == 0  &  on_CRRT_ICUD0toD3 == 1) {
+    onRRT_df[i,"RRTinfo_ICUD0toD3"] <- "CRRT_only"
+  }else if (on_HD_ICUD0toD3 == 1 &  on_CRRT_ICUD0toD3 == 1){
+    onRRT_df[i,"RRTinfo_ICUD0toD3"] <- "HD_and_CRRT"
+  }else if (on_HD_ICUD0toD3 == 0 &  on_CRRT_ICUD0toD3 == 0){
+    onRRT_df[i,"RRTinfo_ICUD0toD3"] <- "None" #none
+  }
+}
+
+table(onRRT_df$RRTinfo_ICUD0toD3)
+write.csv(onRRT_df,paste0(outdir,"All_onRRT_DetailedInfo_ICUD0toD3.csv"),row.names = F)
