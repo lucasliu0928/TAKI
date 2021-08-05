@@ -70,14 +70,14 @@ explainer = shap.TreeExplainer(model) #
     
 
 #Output dir
-outdir = "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/"
+outdir = "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/shap"
 
 # Plot shap summaryfor UK
-plot_shap_summary(explainer, train_X, outdir, "/CV_performance/mortality/Visual_Shap/RF_ClinicalF2_AllUK_SHAP_HospMortality.png")
+plot_shap_summary(explainer, train_X, outdir, "/mortality/RF_ClinicalF2_AllUK_SHAP_HospMortality.png")
 explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
 
 # Plot shap summaryfor UTSW
-plot_shap_summary(explainer, test_X, outdir, "/ExternalV_performance/mortality/Visual_Shap/RF_ClinicalF2_AllUTSW_SHAP_HospMortality.png")
+plot_shap_summary(explainer, test_X, outdir, "/mortality/RF_ClinicalF2_AllUTSW_SHAP_HospMortality.png")
 explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
 
 
@@ -112,7 +112,7 @@ correct_hightolow_IDs_survive = intersection(predicted_correct_survive_IDs,hight
 
 #Plot
 random.seed(0)
-n = 10
+n = 20
 Survivors_IDs = sample(correct_hightolow_IDs_survive,n)
 Death_IDs = sample(predicted_correct_death_IDs,n)
 Sample_IDs = Survivors_IDs + Death_IDs
@@ -122,7 +122,7 @@ for pt in Sample_IDs:
     outcome_label = train_Y.loc[pt] 
     MAX_KDIGO = train_X.loc[pt,'MAX_KDIGO_ICU_D0toD3'] 
     LAST_KDIGO = train_X.loc[pt,'LAST_KDIGO_ICU_D0toD3']
-    plot_individual_shap(explainer, sample_data,0.1,outdir,"/CV_performance/mortality/Visual_Shap/RF_Mortality" + str(outcome_label) + '_MAXKDIGO'+ str(MAX_KDIGO) + '_LASTKDIGO'+ str(LAST_KDIGO) +"_ID" + str(pt) + ".png")
+    plot_individual_shap(explainer, sample_data,0.1,outdir,"/mortality/Examples/UK/" + 'Outcome' + str(outcome_label) + '_MAXKDIGO'+ str(MAX_KDIGO) + '_LASTKDIGO'+ str(LAST_KDIGO) +"_ID" + str(pt) + ".png")
  
 ##########################################################
 #MAKE
@@ -151,14 +151,14 @@ explainer = shap.TreeExplainer(model) #
     
 
 #Output dir
-outdir = "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/"
+outdir = "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/Shap/"
 
 # Plot shap summary UK
-plot_shap_summary(explainer, train_X, outdir, "CV_performance/make120_drop50/Visual_Shap/RF_ClinicalF1_AllUK_SHAP_MAKE50.png")
+plot_shap_summary(explainer, train_X, outdir, "make120drop50/RF_ClinicalF1_AllUK_SHAP_MAKE50.png")
 explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
 
 # Plot shap summaryfor UTSW
-plot_shap_summary(explainer, test_X, outdir, "/ExternalV_performance/make120_drop50/Visual_Shap/RF_ClinicalF1_AllUTSW_SHAP_MAKE50.png")
+plot_shap_summary(explainer, test_X, outdir, "/make120drop50/RF_ClinicalF1_AllUTSW_SHAP_MAKE50.png")
 explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
 
 
