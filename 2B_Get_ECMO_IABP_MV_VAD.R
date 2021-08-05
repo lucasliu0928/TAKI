@@ -66,3 +66,34 @@ missing_table <- get_missing_rate_table(ECMO_IABP_MV_VAD_df,feature_columns)
 missing_table
 
 write.csv(ECMO_IABP_MV_VAD_df,paste0(outdir,"All_ECMO_IABP_MV_VAD_ICUD0toD3.csv"),row.names = F)
+
+
+##########################################################################################
+#Features to extract :  1. days ECMO in ICU D0-D3
+#                       2. days IABP in ICU D0-D3
+#                       3. days MV in ICU D0-D3
+#                       4. days VAD in ICU D0-D3
+##########################################################################################
+ECMO_IABP_MV_VAD_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID), ncol = 5))
+colnames(ECMO_IABP_MV_VAD_df) <- c("STUDY_PATIENT_ID", "Days_ECMO_ICUD0toD3","Days_IABP_ICUD0toD3",
+                                   "Days_MV_ICUD0toD3","Days_VAD_ICUD0toD3")
+for (i in 1: length(analysis_ID)){
+  if (i %% 1000== 0){print(i)}
+  curr_id <- analysis_ID[i]
+  ECMO_IABP_MV_VAD_df[i,"STUDY_PATIENT_ID"] <- curr_id
+  
+  ecmo_res <- get_onMachine_flag_ICUD0_D3_v2(raw_ORGANSUPP_ECMO_df,All_time_df,curr_id,"ECMO_START_DATE","ECMO_STOP_DATE")
+  
+  IABP_res <- get_onMachine_flag_ICUD0_D3_v2(raw_ORGANSUPP_IABP_df,All_time_df,curr_id,"IABP_START_DATE","IABP_STOP_DATE")
+  
+  MV_res <- get_onMachine_flag_ICUD0_D3_v2(raw_ORGANSUPP_VENT_df,All_time_df,curr_id,"VENT_START_DATE","VENT_STOP_DATE")
+  
+  VAD_res <- get_onMachine_flag_ICUD0_D3_v2(raw_ORGANSUPP_VAD_df,All_time_df,curr_id,"VAD_START_DATE","VAD_STOP_DATE")
+  
+  ECMO_IABP_MV_VAD_df[i,"Days_ECMO_ICUD0toD3"] <- ecmo_res[[2]]
+  ECMO_IABP_MV_VAD_df[i,"Days_IABP_ICUD0toD3"] <- IABP_res[[2]]
+  ECMO_IABP_MV_VAD_df[i,"Days_MV_ICUD0toD3"]   <- MV_res[[2]]
+  ECMO_IABP_MV_VAD_df[i,"Days_VAD_ICUD0toD3"]  <- VAD_res[[2]]
+}
+
+write.csv(ECMO_IABP_MV_VAD_df,paste0(outdir,"All_ECMO_IABP_MV_VAD_Days_in_ICUD0toD3.csv"),row.names = F)
