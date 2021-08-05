@@ -579,6 +579,53 @@ get_onMachine_flag_ICUD0_D3 <- function(machine_df,time_df,pt_id,start_t_col,sto
   return(on_flag)
 }
 
+#this one returns days on machine in ICUD0toD3
+get_onMachine_flag_ICUD0_D3_v2 <- function(machine_df,time_df,pt_id,start_t_col,stop_t_col){
+  # machine_df <- onHD_df
+  # pt_id <- curr_id
+  # start_t_col <- "Updated_HD_Start"
+  # stop_t_col <- "Updated_HD_End"
+  # time_df <- All_time_df
+  
+  #ICU start
+  curr_time_df <-  time_df[which(time_df[,"STUDY_PATIENT_ID"] == pt_id),]
+  curr_icu_start <- ymd_hms(curr_time_df[,"Updated_ICU_ADMIT_DATE"])
+  
+  #Get actual days/times in ICU D0-D3
+  #it could be ICU end time (e.g, if ICU stays < 3 days) or the end of ICU D3
+  curr_actual_ICU_time_idxes <- which(colnames(curr_time_df) %in% c("Actual_D0_End","Actual_D1_End","Actual_D2_End","Actual_D3_End"))
+  curr_actual_ICU_time <- curr_time_df[,curr_actual_ICU_time_idxes]
+  curr_last_ICU_time <- max(ymd_hms(curr_actual_ICU_time),na.rm = T)
+  
+  ICU_interval <-interval(curr_icu_start,curr_last_ICU_time)
+  
+  
+  curr_df <- machine_df[which(machine_df[,"STUDY_PATIENT_ID"] == pt_id),]
+  if (nrow(curr_df) !=0 ){ #if pt is ever on machine 
+    #get on machine start and end time 
+    curr_machine_start <- ymd_hms(curr_df[,start_t_col])
+    curr_machine_end <-  ymd_hms(curr_df[,stop_t_col])
+    
+    machine_interval <-interval(curr_machine_start,curr_machine_end)
+     
+    intersect(machine_interval,ICU_interval)
+    if(int_overlaps(ICU_interval, machine_interval)==T){
+      on_flag <- 1 
+      overlappedDuration_inDays <-  as.numeric(as.duration(intersect(machine_interval,ICU_interval)),"days")
+    }else{
+      on_flag <- 0 
+      overlappedDuration_inDays <- 0
+    }
+    
+  }else{
+    on_flag <- 0 
+    overlappedDuration_inDays <- 0
+  }
+  
+  return(list(on_flag,overlappedDuration_inDays))
+}
+
+
 #check if pt on medciation in time window
 get_exposure_toMedication_inTimeWindow <- function(time_start,time_end,medication_df,pt_id,medname_col){
   # time_start <- curr_icu_start
@@ -2912,4 +2959,157 @@ Combine_featureAndoutcomes_func <-function(data_dir,feature_file,outcome_file,ou
   }
   
   return(comb_data)
+}
+
+
+#stats funcs
+compute_mean_sd_func <- function(data_col,round_digit){
+  mean_val <- round(mean(data_col),round_digit)
+  sd_val <-  round(sd(data_col),round_digit)
+  comb_val <- paste0(mean_val," \u00b1 ",sd_val)
+  
+  return(comb_val)
+}
+compute_n_perc_func <- function(data_col,round_digit){
+  # data_col <- curr_values
+  
+  total_n <- length(data_col)
+  count_tb <- table(data_col)
+  count_tb_perc <- round(count_tb/total_n*100,round_digit)
+  count_cato_names <- names(count_tb)
+  count_final <-""
+  count_final <- paste0(count_cato_names,": ", count_tb, " (",count_tb_perc,")", collapse = "\n")
+  count_final <- paste0(count_final,"\n Total(NA excluded):",total_n)
+  return(count_final)
+}
+
+
+compute_median_p25andp75_func <- function(data_col,round_digit){
+  med_val <- round(median(data_col),round_digit)
+  quant_res <- quantile(data_col,c(0.25,0.75))
+  p25 <- round(quant_res[1],round_digit)
+  p75 <- round(quant_res[2],round_digit)
+  comb_val <- paste0(med_val," [",p25,"-",p75,"]")
+
+  return(comb_val)
+}
+
+
+compute_stats_func <- function(input_df,cohort_name,ordered_parameters){
+  # input_df <- UK_data
+  # ordered_parameters <- var_list
+
+  
+  Final_table <- as.data.frame(matrix(NA, nrow = length(ordered_parameters), ncol = 2))
+  colnames(Final_table) <- c("Var","Stats")
+  Final_table$Var <- ordered_parameters
+  
+  for (i in 1:length(ordered_parameters)){
+    curr_f <- ordered_parameters[i]
+    
+    #get index column of current feature
+    curr_colindex <- which(colnames(input_df) == curr_f)
+    
+    
+    if (length(curr_colindex) == 0){ #if feature is not in curret data input
+      Final_table[i,2] <- NA
+    }else{
+      
+      #Get current values
+      if(curr_f == "CRRT_Days_inICUD0toD3"){
+        CRRT_index <- which(input_df[,"RRTinfo_ICUD0toD3"] == "CRRT_only")
+        curr_values <- input_df[CRRT_index,"CRRT_Days_inICUD0toD3"]
+      }else if (curr_f == "HD_Days_inICUD0toD3"){
+        HD_index <- which(input_df[,"RRTinfo_ICUD0toD3"] == "HD_only")
+        curr_values <- input_df[HD_index,"HD_Days_inICUD0toD3"]
+      }else if (curr_f == "Total_days_HDandCRRT"){
+        both_index <- which(input_df[,"RRTinfo_ICUD0toD3"] == "HD_and_CRRT")
+        curr_values <- input_df[both_index,"HD_Days_inICUD0toD3"]
+      }else if (curr_f == "Days_MV_ICUD0toD3"){
+        keep_index <- which(input_df[,"MV_ICUD0toD3"] == 1) #for pts on MV
+        curr_values <- input_df[keep_index,"Days_MV_ICUD0toD3"]
+      }else{
+        curr_values <- input_df[,curr_f]
+      }
+      
+      #remove NAs
+      na_indexes <- which(is.na(curr_values) == T)
+      if(length(na_indexes) > 0){
+        curr_values <- curr_values[-na_indexes]
+      }
+      
+      #check if catogrical or continous
+      n_unique_values <- length(unique(curr_values))
+      
+      if(curr_f == "Total_days_HDandCRRT"){ #becaseu the number of unique value is so small, so manually do this
+        Final_table[i,2] <- compute_median_p25andp75_func(curr_values,2)
+      }else if (n_unique_values > 5){ #if continous, report median and Q1Q3 
+            Final_table[i,2] <- compute_median_p25andp75_func(curr_values,2)
+      }else{
+            Final_table[i,2] <- compute_n_perc_func(curr_values,2)
+      }
+      
+    }
+  }
+  colnames(Final_table) <- paste0(cohort_name,"_",colnames(Final_table))
+  
+  return(Final_table)
+}
+
+
+add_var_func <- function(input_df,var_name_to_add,extra_var_df){
+  # input_df <- UK_data
+  # var_name_to_add <- "Baseline_eGFR"
+  # extra_var_df <- Baseline_eGFR_df
+  #   
+  input_df[,var_name_to_add] <- NA
+  for (i in 1 : nrow(input_df)){
+    curr_id <- input_df[i , "STUDY_PATIENT_ID"]
+    curr_index_in_extra <- which(extra_var_df[,"STUDY_PATIENT_ID"] == curr_id)
+    input_df[i,var_name_to_add]  <- extra_var_df[curr_index_in_extra,var_name_to_add]
+  }
+  return(input_df)
+}
+
+
+add_listofvar_func <- function(input_df,extra_data_dir,cohort_name){
+  # extra_data_dir <- UTSW_intermediate_data_dir
+  # input_df <- UTSW_data
+  # cohort_name <- "UTSW"
+  
+  All_time_df <-read.csv(paste0(extra_data_dir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
+  All_time_df$Days_inHOSP <- difftime(ymd_hms(All_time_df[,"Updated_HOSP_DISCHARGE_DATE"]), ymd_hms(All_time_df[,"Updated_HOSP_ADMIT_DATE"]),units = "days")
+  Baseline_eGFR_df <-read.csv(paste0(extra_data_dir,"Baseline_EGFR.csv"),stringsAsFactors = F)
+  extrat_RRT_df <-read.csv(paste0(extra_data_dir,"All_onRRT_DetailedInfo_ICUD0toD3.csv"),stringsAsFactors = F)
+  
+  if (cohort_name == "UK"){
+     SOFA_APACHE_df <-read.csv(paste0(extra_data_dir,"All_SOFA_APACHE_With_NotImputedFeature.csv"),stringsAsFactors = F)
+     dayson_machine_df <-read.csv(paste0(extra_data_dir,"All_ECMO_IABP_MV_VAD_Days_in_ICUD0toD3.csv"),stringsAsFactors = F)
+  }else{
+     SOFA_APACHE_df <-read.csv(paste0(extra_data_dir,"xilong_extracted/All variables for each patients 07212021.csv"),stringsAsFactors = F)
+     colnames(SOFA_APACHE_df)[which(colnames(SOFA_APACHE_df) == "SOFA")] <- "SOFA_TOTAL"
+     colnames(SOFA_APACHE_df)[which(colnames(SOFA_APACHE_df) == "APACHE")] <- "APACHE_TOTAL"
+     
+  }
+  
+  input_df <- add_var_func(input_df,"Days_inHOSP",All_time_df)
+  input_df <- add_var_func(input_df,"Baseline_eGFR",Baseline_eGFR_df)
+  
+  input_df <- add_var_func(input_df,"RRTinfo_ICUD0toD3",extrat_RRT_df)
+  input_df <- add_var_func(input_df,"CRRT_Days_inICUD0toD3",extrat_RRT_df)
+  input_df <- add_var_func(input_df,"HD_Days_inICUD0toD3",extrat_RRT_df)
+  input_df[,"Total_days_HDandCRRT"] <- input_df[,"CRRT_Days_inICUD0toD3"] + input_df[,"HD_Days_inICUD0toD3"]
+  
+  input_df[ ,"Bicarbonate_D1_AVGof(LOWHIGH)"] <- rowMeans(input_df[,c("Bicarbonate_D1_LOW","Bicarbonate_D1_HIGH")])
+  input_df[ ,"Hematocrit_D1_AVGof(LOWHIGH)"]  <- rowMeans(input_df[,c("Hematocrit_D1_LOW","Hematocrit_D1_HIGH")])
+  input_df[ ,"Hemoglobin_D1_AVGof(LOWHIGH)"]  <- rowMeans(input_df[,c("Hemoglobin_D1_LOW","Hemoglobin_D1_HIGH")])
+  
+  input_df <- add_var_func(input_df,"SOFA_TOTAL",SOFA_APACHE_df)
+  input_df <- add_var_func(input_df,"APACHE_TOTAL",SOFA_APACHE_df)
+  
+  if (cohort_name == "UK"){
+    input_df <- add_var_func(input_df,"Days_MV_ICUD0toD3",dayson_machine_df)
+  }
+  
+  return(input_df)
 }
