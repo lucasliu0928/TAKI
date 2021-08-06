@@ -30,7 +30,8 @@ sepsis_IDs <- unique(sepsis_df$STUDY_PATIENT_ID)
 sepsis_BeforeAtAdmin_df <- sepsis_df[which(sepsis_df$DIAGNOSIS_TYPE %in% c("06.Working Dx","01.Visit Reason","Admit Dx","..Working Dx")),]
 sepsis_beforeat_IDs <- unique(sepsis_BeforeAtAdmin_df$STUDY_PATIENT_ID)
 
-# 
+table(sepsis_df$DIAGNOSIS_TYPE)
+
 # ##########################################################################################
 # #Features to extract : 1. Septic at all time
 # ##########################################################################################
