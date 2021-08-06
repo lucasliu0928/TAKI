@@ -39,7 +39,7 @@ All_MAP_TEMP_HR_df <-read.csv(paste0(outdir,"All_MAP_TEMP_HR_NOTimputed.csv"),st
 
 All_Nephrotoxin_Vasopressor_df <-read.csv(paste0(outdir,"All_Nephrotoxin_Vasopressor.csv"),stringsAsFactors = F)
 All_pO2_pCO2_pH_df <-read.csv(paste0(outdir,"All_pO2_pCO2_pH_NOTimputed.csv"),stringsAsFactors = F)
-All_septic_df <-read.csv(paste0(outdir,"All_sepsis_Before_Or_At_Admission_0805.csv"),stringsAsFactors = F)
+All_septic_df <-read.csv(paste0(outdir,"All_sepsis_AllTime_0805.csv"),stringsAsFactors = F)
 All_UrineOutput_df <-read.csv(paste0(outdir,"All_UrineOutput_NOTimputed.csv"),stringsAsFactors = F)
 All_onRRT_df <-read.csv(paste0(outdir,"All_onRRT_ICUD0toD3.csv"),stringsAsFactors = F)
 All_KDIGO_df <-read.csv(paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"),stringsAsFactors = F)
@@ -94,7 +94,7 @@ colnames(Feature_df) <- c("STUDY_PATIENT_ID",
                           "Potassium_D1_LOW","Potassium_D1_HIGH",
                           "RACE",
                           "RESP_RATE_D1_LOW","RESP_RATE_D1_HIGH",
-                          "Sepsis_Before_or_At_Admission",
+                          "Sepsis",
                           "Sodium_D1_LOW","Sodium_D1_HIGH",
                           "Temperature_D1_LOW","Temperature_D1_HIGH",
                           "UrineOutput_D0toD3","UrineFlow_D0toD3",
@@ -169,7 +169,7 @@ for (i in 1:length(analysis_ID)){
   Feature_df[i,"Temperature_D1_HIGH"] <- get_feature_forPt(curr_id,All_MAP_TEMP_HR_df,"Temperature_D1_HIGH")
   
   #All_septic_df
-  Feature_df[i,"Sepsis_Before_or_At_Admission"] <- get_feature_forPt(curr_id,All_septic_df,"Sepsis_Before_or_At_Admission")
+  Feature_df[i,"Sepsis"] <- get_feature_forPt(curr_id,All_septic_df,"Sepsis")
   
   #All_UrineOutput_df
   Feature_df[i,"UrineOutput_D0toD3"] <- get_feature_forPt(curr_id,All_UrineOutput_df,"UrineOutput")
