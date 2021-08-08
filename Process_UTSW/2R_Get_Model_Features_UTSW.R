@@ -30,8 +30,11 @@ All_KDIGO_df <-read.csv(paste0(data_dir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"),
 #4.onRRTinD0toD3
 All_onRRT_df <-read.csv(paste0(data_dir,"All_onRRT_ICUD0toD3.csv"),stringsAsFactors = F)
 
-#5. Load sepsis
+#5. sepsis
 All_sepsis_df <-read.csv(paste0(data_dir,"All_sepsis_Before_Or_At_Admission.csv"),stringsAsFactors = F)
+
+#6.weight
+All_Weight_df <-read.csv(paste0(data_dir,"INITIAL_WEIGHT_NOTImputed.csv"),stringsAsFactors = F)
 
 
 #II.Xilong's Feature (Load not imputed data)
@@ -42,6 +45,11 @@ Xilong_df3 <-read.csv(paste0(data_dir,"xilong_extracted/All variables for each p
 #Change Elixhaser name
 Elix_indxes <- which(colnames(Xilong_df3) %in% paste0("Elixhauser_",seq(0,30),"_F"))
 colnames(Xilong_df3)[Elix_indxes] <- paste0("ELX_GRP_",seq(1,31))
+
+#'@UPDATED 0808
+#Code Elixhaser NA as 0
+elix_col_names <- paste0("ELX_GRP_",seq(1,31))
+Xilong_df3[which(is.na(Xilong_df3[,elix_col_names]==T),arr.ind = T),elix_col_names] <- 0
 
 #Recode race to white =0 , black =1 , and other = 2 
 table(Xilong_df1$RACE)   #3:BLACK, 4:WHITE, 9:Other 
@@ -123,6 +131,10 @@ for (i in 1:length(analysis_ID)){
   #Septic
   Feature_df[i,"Sepsis_Before_or_At_Admission"] <-get_feature_forPt2(curr_id,All_sepsis_df,"Sepsis_Before_or_At_Admission","STUDY_PATIENT_ID")
   
+  #INITIAL Weight 
+  Feature_df[i,"INITIAL_WEIGHT_KG"] <- get_feature_forPt2(curr_id,All_Weight_df,"INITIAL_WEIGHT_KG","STUDY_PATIENT_ID")
+  
+  
   #Xilong's extraction
   #demo
   Feature_df[i,"AGE"]    <- get_feature_forPt2(curr_id,Xilong_df1,"age","PATIENT_NUM")
@@ -148,7 +160,6 @@ for (i in 1:length(analysis_ID)){
   Feature_df[i,"RESP_RATE_D1_LOW"] <- get_feature_forPt2(curr_id,Xilong_df2,"MIN_RESPIRATORYRATE","patient_num")
   Feature_df[i,"RESP_RATE_D1_HIGH"] <- get_feature_forPt2(curr_id,Xilong_df2,"MAX_RESPIRATORYRATE","patient_num")
   Feature_df[i,"HEIGHT_Meters"] <-   get_feature_forPt2(curr_id,Xilong_df2,"AVG_HEIGHT_Meters","patient_num")
-  Feature_df[i,"INITIAL_WEIGHT_KG"] <- get_feature_forPt2(curr_id,Xilong_df2,"AVG_WEIGHT","patient_num")
   
   #BMI
   curr_weight <- Feature_df[i,"INITIAL_WEIGHT_KG"]
