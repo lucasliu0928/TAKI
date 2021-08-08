@@ -30,6 +30,9 @@ All_KDIGO_df <-read.csv(paste0(data_dir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"),
 #4.onRRTinD0toD3
 All_onRRT_df <-read.csv(paste0(data_dir,"All_onRRT_ICUD0toD3.csv"),stringsAsFactors = F)
 
+#5. Load sepsis
+All_sepsis_df <-read.csv(paste0(data_dir,"All_sepsis_Before_Or_At_Admission.csv"),stringsAsFactors = F)
+
 
 #II.Xilong's Feature (Load not imputed data)
 Xilong_df1 <-read.csv(paste0(data_dir,"xilong_extracted/Final dataset for Lucas part 1 07272021.csv"),stringsAsFactors = F)
@@ -117,6 +120,8 @@ for (i in 1:length(analysis_ID)){
   Feature_df[i,"MAX_KDIGO_ICU_D0toD3"] <- get_feature_forPt2(curr_id,All_KDIGO_df,"MAX_KDIGO_ICU_D0toD3","STUDY_PATIENT_ID")
   Feature_df[i,"LAST_KDIGO_ICU_D0toD3"] <- get_feature_forPt2(curr_id,All_KDIGO_df,"LAST_KDIGO_ICU_D0toD3","STUDY_PATIENT_ID")
   
+  #Septic
+  Feature_df[i,"Sepsis_Before_or_At_Admission"] <-get_feature_forPt2(curr_id,All_sepsis_df,"Sepsis_Before_or_At_Admission","STUDY_PATIENT_ID")
   
   #Xilong's extraction
   #demo
@@ -173,10 +178,7 @@ for (i in 1:length(analysis_ID)){
   Feature_df[i,"MAP_D1_HIGH"] <- get_feature_forPt2(curr_id,Xilong_df2,"MAX_MAP","patient_num")
   Feature_df[i,"Temperature_D1_LOW"] <- get_feature_forPt2(curr_id,Xilong_df2,"MIN_TEMPERATURE","patient_num")
   Feature_df[i,"Temperature_D1_HIGH"] <- get_feature_forPt2(curr_id,Xilong_df2,"MAX_TEMPERATURE","patient_num")
-  
-  #Septic
-  Feature_df[i,"Sepsis_Before_or_At_Admission"] <-get_feature_forPt2(curr_id,Xilong_df1,"sepsis_F","PATIENT_NUM")
-  
+
   #All_onRRT_df
   Feature_df[i,"onRRT_ICUD0toD3"] <- get_feature_forPt2(curr_id,All_onRRT_df,"onRRT_ICUD0toD3","STUDY_PATIENT_ID")
   
