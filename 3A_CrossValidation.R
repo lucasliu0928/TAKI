@@ -14,7 +14,9 @@ library(caret)
 data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
 
 #out dir
-out_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0805/CV_performance/"
+out_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/CV_performance/"
+
+
 #feature file and outcome file names
 outcome_file <- "All_outcome.csv"
 
@@ -48,7 +50,7 @@ model_name_list <- c("SVM","RF","LogReg","XGB")
 for (m in 1:length(model_name_list)){
   model_name <- model_name_list[m]
   #CV
-  cv_res <- cv2_func(model_data,outcome_colname,model_name,upsample_flag,N_sampling,NFolds)
+  cv_res <- cv2_func(model_data,outcome_colname,model_name,upsample_flag,N_sampling,NFolds,svmkernel = 'svmLinear2')
   final_pred <- cv_res[[1]]
   write.csv(final_pred, paste0(outdir1,"Prediction_", model_name, ".csv"),row.names = F)
   
@@ -97,7 +99,7 @@ model_name_list <- c("SVM","RF","LogReg","XGB")
 for (m in 1:length(model_name_list)){
   model_name <- model_name_list[m]
   #CV
-  cv_res <- cv2_func(model_data,outcome_colname,model_name,upsample_flag,N_sampling,NFolds)
+  cv_res <- cv2_func(model_data,outcome_colname,model_name,upsample_flag,N_sampling,NFolds,svmkernel = 'svmLinear2')
   final_pred <- cv_res[[1]]
   write.csv(final_pred, paste0(outdir1,"Prediction_", model_name, ".csv"),row.names = F)
   
@@ -124,7 +126,7 @@ for (m in 1:length(model_name_list)){
 #Outcome file: All_outcome.csv
 ####################################################################################### 
 #1.All_Feature_imputed_normed.csv
-feature_file <- c("All_Feature_imputed_normed_updatedSeptic.csv")
+feature_file <- c("All_Feature_imputed_normed.csv")
 
 #Outdir for mortality
 outdir1 <- paste0(out_dir,"mortality/AllClinicalFeature/")
@@ -145,7 +147,7 @@ model_name_list <- c("SVM","RF","LogReg","XGB")
 for (m in 1:length(model_name_list)){
   model_name <- model_name_list[m]
   #CV
-  cv_res <- cv2_func(model_data,outcome_colname,model_name,upsample_flag,N_sampling,NFolds)
+  cv_res <- cv2_func(model_data,outcome_colname,model_name,upsample_flag,N_sampling,NFolds,svmkernel = 'svmLinear2')
   final_pred <- cv_res[[1]]
   write.csv(final_pred, paste0(outdir1,"Prediction_", model_name, ".csv"),row.names = F)
   
@@ -279,6 +281,8 @@ for (m in 1:length(model_name_list)){
   write.csv(CI_perf_tb, paste0(outdir1,"Performance_AVG_CI_", model_name, ".csv"),row.names = T)
 }
 
+
+
 ####################################################################################### 
 ######                MAKE with drop50 Prediction   1                      ############
 #feature file: 1. All_Feature_imputed_normed.csv, 
@@ -359,7 +363,7 @@ model_name_list <- c("SVM","RF","LogReg","XGB")
 for (m in 1:length(model_name_list)){
   model_name <- model_name_list[m]
   #CV
-  cv_res <- cv2_func(model_data,outcome_colname,model_name,upsample_flag,N_sampling,NFolds)
+  cv_res <- cv2_func(model_data,outcome_colname,model_name,upsample_flag,N_sampling,NFolds,svmkernel = "svmLinear2")
   final_pred <- cv_res[[1]]
   write.csv(final_pred, paste0(outdir1,"Prediction_", model_name, ".csv"),row.names = F)
   
