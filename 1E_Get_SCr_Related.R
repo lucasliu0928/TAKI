@@ -49,9 +49,10 @@ analysis_ID <- unique(Inclusion_df[,"STUDY_PATIENT_ID"])
 ##########################################################################################
 #1.Get baseline Scr and other Scr
 options(warn=2)
-Final_SCR_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 7))
+Final_SCR_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 9))
 colnames(Final_SCR_df) <- c("STUDY_PATIENT_ID","Baseline_SCr","AdmitICU_SCr","AdmitICU_SCr_TIME",
-                            "Peak_SCr_inICU_D0_D3","NUM_SCr_inICU_D0_D3","Lowest_SCr_inICU_D0_D3")
+                            "Peak_SCr_inICU_D0_D3","NUM_SCr_inICU_D0_D3","Lowest_SCr_inICU_D0_D3",
+                            "LastSCr_inICU_D0_D3","LastSCr_inICU_D0_D3_TIME")
 for (i in 1:length(analysis_ID)){
   if (i %% 1000 ==0){print(i)}
   
@@ -90,6 +91,14 @@ for (i in 1:length(analysis_ID)){
     Final_SCR_df[i,"AdmitICU_SCr"] <- curr_admit_scr
     Final_SCR_df[i,"AdmitICU_SCr_TIME"] <- curr_admit_scr_time
     
+    #last Scr
+    curr_last_scr_afterICU_idx <- which(curr_scr_inICUD0D3[,"SCR_ENTERED"] == max(curr_scr_inICUD0D3[,"SCR_ENTERED"]))
+    curr_last_scr <- curr_scr_inICUD0D3[curr_last_scr_afterICU_idx,"SCR_VALUE"]
+    curr_last_scr_time <- curr_scr_inICUD0D3[curr_last_scr_afterICU_idx,"SCR_ENTERED"]
+    Final_SCR_df[i,"LastSCr_inICU_D0_D3"] <- curr_last_scr
+    Final_SCR_df[i,"LastSCr_inICU_D0_D3_TIME"] <- curr_last_scr_time
+
+  
     #peak Scr in ICU D0 -D3
     curr_peak_scr <- max(curr_scr_inICUD0D3[,"SCR_VALUE"])
     curr_num_scr  <- nrow(curr_scr_inICUD0D3)
@@ -135,7 +144,7 @@ no_bl_scr_IDs_df <- as.data.frame(no_bl_scr_IDs)
 write.csv(no_bl_scr_IDs_df,paste0(outdir,"NO_Measured_BaselineScr_IDs.csv"),row.names = F)
 
 
-write.csv(Final_SCR_df,paste0(outdir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df.csv"),row.names = F)
+write.csv(Final_SCR_df,paste0(outdir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df_AddedLastScr.csv"),row.names = F)
 
 
 
