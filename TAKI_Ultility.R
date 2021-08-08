@@ -3073,13 +3073,24 @@ add_var_func <- function(input_df,var_name_to_add,extra_var_df){
 
 
 add_listofvar_func <- function(input_df,extra_data_dir,cohort_name){
-  # extra_data_dir <- UTSW_intermediate_data_dir
-  # input_df <- UTSW_data
-  # cohort_name <- "UTSW"
-  
+  # extra_data_dir <- UK_intermediate_data_dir
+  # input_df <- UK_data
+  # cohort_name <- "UK"
+  # 
+  #Time
   All_time_df <-read.csv(paste0(extra_data_dir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
   All_time_df$Days_inHOSP <- difftime(ymd_hms(All_time_df[,"Updated_HOSP_DISCHARGE_DATE"]), ymd_hms(All_time_df[,"Updated_HOSP_ADMIT_DATE"]),units = "days")
+  
+  #baseline EGFR
   Baseline_eGFR_df <-read.csv(paste0(extra_data_dir,"Baseline_EGFR.csv"),stringsAsFactors = F)
+  
+  #no baseline Scr IDs (This IDs will be excluded when compute stats for baseline egfr and baseline scr)
+  noBaselineSrcIDs_df <-read.csv(paste0(extra_data_dir,"NO_Measured_BaselineScr_IDs.csv"),stringsAsFactors = F)
+  noBaseline_EGFR_IDs <-  noBaselineSrcIDs_df[,"no_bl_scr_IDs"]
+  
+  #charlson, total elix, diabtes and hypertension
+  charlson_elix_db_ht_ckd_df <-read.csv(paste0(extra_data_dir,"All_Charlson_ELIX_Diabetes_Hypertension_CKD.csv"),stringsAsFactors = F)
+  
   extrat_RRT_df <-read.csv(paste0(extra_data_dir,"All_onRRT_DetailedInfo_ICUD0toD3.csv"),stringsAsFactors = F)
   
   if (cohort_name == "UK"){
@@ -3111,5 +3122,15 @@ add_listofvar_func <- function(input_df,extra_data_dir,cohort_name){
     input_df <- add_var_func(input_df,"Days_MV_ICUD0toD3",dayson_machine_df)
   }
   
+  #Recode as NA for baseline Scr and eGFR for patient has no meausred ID 
+  recode_indexes <- which(input_df$STUDY_PATIENT_ID %in% noBaseline_EGFR_IDs)
+  input_df[recode_indexes,c("Baseline_eGFR","Baseline_sCr")] <- NA
+  
+  input_df <- add_var_func(input_df,"CHARLSON_SCORE",charlson_elix_db_ht_ckd_df)
+  input_df <- add_var_func(input_df,"TOTAL_ELIX",charlson_elix_db_ht_ckd_df)
+  input_df <- add_var_func(input_df,"Diabetes",charlson_elix_db_ht_ckd_df)
+  input_df <- add_var_func(input_df,"Hypertension",charlson_elix_db_ht_ckd_df)
+  input_df <- add_var_func(input_df,"CKD",charlson_elix_db_ht_ckd_df)
+
   return(input_df)
 }
