@@ -49,9 +49,6 @@ colnames(Final_SCR_df) <- c("STUDY_PATIENT_ID","Baseline_SCr","AdmitICU_SCr","Ad
                             "Peak_SCr_inICU_D0_D3","NUM_SCr_inICU_D0_D3","Lowest_SCr_inICU_D0_D3")
 for (i in 1:length(analysis_ID)){
   if (i %% 1000 ==0){print(i)}
-  #' #'@TOdelete
-  # i <- which(analysis_ID == 8438917)
-  
   curr_id <- analysis_ID[i]
   Final_SCR_df[i,"STUDY_PATIENT_ID"] <- curr_id
   
@@ -125,6 +122,12 @@ for (i in 1:nrow(Final_SCR_df)){
     
   }
 }
+
+#'@TODO
+#'@ADDED 080821
+no_bl_scr_IDs_df <- as.data.frame(no_bl_scr_IDs)
+write.csv(no_bl_scr_IDs_df,paste0(outdir,"NO_Measured_BaselineScr_IDs.csv"),row.names = F)
+
 
 write.csv(Final_SCR_df,paste0(outdir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df.csv"),row.names = F)
 length(no_bl_scr_IDs) ##N of Resolved baseline by EPI: 5212
