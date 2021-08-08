@@ -125,12 +125,12 @@ for (i in 1:nrow(Final_SCR_df)){
 
 #'@TODO
 #'@ADDED 080821
+length(no_bl_scr_IDs) ##N of Resolved baseline by EPI: 5212
 no_bl_scr_IDs_df <- as.data.frame(no_bl_scr_IDs)
 write.csv(no_bl_scr_IDs_df,paste0(outdir,"NO_Measured_BaselineScr_IDs.csv"),row.names = F)
 
 
 write.csv(Final_SCR_df,paste0(outdir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df.csv"),row.names = F)
-length(no_bl_scr_IDs) ##N of Resolved baseline by EPI: 5212
 
 
 ##########################################################################################
