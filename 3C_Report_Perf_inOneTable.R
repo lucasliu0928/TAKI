@@ -20,7 +20,7 @@ get_allmethods_performance <- function(folder_name,file_names,feature_set_name){
 ####################################################################################### 
 ##### 1. Cross Validation Mortality performance
 #######################################################################################
-perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/"
+perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/"
 folder_name <- paste0(perf_dir,"CV_performance/mortality/")
 method_names <- c("LogReg","RF","SVM","XGB")
 perf_file_names <- paste0("Performance_AVG_CI_",method_names,".csv")
@@ -30,12 +30,11 @@ prediction_file_names <- paste0("Prediction_",method_names,".csv")
 #1. Performances using different feature
 SOFA_perfs <- get_allmethods_performance(folder_name,perf_file_names,"SOFA")
 APACHE_perfs <- get_allmethods_performance(folder_name,perf_file_names,"APACHE")
-SelectedClinicalFeature_perfs <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature")
-SelectedClinicalFeature_perfs2 <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature2")
+SelectedClinicalFeature_perfs <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature15Vars")
 AllClinicalFeature_perfs <- get_allmethods_performance(folder_name,perf_file_names,"AllClinicalFeature")
 
-all_perfs <- cbind(SOFA_perfs,APACHE_perfs,SelectedClinicalFeature_perfs,SelectedClinicalFeature_perfs2,AllClinicalFeature_perfs)
-all_perfs <- all_perfs[-c(6,11,16,21)]
+all_perfs <- cbind(SOFA_perfs,APACHE_perfs,SelectedClinicalFeature_perfs,AllClinicalFeature_perfs)
+all_perfs <- all_perfs[-c(6,11,16)]
 
 #2.For each featuresets and each method, compare with baseline AUC diff
 AUC_diff <- as.data.frame(matrix(NA, nrow = 2, ncol = ncol(all_perfs)))
@@ -87,7 +86,7 @@ write.csv(Final_all_perfs, paste0(folder_name,"Performance_AVG_CI_Altogether.csv
 ##### 2.Cross Validation  MAKE drop 50
 #######################################################################################
 rm() #clear all vairbales
-perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/"
+perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/"
 folder_name <- paste0(perf_dir,"CV_performance/make120_drop50/")
 method_names <- c("LogReg","RF","SVM","XGB")
 perf_file_names <- paste0("Performance_AVG_CI_",method_names,".csv")
@@ -96,8 +95,8 @@ prediction_file_names <- paste0("Prediction_",method_names,".csv")
 
 #1. Performances using different feature
 KDIGO_perfs <- get_allmethods_performance(folder_name,perf_file_names,"KDIGO")
-SelectedClinicalFeature_perfs <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature")
-SelectedClinicalFeature_perfs2 <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature2")
+SelectedClinicalFeature_perfs  <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature14Vars")
+SelectedClinicalFeature_perfs2 <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature15Vars")
 AllClinicalFeature_perfs <- get_allmethods_performance(folder_name,perf_file_names,"AllClinicalFeature")
 
 all_perfs <- cbind(KDIGO_perfs,SelectedClinicalFeature_perfs,SelectedClinicalFeature_perfs2,AllClinicalFeature_perfs)
@@ -154,7 +153,7 @@ write.csv(Final_all_perfs, paste0(folder_name,"Performance_AVG_CI_Altogether.csv
 ####################################################################################### 
 ##### 3. External Validation Mortality performance
 #######################################################################################
-perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/"
+perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/"
 folder_name <- paste0(perf_dir,"ExternalV_performance/mortality/")
 method_names <- c("LogReg","RF","SVM","XGB")
 perf_file_names <- paste0("Performance_AVG_CI_",method_names,".csv")
@@ -164,9 +163,9 @@ prediction_file_names <- paste0("Prediction_",method_names,".csv")
 #1. Performances using different feature
 SOFA_perfs <- get_allmethods_performance(folder_name,perf_file_names,"SOFA")
 APACHE_perfs <- get_allmethods_performance(folder_name,perf_file_names,"APACHE")
-SelectedClinicalFeature_perfs2 <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature2")
+SelectedClinicalFeature_perfs <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature15Vars")
 
-all_perfs <- cbind(SOFA_perfs,APACHE_perfs,SelectedClinicalFeature_perfs2)
+all_perfs <- cbind(SOFA_perfs,APACHE_perfs,SelectedClinicalFeature_perfs)
 all_perfs <- all_perfs[-c(6,11)]
 
 #2.For each featuresets and each method, compare with baseline AUC diff
@@ -219,7 +218,7 @@ write.csv(Final_all_perfs, paste0(folder_name,"Performance_AVG_CI_Altogether.csv
 ##### 4.External Validation  MAKE drop 50
 #######################################################################################
 rm() #clear all vairbales
-perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/"
+perf_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/"
 folder_name <- paste0(perf_dir,"ExternalV_performance/make120_drop50/")
 method_names <- c("LogReg","RF","SVM","XGB")
 perf_file_names <- paste0("Performance_AVG_CI_",method_names,".csv")
@@ -228,9 +227,11 @@ prediction_file_names <- paste0("Prediction_",method_names,".csv")
 
 #1. Performances using different feature
 KDIGO_perfs <- get_allmethods_performance(folder_name,perf_file_names,"KDIGO")
-SelectedClinicalFeature_perfs <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature")
+SelectedClinicalFeature_perfs <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature14Vars")
+SelectedClinicalFeature_perfs2 <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature15Vars")
 
-all_perfs <- cbind(KDIGO_perfs,SelectedClinicalFeature_perfs)
+
+all_perfs <- cbind(KDIGO_perfs,SelectedClinicalFeature_perfs,SelectedClinicalFeature_perfs2)
 all_perfs <- all_perfs[-c(6,11)]
 
 #2.For each featuresets and each method, compare with baseline AUC diff
