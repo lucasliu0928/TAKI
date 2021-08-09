@@ -2651,7 +2651,9 @@ get_avg_pred_func <- function(analysis_df){
 
 
 count_risk_category <- function(risk_df,risk_category){
-  #risk_category <- c(0.1,0.5)
+  # risk_category <- c(0.1,0.5)
+  # risk_df <- avg_risk
+  #   
   Risk_Count_Table <- as.data.frame(matrix(NA, nrow = length(risk_category) + 1, ncol = 3))
   colnames(Risk_Count_Table) <- c("Risk_Category","N_andPerc_PredictedInCategory","N_andPerc_AcutalLabel1")
   
@@ -2673,15 +2675,22 @@ count_risk_category <- function(risk_df,risk_category){
     perc_PredRisk <- round((nPredRisk_in_category/nrow(risk_df)*100),2) # / total n of pts
     Risk_Count_Table[i,"N_andPerc_PredictedInCategory"] <- paste0(nPredRisk_in_category," (", perc_PredRisk, ")")
     
-    min_risk <- round(min(curr_pred_df[,"AVG_pred_prob"]),4)*100 #actual min risk
-    max_risk <- round(max(curr_pred_df[,"AVG_pred_prob"]),4)*100 #actual max risk
-    Risk_Count_Table[i,"Risk_Category"] <- paste0(min_risk,"% - ", max_risk, "%")
+    if (nrow(curr_pred_df) == 0){
+      Risk_Count_Table[i,"Risk_Category"] <- "NONE"
+      Risk_Count_Table[i,"N_andPerc_AcutalLabel1"] <- paste0(0," (", 0, ")")
+      
+    }else{
+      min_risk <- round(min(curr_pred_df[,"AVG_pred_prob"]),4)*100 #actual min risk
+      max_risk <- round(max(curr_pred_df[,"AVG_pred_prob"]),4)*100 #actual max risk
+      Risk_Count_Table[i,"Risk_Category"] <- paste0(min_risk,"% - ", max_risk, "%")
+      
+      nLabel1_in_category <- length(which(curr_pred_df[,"Label"] == 1)) #number of actual label 1 in current category
+      perc_label1 <- round(nLabel1_in_category/nPredRisk_in_category*100,2) # / number of predict risk in category
+      Risk_Count_Table[i,"N_andPerc_AcutalLabel1"] <- paste0(nLabel1_in_category," (", perc_label1, ")")
+      
+    }
     
-    
-    nLabel1_in_category <- length(which(curr_pred_df[,"Label"] == 1)) #number of actual label 1 in current category
-    perc_label1 <- round(nLabel1_in_category/nPredRisk_in_category*100,2) # / number of predict risk in category
-    Risk_Count_Table[i,"N_andPerc_AcutalLabel1"] <- paste0(nLabel1_in_category," (", perc_label1, ")")
-    
+
   }
   return(Risk_Count_Table)
 }
@@ -3091,7 +3100,11 @@ add_listofvar_func <- function(input_df,extra_data_dir,cohort_name){
   #charlson, total elix, diabtes and hypertension
   charlson_elix_db_ht_ckd_df <-read.csv(paste0(extra_data_dir,"All_Charlson_ELIX_Diabetes_Hypertension_CKD.csv"),stringsAsFactors = F)
   
+  #on RRT
   extrat_RRT_df <-read.csv(paste0(extra_data_dir,"All_onRRT_DetailedInfo_ICUD0toD3.csv"),stringsAsFactors = F)
+  
+  #Last Scr in ICU D0-D3
+  lastScr_df <-read.csv(paste0(extra_data_dir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df_AddedLastScr.csv"),stringsAsFactors = F)
   
   if (cohort_name == "UK"){
      SOFA_APACHE_df <-read.csv(paste0(extra_data_dir,"All_SOFA_APACHE_With_NotImputedFeature.csv"),stringsAsFactors = F)
@@ -3132,5 +3145,7 @@ add_listofvar_func <- function(input_df,extra_data_dir,cohort_name){
   input_df <- add_var_func(input_df,"Hypertension",charlson_elix_db_ht_ckd_df)
   input_df <- add_var_func(input_df,"CKD",charlson_elix_db_ht_ckd_df)
 
+  input_df <- add_var_func(input_df,"LastSCr_inICU_D0_D3",lastScr_df)
+  
   return(input_df)
 }
