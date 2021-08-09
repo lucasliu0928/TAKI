@@ -34,7 +34,7 @@ UK_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/Model_
 UTSW_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/Model_Feature_Outcome/"
 
 #out dir
-out_dir <- "//Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/ExternalV_performance/"
+out_dir <- "//Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/ExternalV_performance/"
 
 
 ####################################################################################### 
@@ -99,7 +99,7 @@ main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,ou
 
 ####################################################################################### 
 ######                           Mortality Prediction   3                  ############
-#feature file: Selected features2 
+#feature file: Selected features with 15 var
 #Outcome file: All_outcome.csv
 ####################################################################################### 
 ##1.Feature file
@@ -112,7 +112,7 @@ outcome_file <- "All_outcome.csv"
 outcome_colname <- "Death_inHOSP"
 
 #3.Outdir for mortality
-outdir1 <- paste0(out_dir,"mortality/SelectedClinicalFeature2/")
+outdir1 <- paste0(out_dir,"mortality/SelectedClinicalFeature15Vars/")
 
 
 #1.Get model data
@@ -168,21 +168,57 @@ main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,ou
 
 ####################################################################################### 
 ######                MAKE with drop50 Prediction   2                      ############
-#feature file: Selected Features1
+#feature file: Selected Features with 15 var
 #Outcome file: All_outcome.csv
 ####################################################################################### 
 #1.Feature file
 feature_file <- c("All_Feature_imputed_normed.csv")
 selected_features <- c("LAST_KDIGO_ICU_D0toD3","UrineOutput_D0toD3","MAX_KDIGO_ICU_D0toD3","Bilirubin_D1_HIGH",
                         "AGE","BUN_D0toD3_HIGH","Hemoglobin_D1_LOW","Platelets_D1_LOW","FI02_D1_HIGH",
-                        "Vasopressor_ICUD0toD3","HR_D1_HIGH","PH_D1_LOW")
-
+                        "Vasopressor_ICUD0toD3","HR_D1_HIGH","PH_D1_LOW",
+                        "Admit_sCr","onRRT_ICUD0toD3","Sodium_D1_LOW")
 #2.Outcome column name
 outcome_file <- "All_outcome.csv"
 outcome_colname <- "MAKE_HOSP120_Drop50"
 
 #3.Outdir for mortality
-outdir1 <- paste0(out_dir,"make120_drop50/SelectedClinicalFeature/")
+outdir1 <- paste0(out_dir,"make120_drop50/SelectedClinicalFeature15Vars/")
+
+
+#1.Get model data
+train_data <- construct_model_data_func(UK_data_dir,feature_file,outcome_file,outcome_colname)
+train_data <- train_data[,c(selected_features,outcome_colname)]
+
+Validation_data <- construct_model_data_func(UTSW_data_dir,feature_file,outcome_file,outcome_colname)
+Validation_data <- Validation_data[,c(selected_features,outcome_colname)]
+
+table(train_data$MAKE_HOSP120_Drop50) #4972 2382 
+table(Validation_data$MAKE_HOSP120_Drop50) #1659  574 
+
+#2.For each method, do boostraps 10 times on entire UK data, and valdition on UTSW data
+upsample_flag <- 3 #random sample 0.8 of train data with replacement for bootstrapping and then down sample for training
+N_sampling <- 10
+method_list <- c("SVM","RF","LogReg","XGB")
+main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list)
+
+
+####################################################################################### 
+######                MAKE with drop50 Prediction   3                      ############
+#feature file: Selected Features with 14 var (without onRRT)
+#Outcome file: All_outcome.csv
+####################################################################################### 
+#1.Feature file
+feature_file <- c("All_Feature_imputed_normed.csv")
+selected_features <- c("LAST_KDIGO_ICU_D0toD3","UrineOutput_D0toD3","MAX_KDIGO_ICU_D0toD3","Bilirubin_D1_HIGH",
+                       "AGE","BUN_D0toD3_HIGH","Hemoglobin_D1_LOW","Platelets_D1_LOW","FI02_D1_HIGH",
+                       "Vasopressor_ICUD0toD3","HR_D1_HIGH","PH_D1_LOW",
+                       "Admit_sCr","Sodium_D1_LOW")
+#2.Outcome column name
+outcome_file <- "All_outcome.csv"
+outcome_colname <- "MAKE_HOSP120_Drop50"
+
+#3.Outdir for mortality
+outdir1 <- paste0(out_dir,"make120_drop50/SelectedClinicalFeature14Vars/")
 
 
 #1.Get model data
