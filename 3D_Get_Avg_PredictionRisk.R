@@ -1,8 +1,9 @@
 source("TAKI_Ultility.R")
 compute_avg_pred_risk_and_risk_category <- function(cohort_name,outcome_name,perf_dir,method_name,featureset_folder){
-  # perf_dir <- UK_mortality_dir
-  # cohort_name <- "UK"
-  # outcome_name <- "Mortality"
+  # perf_dir <- UTSW_MAKE_dir
+  # cohort_name <- "UTSW"
+  # outcome_name <- "MAKE"
+  # method_name <- "RF"
   
   #1. Load pred table
   pred_df <- read.csv(paste0(perf_dir, featureset_folder, "/Prediction_",method_name,".csv"),stringsAsFactors = F)
@@ -27,14 +28,14 @@ compute_avg_pred_risk_and_risk_category <- function(cohort_name,outcome_name,per
   
 }
 
-proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/"
+proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/"
 
 ################################################################################################## 
 ######                         Mortality                                            ############## 
 ################################################################################################## 
 outcome_name <- "Mortality"
 method_name <- "RF"
-featureset_folder <- "SelectedClinicalFeature2"
+featureset_folder <- "SelectedClinicalFeature15Vars"
 #1. UK
 UK_mortality_dir <- paste0(proj_dir,"CV_performance/mortality/")
 compute_avg_pred_risk_and_risk_category("UK",outcome_name,UK_mortality_dir,method_name,featureset_folder)
@@ -48,7 +49,7 @@ compute_avg_pred_risk_and_risk_category("UTSW",outcome_name,UTSW_mortality_dir,m
 ################################################################################################## 
 #1. UK
 method_name <- "RF"
-featureset_folder <- "SelectedClinicalFeature"
+featureset_folder <- "SelectedClinicalFeature14Vars"
 outcome_name <- "MAKE"
 #1. UK
 UK_MAKE_dir <- paste0(proj_dir,"CV_performance/make120_drop50/")
