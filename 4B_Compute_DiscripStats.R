@@ -104,7 +104,8 @@ var_list <- c("AGE","GENDER","RACE","BMI","CHARLSON_SCORE","TOTAL_ELIX","Diabete
               "SOFA_TOTAL","APACHE_TOTAL","Days_inHOSP","Hours_inICUD0toD3","ECMO_ICUD0toD3","IABP_ICUD0toD3","VAD_ICUD0toD3","MV_ICUD0toD3","Days_MV_ICUD0toD3",
               "Sepsis_Before_or_At_Admission","UrineOutput_D0toD3","UrineFlow_D0toD3","FluidOverload_inPercentage",
               "Bicarbonate_D1_AVGof(LOWHIGH)","BUN_D0toD3_HIGH","Hematocrit_D1_AVGof(LOWHIGH)","Hemoglobin_D1_AVGof(LOWHIGH)",
-              "Baseline_sCr","Admit_sCr","Peak_SCr_inICU_D0_D3","Last_SCr_inICUD0toD3","onRRT_ICUD0toD3","RRTinfo_ICUD0toD3",
+              "Baseline_sCr","Admit_sCr","Peak_SCr_inICU_D0_D3","LastSCr_inICU_D0_D3","MAX_KDIGO_ICU_D0toD3","LAST_KDIGO_ICU_D0toD3",
+              "onRRT_ICUD0toD3","RRTinfo_ICUD0toD3",
               "CRRT_Days_inICUD0toD3","HD_Days_inICUD0toD3","Total_days_HDandCRRT")
 
 
