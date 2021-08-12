@@ -39,17 +39,28 @@ write.csv(comb_res,paste0(perf_dir,"UTSW_SelectedClinicalFeature15Vars_Mortality
 perf_dir <- paste0(proj_dir,"CV_performance/make120_drop50/")
 baseline_model_file  <- "/KDIGO/Prediction_RF.csv"
 comprison_model_file1 <- "/SelectedClinicalFeature14Vars/Prediction_RF.csv"
+comprison_model_file2 <- "/SelectedClinicalFeature15Vars/Prediction_RF.csv"
 
 reclass_res <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file1,cutoff = c(0,0.5,1))
 colnames(reclass_res)[2] <- paste0("SelectedClinicalFeature14VarsvsKDIGO_",colnames(reclass_res)[2])
 write.csv(reclass_res,paste0(perf_dir,"UK_SelectedClinicalFeature14Vars_MAKE_ReclassResults_RF.csv"))
 
+reclass_res <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file2,cutoff = c(0,0.5,1))
+colnames(reclass_res)[2] <- paste0("SelectedClinicalFeature15VarsvsKDIGO_",colnames(reclass_res)[2])
+write.csv(reclass_res,paste0(perf_dir,"UK_SelectedClinicalFeature15Vars_MAKE_ReclassResults_RF.csv"))
+
 #UTSW
 perf_dir <- paste0(proj_dir,"ExternalV_performance/make120_drop50/")
 baseline_model_file  <- "/KDIGO/Prediction_RF.csv"
 comprison_model_file1 <- "/SelectedClinicalFeature14Vars/Prediction_RF.csv"
+comprison_model_file2 <- "/SelectedClinicalFeature15Vars/Prediction_RF.csv"
 
 reclass_res <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file1,cutoff = c(0,0.5,1))
 colnames(reclass_res)[2] <- paste0("SelectedClinicalFeature14VarsvsKDIGO_",colnames(reclass_res)[2])
 write.csv(reclass_res,paste0(perf_dir,"UTSW_SelectedClinicalFeature14Varsl_MAKE_ReclassResults_RF.csv"))
+
+
+reclass_res <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file2,cutoff = c(0,0.5,1))
+colnames(reclass_res)[2] <- paste0("SelectedClinicalFeature15VarsvsKDIGO_",colnames(reclass_res)[2])
+write.csv(reclass_res,paste0(perf_dir,"UK_SelectedClinicalFeature15Vars_MAKE_ReclassResults_RF.csv"))
 
