@@ -24,11 +24,59 @@ def plot_shap_summary(explainer, X, output_dir, outfile):
 def plot_individual_shap(explainer, Sample_X,value_threshold, output_dir, outfile):
     shap_value = explainer.shap_values(Sample_X)
     #Using logit will change log-odds numbers into probabilities, the defualt shows the the log-odds
+    #We do not have to chaknge link to "logit", because we use RF_regressor classfier, the y_pred is alreayd in proabily form
     shap.force_plot(explainer.expected_value, shap_value, Sample_X,contribution_threshold= value_threshold,show = False,matplotlib=True).savefig(output_dir + outfile,bbox_inches='tight',dpi = 500)
 
+def get_mean_abs_shap_values (explainer,X,output_dir,out_file):
+    shap_values_all = explainer.shap_values(X) #compute shap values for all X
+    f = plt.figure()
+    #plot mean abs value of shap
+    shap.summary_plot(shap_values_all, features=X, feature_names=X.columns, plot_type='bar')
+    f.savefig(output_dir + out_file + ".png", bbox_inches='tight', dpi=600)
+    
+    shap_values_all_df = pd.DataFrame(shap_values_all)
+    #get  mean  abs value shap for each feature
+    mean_abs_shap_values = []
+    for f in shap_values_all_df.columns:
+        curr_val = round(np.mean(abs(shap_values_all_df[f])),4)
+        mean_abs_shap_values.append(curr_val)
+    mean_abs_shap_values_df = pd.DataFrame({'Feature': X.columns, 'Mean_Abs_SHAP': mean_abs_shap_values })
+    mean_abs_shap_values_df.to_csv(output_dir + out_file + ".csv")
+        
+
+def get_correct_predicted_IDs(sample_IDs,y_pred,y_true,label_class):
+    
+    #get true indexes for label_class
+    true_indexes = [i for i, value in enumerate(y_true) if value == label_class]
+    
+    if label_class == 1:
+        #get predicted class 1
+        predicted_label1_indexes = [i for i, value in enumerate(y_pred) if value >= 0.5]
+        #get corrected preidct class 1
+        correct_pred_index = [value for value in predicted_label1_indexes if value in true_indexes] 
+    elif label_class == 0:
+        #get predicted class 0
+        predicted_label0_indexes = [i for i, value in enumerate(y_pred) if value < 0.5]
+        #get corrected preidct class 1
+        correct_pred_index = [value for value in predicted_label0_indexes if value in true_indexes] 
+
+    corrected_prediction_IDs = list(sample_IDs[correct_pred_index])
+    
+    return corrected_prediction_IDs
+
+
+def find_decreaseIn_KDIGO_pts(feature_data, max_kdigo, last_kdigo):
+    hightolow_kdigo_df = feature_data.loc[(feature_data['MAX_KDIGO_ICU_D0toD3'].isin(max_kdigo)) & (feature_data['LAST_KDIGO_ICU_D0toD3'] == last_kdigo)]
+    return hightolow_kdigo_df[['MAX_KDIGO_ICU_D0toD3','LAST_KDIGO_ICU_D0toD3']]
+
+def intersection(lst1, lst2):
+    return list(set(lst1) & set(lst2))
 
 UK_data_dir = "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
 UTSW_data_dir = "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/Model_Feature_Outcome/"
+
+#Output dir
+outdir = "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/Shap/"
 
 #######################################################################################
 # Load data
@@ -46,22 +94,23 @@ UTSW_outcome_df = UTSW_outcome_df.reindex(UTSW_outcome_df.index) #reorder to mat
 ##########################################################
 #Mortality
 ##########################################################
-selected_features2 = ["UrineOutput_D0toD3" , "Vasopressor_ICUD0toD3","FI02_D1_HIGH","Platelets_D1_LOW","AGE",
+selected_features = ["UrineOutput_D0toD3" , "Vasopressor_ICUD0toD3","FI02_D1_HIGH","Platelets_D1_LOW","AGE",
                      "BUN_D0toD3_HIGH","HR_D1_HIGH","LAST_KDIGO_ICU_D0toD3","PH_D1_LOW","Bilirubin_D1_HIGH",
                      "MAX_KDIGO_ICU_D0toD3","ECMO_ICUD0toD3","Hours_inICUD0toD3", 
                      "Temperature_D1_LOW", "Temperature_D1_HIGH"]
 #UK
 UK_comb_df = UK_feature_df.join(UK_outcome_df['Death_inHOSP'])
 train_Y =  UK_comb_df['Death_inHOSP']
-train_X =  UK_comb_df[selected_features2]
+train_X =  UK_comb_df[selected_features]
 
 #UTSW
 UTSW_comb_df = UTSW_feature_df.join(UTSW_outcome_df['Death_inHOSP'])
 test_Y =  UTSW_comb_df['Death_inHOSP']
-test_X =  UTSW_comb_df[selected_features2]
+test_X =  UTSW_comb_df[selected_features]
 
 
 #Use All data to train and get plot
+#model = RandomForestClassifier(max_depth=6, random_state=0, n_estimators=500)
 model = RandomForestRegressor(max_depth=6, random_state=0, n_estimators=500)
 model.fit(train_X, train_Y)
 
@@ -69,53 +118,83 @@ model.fit(train_X, train_Y)
 explainer = shap.TreeExplainer(model) #
     
 
-#Output dir
-outdir = "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/shap"
 
-# Plot shap summaryfor UK
-plot_shap_summary(explainer, train_X, outdir, "/mortality/RF_ClinicalF2_AllUK_SHAP_HospMortality.png")
+# Plot shap summary for UK
+plot_shap_summary(explainer, train_X, outdir, "mortality/RF_15vars_AllUK_SHAP_HospMortality.png")
 explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
+
+#Mean abs shap value for UK
+get_mean_abs_shap_values(explainer, train_X, outdir,"mortality/RF_15vars_AllUK_Mean_ABS_SHAP_HospMortality")
 
 # Plot shap summaryfor UTSW
-plot_shap_summary(explainer, test_X, outdir, "/mortality/RF_ClinicalF2_AllUTSW_SHAP_HospMortality.png")
+plot_shap_summary(explainer, test_X, outdir, "mortality/RF_15vars_AllUTSW_SHAP_HospMortality.png")
 explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
+
+#Mean abs shap value for UTSW
+get_mean_abs_shap_values(explainer, test_X, outdir,"mortality/RF_15vars_AllUTSW_Mean_ABS_SHAP_HospMortality")
 
 
 #check predicted value
-y_pred = model.predict(train_X)
+#y_pred = model.predict_proba(train_X) #if using RandomForestClassifier
+y_pred = model.predict(train_X) #y_pred in RandomForestRegressor is equalient to the probabily of being in the class 1 in using RandomForestClassifier
 
-#Plot indivudal of UK
+
+#Get all Train ID (UK ID)
+all_train_IDs = train_X.index
+
 #Find which y_pred > 0.5 and y_ture == 1
-predicted_death_indexes = [i for i, value in enumerate(y_pred) if value > 0.5]
-true_death_indexes = [i for i, value in enumerate(train_Y) if value == 1]
-predicted_correct_death_index = [value for value in predicted_death_indexes if value in true_death_indexes] #intersection of two list
-predicted_correct_death_IDs = list(train_X.index[predicted_correct_death_index])
+predicted_correct_death_IDs = get_correct_predicted_IDs(all_train_IDs,y_pred,train_Y,1)
 
 #Find which y_pred < 0.5 and y_ture == 0
-predicted_survive_indexes = [i for i, value in enumerate(y_pred) if value < 0.5]
-true_survive_indexes = [i for i, value in enumerate(train_Y) if value == 0]
-predicted_correct_survive_index = [value for value in predicted_survive_indexes if value in true_survive_indexes] #intersection of two list
-predicted_correct_survive_IDs = list(train_X.index[predicted_correct_survive_index])
+predicted_correct_survive_IDs = get_correct_predicted_IDs(all_train_IDs,y_pred,train_Y,0)
 
-#For correct predicted survovors, find HIGH max KDIGO with LOW last KDIGO 
-def find_decreaseIn_KDIGO_pts(feature_data):
-    hightolow_kdigo_df = feature_data.loc[(feature_data['MAX_KDIGO_ICU_D0toD3'].isin([4,3,2])) & (feature_data['LAST_KDIGO_ICU_D0toD3'] == 1)]
-    return hightolow_kdigo_df
+#Find MAX KDIGO 3or4 with lower Last kdigo IDs
+MAX3or4_LAST0 = find_decreaseIn_KDIGO_pts(train_X,[3,4],0) #141
+MAX3or4_LAST1 = find_decreaseIn_KDIGO_pts(train_X,[3,4],1) #93
+MAX3or4_LAST2 = find_decreaseIn_KDIGO_pts(train_X,[3,4],2) #231
+MAX2_LAST1    = find_decreaseIn_KDIGO_pts(train_X,[2],1) #444
+MAX2_LAST0    = find_decreaseIn_KDIGO_pts(train_X,[2],0) #488
+MAX1_LAST0    = find_decreaseIn_KDIGO_pts(train_X,[1],0) #2012
+MAX1_LAST1   = find_decreaseIn_KDIGO_pts(train_X,[1],1) #2012
 
-def intersection(lst1, lst2):
-    return list(set(lst1) & set(lst2))
+#All high to low IDs
+MAX3or4_LAST0_IDs = list(MAX3or4_LAST0.index)
+MAX3or4_LAST1_IDs = list(MAX3or4_LAST1.index)
+MAX3or4_LAST2_IDs = list(MAX3or4_LAST2.index)
+MAX2_LAST1_IDs = list(MAX2_LAST1.index)
+MAX2_LAST0_IDs = list(MAX2_LAST0.index)
+MAX1_LAST0_IDs = list(MAX1_LAST0.index)
+MAX1_LAST1_IDs = list(MAX1_LAST1.index)
 
-hightolow_df = find_decreaseIn_KDIGO_pts(train_X)
-hightolow_IDs = hightolow_df.index
+#For survivors: Correct predicted and high to low IDs
+correct_MAX3or4_LAST0_IDs1 = intersection(predicted_correct_survive_IDs,MAX3or4_LAST0_IDs)
+correct_MAX3or4_LAST1_IDs1 = intersection(predicted_correct_survive_IDs,MAX3or4_LAST1_IDs)
+correct_MAX3or4_LAST2_IDs1 = intersection(predicted_correct_survive_IDs,MAX3or4_LAST2_IDs)
+correct_MAX2_LAST1_IDs1 = intersection(predicted_correct_survive_IDs,MAX2_LAST1_IDs)
+correct_MAX2_LAST0_IDs1 = intersection(predicted_correct_survive_IDs,MAX2_LAST0_IDs)
+correct_MAX1_LAST0_IDs1 = intersection(predicted_correct_survive_IDs,MAX1_LAST0_IDs)
 
-correct_hightolow_IDs_survive = intersection(predicted_correct_survive_IDs,hightolow_IDs)
 
-#Plot
-random.seed(0)
-n = 20
-Survivors_IDs = sample(correct_hightolow_IDs_survive,n)
-Death_IDs = sample(predicted_correct_death_IDs,n)
-Sample_IDs = Survivors_IDs + Death_IDs
+#For death: Correct predicted and high to low IDs
+correct_MAX3or4_LAST0_IDs2 = intersection(predicted_correct_death_IDs,MAX3or4_LAST0_IDs) #0
+correct_MAX3or4_LAST1_IDs2 = intersection(predicted_correct_death_IDs,MAX3or4_LAST1_IDs) #1
+correct_MAX3or4_LAST2_IDs2 = intersection(predicted_correct_death_IDs,MAX3or4_LAST2_IDs) #10
+correct_MAX2_LAST1_IDs2 = intersection(predicted_correct_death_IDs,MAX2_LAST1_IDs) #13
+correct_MAX2_LAST0_IDs2 = intersection(predicted_correct_death_IDs,MAX2_LAST0_IDs) #7
+correct_MAX1_LAST0_IDs2 = intersection(predicted_correct_death_IDs,MAX1_LAST0_IDs) #28
+
+
+#Sample  IDs to plot
+random.seed(1)
+Survivors_IDs1 = sample(correct_MAX3or4_LAST0_IDs1,2)
+Survivors_IDs2 = sample(correct_MAX2_LAST0_IDs1,2)
+Survivors_IDs3 = sample(correct_MAX1_LAST0_IDs1,2)
+
+Death_IDs1 = sample(correct_MAX3or4_LAST2_IDs2,2)
+Death_IDs2 = sample(correct_MAX2_LAST0_IDs2,2)
+Death_IDs3 = sample(correct_MAX1_LAST0_IDs2,2)
+
+Sample_IDs = Survivors_IDs1 + Survivors_IDs2 + Survivors_IDs3 + Death_IDs1 + Death_IDs2 + Death_IDs3
 
 for pt in Sample_IDs:
     sample_data = np.around(train_X.loc[pt],2) #round feature to 2 digit
@@ -129,8 +208,9 @@ for pt in Sample_IDs:
 ##########################################################
 selected_features1 = ["LAST_KDIGO_ICU_D0toD3","UrineOutput_D0toD3","MAX_KDIGO_ICU_D0toD3","Bilirubin_D1_HIGH",
                      "AGE","BUN_D0toD3_HIGH","Hemoglobin_D1_LOW","Platelets_D1_LOW","FI02_D1_HIGH",
-                     "Vasopressor_ICUD0toD3","HR_D1_HIGH","PH_D1_LOW"]
-
+                     "Vasopressor_ICUD0toD3","HR_D1_HIGH","PH_D1_LOW",
+                     "Admit_sCr","Sodium_D1_LOW"]
+                        
 #UK
 UK_comb_df = UK_feature_df.join(UK_outcome_df['MAKE_HOSP120_Drop50'])
 train_Y =  UK_comb_df['MAKE_HOSP120_Drop50']
@@ -149,45 +229,69 @@ model.fit(train_X, train_Y)
 # Create object that can calculate shap values
 explainer = shap.TreeExplainer(model) #
     
-
-#Output dir
-outdir = "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0708/Shap/"
-
 # Plot shap summary UK
-plot_shap_summary(explainer, train_X, outdir, "make120drop50/RF_ClinicalF1_AllUK_SHAP_MAKE50.png")
+plot_shap_summary(explainer, train_X, outdir, "make120drop50/RF_14vars_AllUK_SHAP_MAKE50.png")
 explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
+
+#Mean abs shap value for UK
+get_mean_abs_shap_values(explainer, train_X, outdir,"make120drop50/RF_14vars_AllUK_Mean_ABS_SHAP_MAKE50")
+
 
 # Plot shap summaryfor UTSW
-plot_shap_summary(explainer, test_X, outdir, "/make120drop50/RF_ClinicalF1_AllUTSW_SHAP_MAKE50.png")
+plot_shap_summary(explainer, test_X, outdir, "/make120drop50/RF_14vars_AllUTSW_SHAP_MAKE50.png")
 explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
+
+#Mean abs shap value for UTSW
+get_mean_abs_shap_values(explainer, test_X, outdir,"make120drop50/RF_14vars_AllUTSW_Mean_ABS_SHAP_MAKE50")
 
 
 #check predicted value
 y_pred = model.predict(train_X)
 
+#Get all Train ID (UK ID)
+all_train_IDs = train_X.index
+
 #Find which y_pred > 0.5 and y_ture == 1
-predicted_make_indexes = [i for i, value in enumerate(y_pred) if value > 0.5]
-true_make_indexes = [i for i, value in enumerate(train_Y) if value == 1]
-predicted_correct_make_index = [value for value in predicted_make_indexes if value in true_make_indexes] #intersection of two list
-predicted_correct_make_IDs = list(train_X.index[predicted_correct_make_index])
+predicted_correct_MAKE1_IDs = get_correct_predicted_IDs(all_train_IDs,y_pred,train_Y,1)
 
 #Find which y_pred < 0.5 and y_ture == 0
-predicted_survive_indexes = [i for i, value in enumerate(y_pred) if value < 0.5]
-true_survive_indexes = [i for i, value in enumerate(train_Y) if value == 0]
-predicted_correct_survive_index = [value for value in predicted_survive_indexes if value in true_survive_indexes] #intersection of two list
-predicted_correct_survive_IDs = list(train_X.index[predicted_correct_survive_index])
+predicted_correct_MAKE0_IDs = get_correct_predicted_IDs(all_train_IDs,y_pred,train_Y,0)
 
-# plot Indiviaual UK
+
+#For MAKE0: Correct predicted and high to low IDs
+correct_MAX3or4_LAST0_IDs1 = intersection(predicted_correct_MAKE0_IDs,MAX3or4_LAST0_IDs)
+correct_MAX3or4_LAST1_IDs1 = intersection(predicted_correct_MAKE0_IDs,MAX3or4_LAST1_IDs)
+correct_MAX3or4_LAST2_IDs1 = intersection(predicted_correct_MAKE0_IDs,MAX3or4_LAST2_IDs)
+correct_MAX2_LAST1_IDs1 = intersection(predicted_correct_MAKE0_IDs,MAX2_LAST1_IDs)
+correct_MAX2_LAST0_IDs1 = intersection(predicted_correct_MAKE0_IDs,MAX2_LAST0_IDs)
+correct_MAX1_LAST0_IDs1 = intersection(predicted_correct_MAKE0_IDs,MAX1_LAST0_IDs)
+
+
+#For MAKE1: Correct predicted and high to low IDs
+correct_MAX3or4_LAST0_IDs2 = intersection(predicted_correct_MAKE1_IDs,MAX3or4_LAST0_IDs) #5
+correct_MAX3or4_LAST1_IDs2 = intersection(predicted_correct_MAKE1_IDs,MAX3or4_LAST1_IDs) #3
+correct_MAX3or4_LAST2_IDs2 = intersection(predicted_correct_MAKE1_IDs,MAX3or4_LAST2_IDs) #31
+correct_MAX2_LAST1_IDs2 = intersection(predicted_correct_MAKE1_IDs,MAX2_LAST1_IDs) #20
+correct_MAX2_LAST0_IDs2 = intersection(predicted_correct_MAKE1_IDs,MAX2_LAST0_IDs) #11
+correct_MAX1_LAST0_IDs2 = intersection(predicted_correct_MAKE1_IDs,MAX1_LAST0_IDs) #33
+correct_MAX1_LAST1_IDs2 = intersection(predicted_correct_MAKE1_IDs,MAX1_LAST1_IDs) #66
+
+
+#Sample  IDs to plot
 random.seed(1)
-n = 20
-Survivors_IDs = sample(predicted_correct_survive_IDs,n)
-MAKE_IDs = sample(predicted_correct_make_IDs,n)
-Sample_IDs = Survivors_IDs + MAKE_IDs
+MAKE0_IDs1 = sample(correct_MAX3or4_LAST0_IDs1,2)
+MAKE0_IDs2 = sample(correct_MAX2_LAST0_IDs1,2)
+MAKE0_IDs3 = sample(correct_MAX1_LAST0_IDs1,2)
+
+MAKE1_IDs1 = sample(correct_MAX3or4_LAST2_IDs2,2)
+MAKE1_IDs2 = sample(correct_MAX2_LAST1_IDs2,2)
+MAKE1_IDs3 = sample(correct_MAX1_LAST1_IDs2,2)
+
+Sample_IDs = MAKE0_IDs1 + MAKE0_IDs2 + MAKE0_IDs3 + MAKE1_IDs1 + MAKE1_IDs2 + MAKE1_IDs3
 
 for pt in Sample_IDs:
     sample_data = np.around(train_X.loc[pt],2) #round feature to 2 digit
     outcome_label = train_Y.loc[pt] 
     MAX_KDIGO = train_X.loc[pt,'MAX_KDIGO_ICU_D0toD3'] 
     LAST_KDIGO = train_X.loc[pt,'LAST_KDIGO_ICU_D0toD3']
-    plot_individual_shap(explainer, sample_data, 0.1, outdir,  "/CV_performance/make120_drop50/Visual_Shap/RF_MAKE" + str(outcome_label) + '_MAXKDIGO'+ str(MAX_KDIGO) + '_LASTKDIGO'+ str(LAST_KDIGO) +"_ID" + str(pt) + ".png")
-
+    plot_individual_shap(explainer, sample_data,0.1,outdir,"/make120drop50/Examples/UK/" + 'Outcome' + str(outcome_label) + '_MAXKDIGO'+ str(MAX_KDIGO) + '_LASTKDIGO'+ str(LAST_KDIGO) +"_ID" + str(pt) + ".png")
