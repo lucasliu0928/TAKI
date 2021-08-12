@@ -236,3 +236,70 @@ upsample_flag <- 3 #random sample 0.8 of train data with replacement for bootstr
 N_sampling <- 10
 method_list <- c("SVM","RF","LogReg","XGB")
 main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list)
+
+
+####################################################################################### 
+######                MAKE with drop50 Prediction   4                      ############
+#'@NOTE: only do prediction for survirors (pts who  did not die from hosp start to hosp 120)
+#feature file: Selected Features 14 vars (prediction3 without onRRT)
+#Outcome file: All_outcome.csv
+####################################################################################### 
+#1.Feature file
+feature_file <- c("All_Feature_imputed_normed.csv")
+selected_features <- c("LAST_KDIGO_ICU_D0toD3","UrineOutput_D0toD3","MAX_KDIGO_ICU_D0toD3","Bilirubin_D1_HIGH",
+                       "AGE","BUN_D0toD3_HIGH","Hemoglobin_D1_LOW","Platelets_D1_LOW","FI02_D1_HIGH",
+                       "Vasopressor_ICUD0toD3","HR_D1_HIGH","PH_D1_LOW",
+                       "Admit_sCr","Sodium_D1_LOW")
+#2.Outcome column name
+outcome_file <- "All_outcome.csv"
+outcome_colname <- "MAKE_HOSP120_Drop50"
+
+#3.Outdir for mortality
+outdir1 <- paste0(out_dir,"Surviors_make120_drop50/SelectedClinicalFeature14Vars/")
+
+
+#1.Get model data
+train_data <- construct_model_data_func_survirors(UK_data_dir,feature_file,outcome_file,outcome_colname)
+train_data <- train_data[,c(selected_features,outcome_colname)]
+
+Validation_data <- construct_model_data_func_survirors(UTSW_data_dir,feature_file,outcome_file,outcome_colname)
+Validation_data <- Validation_data[,c(selected_features,outcome_colname)]
+
+table(train_data$MAKE_HOSP120_Drop50) #4972  423 
+table(Validation_data$MAKE_HOSP120_Drop50) #1659  205
+
+#2.For each method, do boostraps 10 times on entire UK data, and valdition on UTSW data
+upsample_flag <- 3 #random sample 0.8 of train data with replacement for bootstrapping and then down sample for training
+N_sampling <- 10
+method_list <- c("SVM","RF","LogReg","XGB")
+main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list)
+
+
+####################################################################################### 
+######                MAKE with drop50 Prediction   5                      ############
+##'@NOTE: only do prediction for survirors (pts who  did not die from hosp start to hosp 120)
+#feature file: 1. KDIGO.csv, 
+#Outcome file: All_outcome.csv
+####################################################################################### 
+#1.Feature file
+feature_file <- c("All_MAX_KDIGO_ICUD0toD3_normed.csv")
+
+#2.Outcome column name
+outcome_file <- "All_outcome.csv"
+outcome_colname <- "MAKE_HOSP120_Drop50"
+
+#3.Outdir for mortality
+outdir1 <- paste0(out_dir,"Surviors_make120_drop50/KDIGO/")
+
+
+#1.Get model data
+train_data <- construct_model_data_func_survirors(UK_data_dir,feature_file,outcome_file,outcome_colname)
+Validation_data <- construct_model_data_func_survirors(UTSW_data_dir,feature_file,outcome_file,outcome_colname)
+table(train_data$MAKE_HOSP120_Drop50) #4972  423
+table(Validation_data$MAKE_HOSP120_Drop50) #1659  205 
+
+#2.For each method, do boostraps 10 times on entire UK data, and valdition on UTSW data
+upsample_flag <- 3 #random sample 0.8 of train data with replacement for bootstrapping and then down sample for training
+N_sampling <- 10
+method_list <- c("SVM","RF","LogReg","XGB")
+main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list,n_tress_RF=500,svmkernel = 'svmLinear2',random_perc=0.8)
