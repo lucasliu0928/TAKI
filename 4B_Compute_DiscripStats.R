@@ -1,4 +1,5 @@
 source("TAKI_Ultility.R")
+library(lubridate)
 
 #Data dir
 UK_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
@@ -33,6 +34,15 @@ UK_data <- add_listofvar_func(UK_data,UK_intermediate_data_dir,"UK")
 #For UTSW
 UTSW_data <- add_listofvar_func(UTSW_data,UTSW_intermediate_data_dir,"UTSW")
 
+####################################################################################
+##4. Recode last and max KDIGO 3 and 4 
+####################################################################################
+UK_data <-  recode_KDIGO_func(UK_data,"LAST_KDIGO_ICU_D0toD3")
+UK_data <-  recode_KDIGO_func(UK_data,"MAX_KDIGO_ICU_D0toD3")
+
+
+UTSW_data <-  recode_KDIGO_func(UTSW_data,"LAST_KDIGO_ICU_D0toD3")
+UTSW_data <-  recode_KDIGO_func(UTSW_data,"MAX_KDIGO_ICU_D0toD3")
 
 ####################################################################################
 ###2. Missing table
@@ -55,6 +65,7 @@ write.csv(UTSW_MissingTable,paste0(out_dir,"Feature_MissingTable_UTSW.csv"),row.
 selected_features_Mortality <- c("UrineOutput_D0toD3" , "Vasopressor_ICUD0toD3","FI02_D1_HIGH","Platelets_D1_LOW","AGE",
                                  "BUN_D0toD3_HIGH","HR_D1_HIGH","LAST_KDIGO_ICU_D0toD3","PH_D1_LOW","Bilirubin_D1_HIGH",
                                  "MAX_KDIGO_ICU_D0toD3","ECMO_ICUD0toD3","Hours_inICUD0toD3", "Temperature_D1_LOW", "Temperature_D1_HIGH")
+#Outdir for mortality
 #For UK
 survived_df_UK <- UK_data[which(UK_data$Death_inHOSP==0),]
 died_df_UK     <- UK_data[which(UK_data$Death_inHOSP==1),]
@@ -78,7 +89,10 @@ write.csv(final_supp_tb2,paste0(out_dir,"Supp_table2.csv"),row.names = F)
 ####################################################################################
 selected_features_MAKE <- c("LAST_KDIGO_ICU_D0toD3","UrineOutput_D0toD3","MAX_KDIGO_ICU_D0toD3","Bilirubin_D1_HIGH",
                             "AGE","BUN_D0toD3_HIGH","Hemoglobin_D1_LOW","Platelets_D1_LOW","FI02_D1_HIGH",
-                            "Vasopressor_ICUD0toD3","HR_D1_HIGH","PH_D1_LOW")
+                            "Vasopressor_ICUD0toD3","HR_D1_HIGH","PH_D1_LOW",
+                            "Admit_sCr","Sodium_D1_LOW")
+  
+  
 #For UK
 MAKE0_df_UK     <- UK_data[which(UK_data$MAKE_HOSP120_Drop50==0),]
 MAKE1_df_UK     <- UK_data[which(UK_data$MAKE_HOSP120_Drop50==1),]
