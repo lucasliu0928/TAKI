@@ -2573,6 +2573,46 @@ construct_model_data_func <- function(data_dir,feature_file,outcome_file,outcome
   return(model_data)
 }
 
+
+#Only get data for survirors
+construct_model_data_func_survirors <- function(data_dir,feature_file,outcome_file,outcome_colname){
+  #1.Load feature data
+  feature_df <- read.csv(paste0(data_dir,feature_file),stringsAsFactors = F)
+  #2. Load Outcome data
+  outcome_df <- read.csv(paste0(data_dir,outcome_file),stringsAsFactors = F)
+  outcome_df <- outcome_df[match(feature_df[,"STUDY_PATIENT_ID"],outcome_df[,"STUDY_PATIENT_ID"]),] #  #reorder outcome to match ID
+  
+  #3.Get pts IDs who died in hosp
+  died_inHOSP_ID <- outcome_df[which(outcome_df[,"Death_inHOSP"] == 1),"STUDY_PATIENT_ID"]
+  
+  #4.Get pts IDs who did  died in the range of hosp start to 120 after hosp discharge
+  died_inHOSPstartTo120_ID <- outcome_df[which(outcome_df[,"Death_HOSPStartTo120"] == 1),"STUDY_PATIENT_ID"]
+  
+  #5.exclude ID did in hosp and died from hosp start to 120
+  updated_outcome_df <- outcome_df[-which(outcome_df$STUDY_PATIENT_ID %in% c(died_inHOSP_ID,died_inHOSPstartTo120_ID)),]
+  updated_feature_df <- feature_df[-which(feature_df$STUDY_PATIENT_ID %in% c(died_inHOSP_ID,died_inHOSPstartTo120_ID)),]
+  
+  #3.Check if IDs order are matched, if so process
+  if(identical(updated_outcome_df[,"STUDY_PATIENT_ID"],updated_feature_df[,"STUDY_PATIENT_ID"])==T){
+    #4.Add outcome to feature data as train data
+    model_data <- updated_feature_df
+    model_data[,outcome_colname] <- updated_outcome_df[,outcome_colname]
+    
+    #5.Add ID as row name, and remove ID col
+    rownames(model_data) <- model_data[,"STUDY_PATIENT_ID"] #add ID as
+    model_data <- model_data[,-1]
+    
+    #6.Recode label as Y and N, because caret package does not accept 1 or 0
+    model_data <- code_Label_YN_func(model_data,outcome_colname)
+    
+  }else{
+    model_data <- NULL
+    print("Feature and Outcome IDs does not match")
+  }
+  return(model_data)
+}
+
+
 #Train model of choice and return model and important matrix
 train_models <- function(train_data,outcome_colname,model_name,n_tress_RF,svmkernel){
   #train_data <- sampled_train_data
