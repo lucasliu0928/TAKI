@@ -58,3 +58,20 @@ compute_avg_pred_risk_and_risk_category("UK",outcome_name,UK_MAKE_dir,method_nam
 #2.UTSW
 UTSW_MAKE_dir <- paste0(proj_dir,"ExternalV_performance/make120_drop50/")
 compute_avg_pred_risk_and_risk_category("UTSW",outcome_name,UTSW_MAKE_dir,method_name,featureset_folder)
+
+
+################################################################################################## 
+############## MAKE ############## 
+#'@ADDITONAL MAKE for survivors
+################################################################################################## 
+#1. UK
+method_name <- "RF"
+featureset_folder <- "SelectedClinicalFeature14Vars"
+outcome_name <- "MAKE"
+#1. UK
+UK_MAKE_dir <- paste0(proj_dir,"CV_performance/Surviors_make120_drop50/")
+compute_avg_pred_risk_and_risk_category("UK",outcome_name,UK_MAKE_dir,method_name,featureset_folder)
+
+#2.UTSW
+UTSW_MAKE_dir <- paste0(proj_dir,"ExternalV_performance/Surviors_make120_drop50/")
+compute_avg_pred_risk_and_risk_category("UTSW",outcome_name,UTSW_MAKE_dir,method_name,featureset_folder)
