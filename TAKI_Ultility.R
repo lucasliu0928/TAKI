@@ -3149,3 +3149,11 @@ add_listofvar_func <- function(input_df,extra_data_dir,cohort_name){
   
   return(input_df)
 }
+
+recode_KDIGO_func <- function(input_df,col_torecode){
+  KDIGO34_indxes <- which(input_df[,col_torecode] == 3 | input_df[,col_torecode] == 4)
+  
+  input_df[KDIGO34_indxes,col_torecode] <- "3or4"
+  
+  return(input_df)
+}
