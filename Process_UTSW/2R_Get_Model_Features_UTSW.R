@@ -36,6 +36,9 @@ All_sepsis_df <-read.csv(paste0(data_dir,"All_sepsis_Before_Or_At_Admission.csv"
 #6.weight
 All_Weight_df <-read.csv(paste0(data_dir,"INITIAL_WEIGHT_NOTImputed.csv"),stringsAsFactors = F)
 
+#7.ECMO_IABP_MV_VAD_ICUD0toD3 
+All_ECMO_IABP_MV_VAD_ICUD0toD3_df <-read.csv(paste0(data_dir,"All_ECMO_IABP_MV_VAD_ICUD0toD3.csv"),stringsAsFactors = F)
+
 
 #II.Xilong's Feature (Load not imputed data)
 Xilong_df1 <-read.csv(paste0(data_dir,"xilong_extracted/Final dataset for Lucas part 1 07272021.csv"),stringsAsFactors = F)
@@ -134,6 +137,12 @@ for (i in 1:length(analysis_ID)){
   #INITIAL Weight 
   Feature_df[i,"INITIAL_WEIGHT_KG"] <- get_feature_forPt2(curr_id,All_Weight_df,"INITIAL_WEIGHT_KG","STUDY_PATIENT_ID")
   
+  #All_ECMO_IABP_MV_VAD_df
+  Feature_df[i,"ECMO_ICUD0toD3"] <- get_feature_forPt2(curr_id,All_ECMO_IABP_MV_VAD_ICUD0toD3_df,"ECMO_ICUD0toD3","STUDY_PATIENT_ID")
+  Feature_df[i,"IABP_ICUD0toD3"] <- get_feature_forPt2(curr_id,All_ECMO_IABP_MV_VAD_ICUD0toD3_df,"IABP_ICUD0toD3","STUDY_PATIENT_ID")
+  Feature_df[i,"MV_ICUD0toD3"] <- get_feature_forPt2(curr_id,All_ECMO_IABP_MV_VAD_ICUD0toD3_df,"MV_ICUD0toD3","STUDY_PATIENT_ID")
+  Feature_df[i,"VAD_ICUD0toD3"] <- get_feature_forPt2(curr_id,All_ECMO_IABP_MV_VAD_ICUD0toD3_df,"VAD_ICUD0toD3","STUDY_PATIENT_ID")
+  
   
   #Xilong's extraction
   #demo
@@ -141,12 +150,7 @@ for (i in 1:length(analysis_ID)){
   Feature_df[i,"RACE"]   <- get_feature_forPt2(curr_id,Xilong_df1,"RACE","PATIENT_NUM")
   Feature_df[i,"GENDER"] <- get_feature_forPt2(curr_id,Xilong_df1,"gender","PATIENT_NUM")
   
-  #All_ECMO_IABP_MV_VAD_df
-  Feature_df[i,"ECMO_ICUD0toD3"] <- get_feature_forPt2(curr_id,Xilong_df1,"ECMO","PATIENT_NUM")
-  Feature_df[i,"IABP_ICUD0toD3"] <- get_feature_forPt2(curr_id,Xilong_df1,"IABP","PATIENT_NUM")
-  Feature_df[i,"MV_ICUD0toD3"] <- get_feature_forPt2(curr_id,Xilong_df1,"MV","PATIENT_NUM")
-  Feature_df[i,"VAD_ICUD0toD3"] <- get_feature_forPt2(curr_id,Xilong_df1,"VAD","PATIENT_NUM")
-  
+
   #"Mechanical_Hemodynamic_Support"
   if (Feature_df[i,"VAD_ICUD0toD3"]  == 1 | Feature_df[i,"IABP_ICUD0toD3"] == 1 | Feature_df[i,"ECMO_ICUD0toD3"] == 1 ){
     Feature_df[i,"Mechanical_Hemodynamic_Support"] <- 1
