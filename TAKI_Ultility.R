@@ -626,6 +626,21 @@ get_onMachine_flag_ICUD0_D3_v2 <- function(machine_df,time_df,pt_id,start_t_col,
 }
 
 
+correct_STARTEqualEND <- function(pt_id, onMachine_res,raw_machine_date_df,start_time_col,stop_time_col){
+  on_flag <- onMachine_res[[1]]
+  on_days_inICUD0toD3 <- onMachine_res[[2]]
+  
+  if (on_flag == 1 & on_days_inICUD0toD3==0){
+    curr_id_index <- which(raw_machine_date_df[,"STUDY_PATIENT_ID"] == pt_id)
+    #update stop date == stop/start date at 23:59:59
+    raw_machine_date_df[curr_id_index,stop_time_col] <-gsub("00:00:00","23:59:59",raw_machine_date_df[curr_id_index,stop_time_col])
+    
+  }
+  
+  return(raw_machine_date_df)
+}
+
+
 #check if pt on medciation in time window
 get_exposure_toMedication_inTimeWindow <- function(time_start,time_end,medication_df,pt_id,medname_col){
   # time_start <- curr_icu_start
@@ -3063,17 +3078,13 @@ compute_stats_func <- function(input_df,cohort_name,ordered_parameters){
     if (length(curr_colindex) == 0){ #if feature is not in curret data input
       Final_table[i,2] <- NA
     }else{
-      
       #Get current values
       if(curr_f == "CRRT_Days_inICUD0toD3"){
-        CRRT_index <- which(input_df[,"RRTinfo_ICUD0toD3"] == "CRRT_only")
+        CRRT_index <- which(input_df[,"RRTinfo_ICUD0toD3"] %in% c("CRRT_only","HD_and_CRRT")) #inlcude on both pts
         curr_values <- input_df[CRRT_index,"CRRT_Days_inICUD0toD3"]
       }else if (curr_f == "HD_Days_inICUD0toD3"){
-        HD_index <- which(input_df[,"RRTinfo_ICUD0toD3"] == "HD_only")
+        HD_index <- which(input_df[,"RRTinfo_ICUD0toD3"] %in% c("CRRT_only","HD_and_CRRT")) #inlcude on both pts
         curr_values <- input_df[HD_index,"HD_Days_inICUD0toD3"]
-      }else if (curr_f == "Total_days_HDandCRRT"){
-        both_index <- which(input_df[,"RRTinfo_ICUD0toD3"] == "HD_and_CRRT")
-        curr_values <- input_df[both_index,"HD_Days_inICUD0toD3"]
       }else if (curr_f == "Days_MV_ICUD0toD3"){
         keep_index <- which(input_df[,"MV_ICUD0toD3"] == 1) #for pts on MV
         curr_values <- input_df[keep_index,"Days_MV_ICUD0toD3"]
@@ -3150,6 +3161,8 @@ add_listofvar_func <- function(input_df,extra_data_dir,cohort_name){
      SOFA_APACHE_df <-read.csv(paste0(extra_data_dir,"All_SOFA_APACHE_With_NotImputedFeature.csv"),stringsAsFactors = F)
      dayson_machine_df <-read.csv(paste0(extra_data_dir,"All_ECMO_IABP_MV_VAD_Days_in_ICUD0toD3.csv"),stringsAsFactors = F)
   }else{
+     dayson_machine_df <-read.csv(paste0(extra_data_dir,"All_MV_Days_in_ICUD0toD3.csv"),stringsAsFactors = F)
+    
      SOFA_APACHE_df <-read.csv(paste0(extra_data_dir,"xilong_extracted/All variables for each patients 07212021.csv"),stringsAsFactors = F)
      colnames(SOFA_APACHE_df)[which(colnames(SOFA_APACHE_df) == "SOFA")] <- "SOFA_TOTAL"
      colnames(SOFA_APACHE_df)[which(colnames(SOFA_APACHE_df) == "APACHE")] <- "APACHE_TOTAL"
@@ -3171,9 +3184,9 @@ add_listofvar_func <- function(input_df,extra_data_dir,cohort_name){
   input_df <- add_var_func(input_df,"SOFA_TOTAL",SOFA_APACHE_df)
   input_df <- add_var_func(input_df,"APACHE_TOTAL",SOFA_APACHE_df)
   
-  if (cohort_name == "UK"){
-    input_df <- add_var_func(input_df,"Days_MV_ICUD0toD3",dayson_machine_df)
-  }
+ 
+  input_df <- add_var_func(input_df,"Days_MV_ICUD0toD3",dayson_machine_df)
+
   
   #Recode as NA for baseline Scr and eGFR for patient has no meausred ID 
   recode_indexes <- which(input_df$STUDY_PATIENT_ID %in% noBaseline_EGFR_IDs)
@@ -3197,3 +3210,5 @@ recode_KDIGO_func <- function(input_df,col_torecode){
   
   return(input_df)
 }
+
+
