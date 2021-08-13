@@ -132,5 +132,3 @@ UTSW_tb4 <- compute_stats_func(UTSW_data,"UTSW",var_list)
 comb_supptb4 <- cbind(UK_tb4,UTSW_tb4)
 write.csv(comb_supptb4,paste0(out_dir,"Supp_table4.csv"),row.names = F)
 
-check <- UTSW_data[,c("STUDY_PATIENT_ID","MV_ICUD0toD3","Days_MV_ICUD0toD3")]
-which(check$MV_ICUD0toD3==1 & check$Days_MV_ICUD0toD3==0)
