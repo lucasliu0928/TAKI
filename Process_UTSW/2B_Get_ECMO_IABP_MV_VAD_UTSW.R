@@ -66,10 +66,10 @@ for (i in 1: length(analysis_ID)){
   if (i %% 1000== 0){print(i)}
   curr_id <- analysis_ID[i]
   ECMO_IABP_MV_VAD_df[i,"STUDY_PATIENT_ID"] <- curr_id
-  ECMO_IABP_MV_VAD_df[i,"ECMO_ICUD0toD3"] <- get_onMachine_flag_ICUD0_D3(raw_ORGANSUPP_ECMO_df,All_time_df,curr_id,"ECMO_START_DATE","ECMO_STOP_DATE")
-  ECMO_IABP_MV_VAD_df[i,"IABP_ICUD0toD3"] <- get_onMachine_flag_ICUD0_D3(raw_ORGANSUPP_IABP_df,All_time_df,curr_id,"IABP_START_DATE","IABP_STOP_DATE")
-  ECMO_IABP_MV_VAD_df[i,"MV_ICUD0toD3"] <- get_onMachine_flag_ICUD0_D3(raw_ORGANSUPP_VENT_df,All_time_df,curr_id,"VENT_START_DATE","VENT_STOP_DATE")
-  ECMO_IABP_MV_VAD_df[i,"VAD_ICUD0toD3"] <- get_onMachine_flag_ICUD0_D3(raw_ORGANSUPP_VAD_df,All_time_df,curr_id,"VAD_START_DATE","VAD_STOP_DATE")
+  ECMO_IABP_MV_VAD_df[i,"ECMO_ICUD0toD3"] <- get_onMachine_flag_ICUD0_D3(raw_ORGANSUPP_ECMO_df,All_time_df,curr_id,"ECMO_START_DATE","ECMO_END_DATE")
+  ECMO_IABP_MV_VAD_df[i,"IABP_ICUD0toD3"] <- get_onMachine_flag_ICUD0_D3(raw_ORGANSUPP_IABP_df,All_time_df,curr_id,"IABP_START_DATE","IABP_END_DATE")
+  ECMO_IABP_MV_VAD_df[i,"MV_ICUD0toD3"] <- get_onMachine_flag_ICUD0_D3(raw_ORGANSUPP_VENT_df,All_time_df,curr_id,"MV_START_DATE","MV_END_DATE")
+  ECMO_IABP_MV_VAD_df[i,"VAD_ICUD0toD3"] <- get_onMachine_flag_ICUD0_D3(raw_ORGANSUPP_VAD_df,All_time_df,curr_id,"VAD_START_DATE","VAD_END_DATE")
   
   if ( ECMO_IABP_MV_VAD_df[i,"VAD_ICUD0toD3"] == 1 | 
        ECMO_IABP_MV_VAD_df[i,"IABP_ICUD0toD3"] == 1|
@@ -80,7 +80,7 @@ for (i in 1: length(analysis_ID)){
   }
 }
 
-#write.csv(ECMO_IABP_MV_VAD_df,paste0(outdir,"All_ECMO_IABP_MV_VAD_ICUD0toD3.csv"),row.names = F)
+write.csv(ECMO_IABP_MV_VAD_df,paste0(outdir,"All_ECMO_IABP_MV_VAD_ICUD0toD3.csv"),row.names = F)
 
 
 ##########################################################################################
@@ -99,28 +99,28 @@ for (i in 1: length(analysis_ID)){
   curr_id <- analysis_ID[i]
   Days_ECMO_IABP_MV_VAD_df[i,"STUDY_PATIENT_ID"] <- curr_id
   
-  ecmo_res <- get_onMachine_flag_ICUD0_D3_v2(raw_ORGANSUPP_ECMO_df,All_time_df,curr_id,"ECMO_START_DATE","ECMO_STOP_DATE")
+  ecmo_res <- get_onMachine_flag_ICUD0_D3_v2(raw_ORGANSUPP_ECMO_df,All_time_df,curr_id,"ECMO_START_DATE","ECMO_END_DATE")
   
-  IABP_res <- get_onMachine_flag_ICUD0_D3_v2(raw_ORGANSUPP_IABP_df,All_time_df,curr_id,"IABP_START_DATE","IABP_STOP_DATE")
+  IABP_res <- get_onMachine_flag_ICUD0_D3_v2(raw_ORGANSUPP_IABP_df,All_time_df,curr_id,"IABP_START_DATE","IABP_END_DATE")
   
-  MV_res <- get_onMachine_flag_ICUD0_D3_v2(raw_ORGANSUPP_VENT_df,All_time_df,curr_id,"VENT_START_DATE","VENT_STOP_DATE")
+  MV_res <- get_onMachine_flag_ICUD0_D3_v2(raw_ORGANSUPP_VENT_df,All_time_df,curr_id,"MV_START_DATE","MV_END_DATE")
   
-  VAD_res <- get_onMachine_flag_ICUD0_D3_v2(raw_ORGANSUPP_VAD_df,All_time_df,curr_id,"VAD_START_DATE","VAD_STOP_DATE")
+  VAD_res <- get_onMachine_flag_ICUD0_D3_v2(raw_ORGANSUPP_VAD_df,All_time_df,curr_id,"VAD_START_DATE","VAD_END_DATE")
   
   
   #'@NOTE: If on Machine in ICU D0toD3, but START date = STOP date
   #'then1. update stop date == stop/start date at 23:59:59, 2. update on machine res
-  updated_raw_ORGANSUPP_ECMO_df <- correct_STARTEqualEND(curr_id,ecmo_res,raw_ORGANSUPP_ECMO_df,"ECMO_START_DATE","ECMO_STOP_DATE")
-  ecmo_res2 <- get_onMachine_flag_ICUD0_D3_v2(updated_raw_ORGANSUPP_ECMO_df,All_time_df,curr_id,"ECMO_START_DATE","ECMO_STOP_DATE")
+  updated_raw_ORGANSUPP_ECMO_df <- correct_STARTEqualEND(curr_id,ecmo_res,raw_ORGANSUPP_ECMO_df,"ECMO_START_DATE","ECMO_END_DATE")
+  ecmo_res2 <- get_onMachine_flag_ICUD0_D3_v2(updated_raw_ORGANSUPP_ECMO_df,All_time_df,curr_id,"ECMO_START_DATE","ECMO_END_DATE")
   
-  updated_raw_ORGANSUPP_IABP_df <- correct_STARTEqualEND(curr_id,IABP_res,raw_ORGANSUPP_IABP_df,"IABP_START_DATE","IABP_STOP_DATE")
-  IABP_res2 <- get_onMachine_flag_ICUD0_D3_v2(updated_raw_ORGANSUPP_IABP_df,All_time_df,curr_id,"IABP_START_DATE","IABP_STOP_DATE")
+  updated_raw_ORGANSUPP_IABP_df <- correct_STARTEqualEND(curr_id,IABP_res,raw_ORGANSUPP_IABP_df,"IABP_START_DATE","IABP_END_DATE")
+  IABP_res2 <- get_onMachine_flag_ICUD0_D3_v2(updated_raw_ORGANSUPP_IABP_df,All_time_df,curr_id,"IABP_START_DATE","IABP_END_DATE")
   
-  updated_raw_ORGANSUPP_VENT_df <- correct_STARTEqualEND(curr_id,MV_res,raw_ORGANSUPP_VENT_df,"VENT_START_DATE","VENT_STOP_DATE")
-  MV_res2 <- get_onMachine_flag_ICUD0_D3_v2(updated_raw_ORGANSUPP_VENT_df,All_time_df,curr_id,"VENT_START_DATE","VENT_STOP_DATE")
+  updated_raw_ORGANSUPP_VENT_df <- correct_STARTEqualEND(curr_id,MV_res,raw_ORGANSUPP_VENT_df,"MV_START_DATE","MV_END_DATE")
+  MV_res2 <- get_onMachine_flag_ICUD0_D3_v2(updated_raw_ORGANSUPP_VENT_df,All_time_df,curr_id,"MV_START_DATE","MV_END_DATE")
   
-  updated_raw_ORGANSUPP_VAD_df <- correct_STARTEqualEND(curr_id,VAD_res,raw_ORGANSUPP_VAD_df,"VAD_START_DATE","VAD_STOP_DATE")
-  VAD_res2 <- get_onMachine_flag_ICUD0_D3_v2(updated_raw_ORGANSUPP_VAD_df,All_time_df,curr_id,"VAD_START_DATE","VAD_STOP_DATE")
+  updated_raw_ORGANSUPP_VAD_df <- correct_STARTEqualEND(curr_id,VAD_res,raw_ORGANSUPP_VAD_df,"VAD_START_DATE","VAD_END_DATE")
+  VAD_res2 <- get_onMachine_flag_ICUD0_D3_v2(updated_raw_ORGANSUPP_VAD_df,All_time_df,curr_id,"VAD_START_DATE","VAD_END_DATE")
   
   
   
@@ -131,4 +131,4 @@ for (i in 1: length(analysis_ID)){
   Days_ECMO_IABP_MV_VAD_df[i,"Days_VAD_ICUD0toD3"]  <- VAD_res2[[2]]
 }
 
-#write.csv(Days_ECMO_IABP_MV_VAD_df,paste0(outdir,"All_ECMO_IABP_MV_VAD_Days_in_ICUD0toD3.csv"),row.names = F)
+write.csv(Days_ECMO_IABP_MV_VAD_df,paste0(outdir,"All_ECMO_IABP_MV_VAD_Days_in_ICUD0toD3.csv"),row.names = F)
