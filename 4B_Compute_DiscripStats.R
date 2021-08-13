@@ -120,7 +120,7 @@ var_list <- c("AGE","GENDER","RACE","BMI","CHARLSON_SCORE","TOTAL_ELIX","Diabete
               "Bicarbonate_D1_AVGof(LOWHIGH)","BUN_D0toD3_HIGH","Hematocrit_D1_AVGof(LOWHIGH)","Hemoglobin_D1_AVGof(LOWHIGH)",
               "Baseline_sCr","Admit_sCr","Peak_SCr_inICU_D0_D3","LastSCr_inICU_D0_D3","MAX_KDIGO_ICU_D0toD3","LAST_KDIGO_ICU_D0toD3",
               "onRRT_ICUD0toD3","RRTinfo_ICUD0toD3",
-              "CRRT_Days_inICUD0toD3","HD_Days_inICUD0toD3","Total_days_HDandCRRT")
+              "CRRT_Days_inICUD0toD3","HD_Days_inICUD0toD3")
 
 
 #For UK
@@ -131,3 +131,6 @@ UTSW_tb4 <- compute_stats_func(UTSW_data,"UTSW",var_list)
 
 comb_supptb4 <- cbind(UK_tb4,UTSW_tb4)
 write.csv(comb_supptb4,paste0(out_dir,"Supp_table4.csv"),row.names = F)
+
+check <- UTSW_data[,c("STUDY_PATIENT_ID","MV_ICUD0toD3","Days_MV_ICUD0toD3")]
+which(check$MV_ICUD0toD3==1 & check$Days_MV_ICUD0toD3==0)
