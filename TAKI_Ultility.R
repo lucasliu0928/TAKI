@@ -3157,16 +3157,15 @@ add_listofvar_func <- function(input_df,extra_data_dir,cohort_name){
   #Last Scr in ICU D0-D3
   lastScr_df <-read.csv(paste0(extra_data_dir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df_AddedLastScr.csv"),stringsAsFactors = F)
   
+  #Days on MV
+  dayson_machine_df <-read.csv(paste0(extra_data_dir,"All_ECMO_IABP_MV_VAD_Days_in_ICUD0toD3.csv"),stringsAsFactors = F)
+  
   if (cohort_name == "UK"){
      SOFA_APACHE_df <-read.csv(paste0(extra_data_dir,"All_SOFA_APACHE_With_NotImputedFeature.csv"),stringsAsFactors = F)
-     dayson_machine_df <-read.csv(paste0(extra_data_dir,"All_ECMO_IABP_MV_VAD_Days_in_ICUD0toD3.csv"),stringsAsFactors = F)
   }else{
-     dayson_machine_df <-read.csv(paste0(extra_data_dir,"All_MV_Days_in_ICUD0toD3.csv"),stringsAsFactors = F)
-    
      SOFA_APACHE_df <-read.csv(paste0(extra_data_dir,"xilong_extracted/All variables for each patients 07212021.csv"),stringsAsFactors = F)
      colnames(SOFA_APACHE_df)[which(colnames(SOFA_APACHE_df) == "SOFA")] <- "SOFA_TOTAL"
      colnames(SOFA_APACHE_df)[which(colnames(SOFA_APACHE_df) == "APACHE")] <- "APACHE_TOTAL"
-     
   }
   
   input_df <- add_var_func(input_df,"Days_inHOSP",All_time_df)
