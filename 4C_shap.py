@@ -13,13 +13,62 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 import shap
-from sklearn import metrics
+
+def plot_shap_summary_trainAndTest(explainer, TRAIN_X, TEST_X, ticks_value, outdir,outfile):
+    LARGE_SIZE =  50
+    MEDIUM_SIZE = 40
+    SMALL_SIZE = 30
+    TINY_SIZE = 20
+
+    #Train Values
+    shap_values_train = explainer.shap_values(TRAIN_X) #compute shap values for all X
+
+    #Test Values
+    shap_values_test = explainer.shap_values(TEST_X) #compute shap values for all X
+    
+    plt.figure(figsize=(16, 64))
+    plt.subplot(1,2,1)
+    shap.summary_plot(shap_values_train, TRAIN_X, plot_size=(32, 16), show=False, color_bar = False)
+    plt.title('UK', fontsize= LARGE_SIZE)
+    plt.xlabel('SHAP value',fontsize= MEDIUM_SIZE)
+    plt.yticks(fontsize= SMALL_SIZE)
+    plt.xticks(fontsize= SMALL_SIZE)
+    
+    cb = plt.colorbar(ticks = ticks_value,aspect=1000)
+    cb.set_ticklabels(['Low/Non-EXP.', 'High/EXP.'])
+    cb.set_label(label='Feature Value',size=SMALL_SIZE, labelpad=-100)
+    cb.ax.tick_params(labelsize=SMALL_SIZE, length=0)
+    cb.set_alpha(1)
+    cb.outline.set_visible(False)
+    bbox = cb.ax.get_window_extent().transformed(plt.gcf().dpi_scale_trans.inverted())
+    cb.ax.set_aspect((bbox.height - 0.9) * 20)
+
+    plt.subplot(1,2,2)
+    shap.summary_plot(shap_values_test, TEST_X, plot_size=(32, 16), show=False, color_bar = False)
+    plt.title('UTSW', fontsize= LARGE_SIZE)
+    plt.xlabel('SHAP value',fontsize= MEDIUM_SIZE)
+    plt.yticks(fontsize= SMALL_SIZE)
+    plt.xticks(fontsize= SMALL_SIZE)
+
+    cb = plt.colorbar(ticks = ticks_value,aspect=1000)
+    cb.set_ticklabels(['Low/Non-EXP.', 'High/EXP.'])
+    cb.set_label(label='Feature Value',size=SMALL_SIZE, labelpad=-100)
+    cb.ax.tick_params(labelsize=SMALL_SIZE, length=0)
+    cb.set_alpha(1)
+    cb.outline.set_visible(False)
+    bbox = cb.ax.get_window_extent().transformed(plt.gcf().dpi_scale_trans.inverted())
+    cb.ax.set_aspect((bbox.height - 0.9) * 20)
+    
+    plt.subplots_adjust(wspace=0.8)
+    plt.savefig(outdir + outfile, bbox_inches='tight', dpi=300)
+
 
 def plot_shap_summary(explainer, X, output_dir, outfile):
     shap_values_all = explainer.shap_values(X) #compute shap values for all X
     f = plt.figure()
     shap.summary_plot(shap_values_all, X)
     f.savefig(output_dir + outfile, bbox_inches='tight', dpi=600)
+    
 
 def plot_individual_shap(explainer, Sample_X,value_threshold, output_dir, outfile):
     shap_value = explainer.shap_values(Sample_X)
@@ -66,16 +115,38 @@ def get_correct_predicted_IDs(sample_IDs,y_pred,y_true,label_class):
 
 
 def find_decreaseIn_KDIGO_pts(feature_data, max_kdigo, last_kdigo):
-    hightolow_kdigo_df = feature_data.loc[(feature_data['MAX_KDIGO_ICU_D0toD3'].isin(max_kdigo)) & (feature_data['LAST_KDIGO_ICU_D0toD3'] == last_kdigo)]
-    return hightolow_kdigo_df[['MAX_KDIGO_ICU_D0toD3','LAST_KDIGO_ICU_D0toD3']]
+    hightolow_kdigo_df = feature_data.loc[(feature_data['Maximum KDIGO'].isin(max_kdigo)) & (feature_data['Last KDIGO'] == last_kdigo)]
+    return hightolow_kdigo_df[['Maximum KDIGO','Last KDIGO']]
 
 def intersection(lst1, lst2):
     return list(set(lst1) & set(lst2))
 
+def change_feature_name(df):
+    df = df.rename(columns={"UrineOutput_D0toD3": "Urine Output", 
+                            "Vasopressor_ICUD0toD3": "Vasopressor Exposure",
+                            "FI02_D1_HIGH": "FiO2 (High)",
+                            "Platelets_D1_LOW": "Platelets (Low)",
+                            "AGE": "Age",
+                            "BUN_D0toD3_HIGH": "BUN (High)",
+                            "HR_D1_HIGH": "Heart Rate (High)",
+                            "LAST_KDIGO_ICU_D0toD3": "Last KDIGO",
+                            "PH_D1_LOW": "pH (Low)",
+                            "Bilirubin_D1_HIGH": "Bilirubin (High)",
+                            "MAX_KDIGO_ICU_D0toD3": "Maximum KDIGO",
+                            "ECMO_ICUD0toD3": "ECMO",
+                            "Hours_inICUD0toD3": "Hours in ICU",
+                            "Temperature_D1_LOW": "Temperature (Low)",
+                            "Temperature_D1_HIGH": "Temperature (High)",
+                            "Hemoglobin_D1_LOW": "Hemoglobin (Low)",
+                            "Admit_sCr": "ICU admission sCr",
+                            "Sodium_D1_LOW": "Sodium (Low)"})
+    return df
+
+#######################################################################################
+#data dir
+#######################################################################################
 UK_data_dir = "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
 UTSW_data_dir = "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/Model_Feature_Outcome/"
-
-#Output dir
 outdir = "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/Shap/"
 
 #######################################################################################
@@ -108,6 +179,10 @@ UTSW_comb_df = UTSW_feature_df.join(UTSW_outcome_df['Death_inHOSP'])
 test_Y =  UTSW_comb_df['Death_inHOSP']
 test_X =  UTSW_comb_df[selected_features]
 
+#Change feature name for publication
+train_X = change_feature_name(train_X)
+test_X = change_feature_name(test_X)
+
 
 #Use All data to train and get plot
 #model = RandomForestClassifier(max_depth=6, random_state=0, n_estimators=500)
@@ -116,19 +191,20 @@ model.fit(train_X, train_Y)
 
 # Create object that can calculate shap values
 explainer = shap.TreeExplainer(model) #
-    
 
+#Plot shap summary for UK and UTSW together
+plot_shap_summary_trainAndTest(explainer,train_X, test_X, [0,1], outdir, "mortality/RF_15vars_UKandUTSW_Mortality.tiff")
 
-# Plot shap summary for UK
-plot_shap_summary(explainer, train_X, outdir, "mortality/RF_15vars_AllUK_SHAP_HospMortality.png")
-explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
+# # Plot shap summary for UK
+# plot_shap_summary(explainer, train_X, outdir, "mortality/RF_15vars_AllUK_SHAP_HospMortality.png")
+# explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
 
 #Mean abs shap value for UK
 get_mean_abs_shap_values(explainer, train_X, outdir,"mortality/RF_15vars_AllUK_Mean_ABS_SHAP_HospMortality")
 
-# Plot shap summaryfor UTSW
-plot_shap_summary(explainer, test_X, outdir, "mortality/RF_15vars_AllUTSW_SHAP_HospMortality.png")
-explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
+# # Plot shap summaryfor UTSW
+# plot_shap_summary(explainer, test_X, outdir, "mortality/RF_15vars_AllUTSW_SHAP_HospMortality.png")
+# explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
 
 #Mean abs shap value for UTSW
 get_mean_abs_shap_values(explainer, test_X, outdir,"mortality/RF_15vars_AllUTSW_Mean_ABS_SHAP_HospMortality")
@@ -199,8 +275,8 @@ Sample_IDs = Survivors_IDs1 + Survivors_IDs2 + Survivors_IDs3 + Death_IDs1 + Dea
 for pt in Sample_IDs:
     sample_data = np.around(train_X.loc[pt],2) #round feature to 2 digit
     outcome_label = train_Y.loc[pt] 
-    MAX_KDIGO = train_X.loc[pt,'MAX_KDIGO_ICU_D0toD3'] 
-    LAST_KDIGO = train_X.loc[pt,'LAST_KDIGO_ICU_D0toD3']
+    MAX_KDIGO = train_X.loc[pt,'Maximum KDIGO'] 
+    LAST_KDIGO = train_X.loc[pt,'Last KDIGO']
     plot_individual_shap(explainer, sample_data,0.1,outdir,"/mortality/Examples/UK/" + 'Outcome' + str(outcome_label) + '_MAXKDIGO'+ str(MAX_KDIGO) + '_LASTKDIGO'+ str(LAST_KDIGO) +"_ID" + str(pt) + ".png")
  
 ##########################################################
@@ -222,24 +298,31 @@ test_Y =  UTSW_comb_df['MAKE_HOSP120_Drop50']
 test_X =  UTSW_comb_df[selected_features1]
 
 
+#Change feature name for publication
+train_X = change_feature_name(train_X)
+test_X = change_feature_name(test_X)
+
 #Use All data to train and get plot
 model = RandomForestRegressor(max_depth=6, random_state=0, n_estimators=500)
 model.fit(train_X, train_Y)
 
 # Create object that can calculate shap values
 explainer = shap.TreeExplainer(model) #
-    
-# Plot shap summary UK
-plot_shap_summary(explainer, train_X, outdir, "make120drop50/RF_14vars_AllUK_SHAP_MAKE50.png")
-explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
+
+#Plot shap summary for UK and UTSW together
+plot_shap_summary_trainAndTest(explainer,train_X, test_X,[0,4], outdir,"make120drop50/RF_14vars_UKandUTSW_MAKE50.tiff")
+
+# # Plot shap summary UK
+# plot_shap_summary(explainer, train_X, outdir, "make120drop50/RF_14vars_AllUK_SHAP_MAKE50.png")
+# explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
 
 #Mean abs shap value for UK
 get_mean_abs_shap_values(explainer, train_X, outdir,"make120drop50/RF_14vars_AllUK_Mean_ABS_SHAP_MAKE50")
 
 
-# Plot shap summaryfor UTSW
-plot_shap_summary(explainer, test_X, outdir, "/make120drop50/RF_14vars_AllUTSW_SHAP_MAKE50.png")
-explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
+# # Plot shap summaryfor UTSW
+# plot_shap_summary(explainer, test_X, outdir, "/make120drop50/RF_14vars_AllUTSW_SHAP_MAKE50.png")
+# explainer.expected_value #This is the base value = Y.mean(), if we know nothing about this instance, the prediction is this value
 
 #Mean abs shap value for UTSW
 get_mean_abs_shap_values(explainer, test_X, outdir,"make120drop50/RF_14vars_AllUTSW_Mean_ABS_SHAP_MAKE50")
@@ -292,6 +375,6 @@ Sample_IDs = MAKE0_IDs1 + MAKE0_IDs2 + MAKE0_IDs3 + MAKE1_IDs1 + MAKE1_IDs2 + MA
 for pt in Sample_IDs:
     sample_data = np.around(train_X.loc[pt],2) #round feature to 2 digit
     outcome_label = train_Y.loc[pt] 
-    MAX_KDIGO = train_X.loc[pt,'MAX_KDIGO_ICU_D0toD3'] 
-    LAST_KDIGO = train_X.loc[pt,'LAST_KDIGO_ICU_D0toD3']
+    MAX_KDIGO = train_X.loc[pt,'Maximum KDIGO'] 
+    LAST_KDIGO = train_X.loc[pt,'Last KDIGO']
     plot_individual_shap(explainer, sample_data,0.1,outdir,"/make120drop50/Examples/UK/" + 'Outcome' + str(outcome_label) + '_MAXKDIGO'+ str(MAX_KDIGO) + '_LASTKDIGO'+ str(LAST_KDIGO) +"_ID" + str(pt) + ".png")
