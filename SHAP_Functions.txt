@@ -1,0 +1,30 @@
+
+from sklearn.ensemble import RandomForestRegressor
+import shap
+
+
+def plot_shap_summary(explainer, X):
+    shap_value = explainer.shap_values(X) 
+    shap.summary_plot(shap_value, X)
+
+def plot_individual_shap(explainer, X, contrib_threshold):
+    shap_value = explainer.shap_values(X)
+    shap.force_plot(explainer.expected_value, shap_value, X, matplotlib=True)
+
+def plot_shap_altogether(train_X,train_Y,test_X,sample_X):
+    
+    #Train model
+    model = RandomForestRegressor(max_depth=6, random_state=0, n_estimators=500)
+    model.fit(train_X, train_Y)
+    
+    #Create explainer
+    explainer = shap.TreeExplainer(model)
+        
+    #Plot shap values for all train_X
+    plot_shap_summary(explainer, train_X)
+    
+    #Plot shap values for all text_X
+    plot_shap_summary(explainer, test_X)
+    
+    #Plot shap values for individual samples
+    plot_individual_shap(explainer, sample_X)
