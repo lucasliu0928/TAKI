@@ -67,7 +67,7 @@ for (i in 1: length(analysis_ID)){
 #                       3. days MV in ICU D0-D3
 #                       4. days VAD in ICU D0-D3
 #'@NOTE If on Machine in ICU D0toD3, but START date = STOP date
-#'then 1. update stop date == stop/start date at 23:59:59, 2. update on machine res
+#'then 1. update stop date == stop/start date at 23:59:59, 2. check if on machine again
 ##########################################################################################
 Days_ECMO_IABP_MV_VAD_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID), ncol = 5))
 colnames(Days_ECMO_IABP_MV_VAD_df) <- c("STUDY_PATIENT_ID", "Days_ECMO_ICUD0toD3","Days_IABP_ICUD0toD3",
@@ -87,7 +87,7 @@ for (i in 1: length(analysis_ID)){
   
 
   #'@NOTE: If on Machine in ICU D0toD3, but START date = STOP date
-  #'then1. update stop date == stop/start date at 23:59:59, 2. update on machine res
+  #'then1. update stop date == stop/start date at 23:59:59, 2. check if on machine again
   updated_raw_ORGANSUPP_ECMO_df <- correct_STARTEqualEND(curr_id,ecmo_res,raw_ORGANSUPP_ECMO_df,"ECMO_START_DATE","ECMO_STOP_DATE")
   ecmo_res2 <- get_onMachine_flag_ICUD0_D3_v2(updated_raw_ORGANSUPP_ECMO_df,All_time_df,curr_id,"ECMO_START_DATE","ECMO_STOP_DATE")
   
