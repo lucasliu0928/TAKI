@@ -2706,22 +2706,38 @@ get_avg_pred_func <- function(analysis_df){
 
 
 count_risk_category <- function(risk_df,risk_category){
-  # risk_category <- c(0.1,0.5)
+  # risk_category <- c(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)
   # risk_df <- avg_risk
   #   
-  Risk_Count_Table <- as.data.frame(matrix(NA, nrow = length(risk_category) + 1, ncol = 3))
-  colnames(Risk_Count_Table) <- c("Risk_Category","N_andPerc_PredictedInCategory","N_andPerc_AcutalLabel1")
-  
+  Risk_Count_Table <- as.data.frame(matrix(NA, nrow = length(risk_category) + 1, ncol = 4))
+  colnames(Risk_Count_Table) <- c("Risk_Category","Detailed_Risk_Category","N_andPerc_PredictedInCategory","N_andPerc_AcutalLabel1")
   for (i in 1: (length(risk_category) + 1)){
     
     if (i == 1){
-      cond <- risk_df[,"AVG_pred_prob"] < risk_category[i]
+      cond <- risk_df[,"AVG_pred_prob"] <= risk_category[i]
       
     }else if (i == (length(risk_category) + 1)){
-      cond <- risk_df[,"AVG_pred_prob"] >= risk_category[i-1]
+      cond <- risk_df[,"AVG_pred_prob"] > risk_category[i-1]
       
     }else{
-      cond <- (risk_df[,"AVG_pred_prob"] >= risk_category[i-1]) & (risk_df[,"AVG_pred_prob"] < risk_category[i])
+      cond <- (risk_df[,"AVG_pred_prob"] > risk_category[i-1]) & (risk_df[,"AVG_pred_prob"] <= risk_category[i])
+      
+    }
+    
+    if (i == 1){
+      min_category <- 0
+      max_category <- risk_category[i]*100
+      Risk_Count_Table[i,"Risk_Category"] <- paste0("<=", max_category, "%")
+      
+    }else if (i == (length(risk_category) + 1)){
+      min_category <-  risk_category[i-1]*100
+      max_category <-  1*100
+      Risk_Count_Table[i,"Risk_Category"] <- paste0(">", min_category, "%")
+      
+    }else{
+      min_category <-  risk_category[i-1]*100
+      max_category <-  risk_category[i]*100
+      Risk_Count_Table[i,"Risk_Category"] <- paste0("(",min_category,"%",", ", max_category, "%","]")
       
     }
     
@@ -2731,13 +2747,13 @@ count_risk_category <- function(risk_df,risk_category){
     Risk_Count_Table[i,"N_andPerc_PredictedInCategory"] <- paste0(nPredRisk_in_category," (", perc_PredRisk, ")")
     
     if (nrow(curr_pred_df) == 0){
-      Risk_Count_Table[i,"Risk_Category"] <- "NONE"
+      Risk_Count_Table[i,"Detailed_Risk_Category"] <- "NONE"
       Risk_Count_Table[i,"N_andPerc_AcutalLabel1"] <- paste0(0," (", 0, ")")
       
     }else{
       min_risk <- round(min(curr_pred_df[,"AVG_pred_prob"]),4)*100 #actual min risk
       max_risk <- round(max(curr_pred_df[,"AVG_pred_prob"]),4)*100 #actual max risk
-      Risk_Count_Table[i,"Risk_Category"] <- paste0(min_risk,"% - ", max_risk, "%")
+      Risk_Count_Table[i,"Detailed_Risk_Category"] <- paste0(min_risk,"% - ", max_risk, "%")
       
       nLabel1_in_category <- length(which(curr_pred_df[,"Label"] == 1)) #number of actual label 1 in current category
       perc_label1 <- round(nLabel1_in_category/nPredRisk_in_category*100,2) # / number of predict risk in category
