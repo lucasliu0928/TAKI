@@ -228,11 +228,9 @@ prediction_file_names <- paste0("Prediction_",method_names,".csv")
 #1. Performances using different feature
 KDIGO_perfs <- get_allmethods_performance(folder_name,perf_file_names,"KDIGO")
 SelectedClinicalFeature_perfs <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature14Vars")
-SelectedClinicalFeature_perfs2 <- get_allmethods_performance(folder_name,perf_file_names,"SelectedClinicalFeature15Vars")
 
-
-all_perfs <- cbind(KDIGO_perfs,SelectedClinicalFeature_perfs,SelectedClinicalFeature_perfs2)
-all_perfs <- all_perfs[-c(6,11)]
+all_perfs <- cbind(KDIGO_perfs,SelectedClinicalFeature_perfs)
+all_perfs <- all_perfs[-c(6)]
 
 #2.For each featuresets and each method, compare with baseline AUC diff
 AUC_diff <- as.data.frame(matrix(NA, nrow = 2, ncol = ncol((all_perfs))))
