@@ -2,11 +2,8 @@ source("TAKI_Ultility.R")
 library(lubridate)
 
 #Data dir
-UK_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
-UTSW_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/Model_Feature_Outcome/"
-#intermediate data dir 
-UK_intermediate_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/"
-UTSW_intermediate_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/"
+UK_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/"
+UTSW_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/"
 
 #out dir
 out_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/Discrip_Stats/"
@@ -14,8 +11,8 @@ out_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Proje
 ####################################################################################
 #### 1. Load data
 ####################################################################################
-feature_file <- "All_Feature_NOTimputed.csv"
-outcome_file <- "All_outcome.csv"
+feature_file <- "Model_Feature_Outcome/All_Feature_NOTimputed.csv"
+outcome_file <- "Model_Feature_Outcome/All_outcome.csv"
 outcome_colname_list <- c("Death_inHOSP","MAKE_HOSP120_Drop50")
 
 #For UK
@@ -29,10 +26,10 @@ UTSW_data <- Combine_featureAndoutcomes_func(UTSW_data_dir,feature_file,outcome_
 ###3.Add some variables
 ####################################################################################
 #For UK
-UK_data <- add_listofvar_func(UK_data,UK_intermediate_data_dir,"UK")
+UK_data <- add_listofvar_func(UK_data,UK_data_dir,"UK")
 
 #For UTSW
-UTSW_data <- add_listofvar_func(UTSW_data,UTSW_intermediate_data_dir,"UTSW")
+UTSW_data <- add_listofvar_func(UTSW_data,UTSW_data_dir,"UTSW")
 
 ####################################################################################
 ##4. Recode last and max KDIGO 3 and 4 
