@@ -3099,7 +3099,7 @@ compute_stats_func <- function(input_df,cohort_name,ordered_parameters){
         CRRT_index <- which(input_df[,"RRTinfo_ICUD0toD3"] %in% c("CRRT_only","HD_and_CRRT")) #inlcude on both pts
         curr_values <- input_df[CRRT_index,"CRRT_Days_inICUD0toD3"]
       }else if (curr_f == "HD_Days_inICUD0toD3"){
-        HD_index <- which(input_df[,"RRTinfo_ICUD0toD3"] %in% c("CRRT_only","HD_and_CRRT")) #inlcude on both pts
+        HD_index <- which(input_df[,"RRTinfo_ICUD0toD3"] %in% c("HD_only","HD_and_CRRT")) #inlcude on both pts
         curr_values <- input_df[HD_index,"HD_Days_inICUD0toD3"]
       }else if (curr_f == "Days_MV_ICUD0toD3"){
         keep_index <- which(input_df[,"MV_ICUD0toD3"] == 1) #for pts on MV
