@@ -194,7 +194,7 @@ ExclusionID5 <- KDIGO_df[which(KDIGO_df[,"MAX_KDIGO_ICU_D0toD3"] == 0 |is.na(KDI
 res <- exclude_pts_func(updated_inclusion_IDs4,ExclusionID5)
 actual_exclusion_IDs5 <- res[[1]] 
 updated_inclusion_IDs5 <- res[[2]]
-length(actual_exclusion_IDs5) #7515
+length(actual_exclusion_IDs5) #7513
 length(updated_inclusion_IDs5) # 2540
 
 #Exclude 6- <24 hours of ICU stay
