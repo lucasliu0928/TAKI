@@ -189,3 +189,25 @@ comb_supptb4 <- cbind(UK_tb4,UTSW_tb4)
 
 write.csv(comb_supptb4,paste0(out_dir,"Supp_table4.csv"),row.names = F)
 
+
+
+####################################################################################
+#### 7. Final ID raw time info
+####################################################################################
+UK_Time_data <- read.csv("/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UKY/raw_csv_files/ADMISSION_INDX.csv",stringsAsFactors = F)
+UK_Time_data$ICU_ADMIT_DATE <- mdy_hm(UK_Time_data$ICU_ADMIT_DATE)
+
+UTSW_Time_data <- read.csv("/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UTSW/raw_csv_files/tIndexedIcuAdmission.csv",stringsAsFactors = F)
+UTSW_Time_data$ICU_ADMSN_TIME <- ymd_hms(UTSW_Time_data$ICU_ADMSN_TIME)
+
+
+#For UK
+UK_Time_data <- UK_Time_data[which(UK_Time_data$STUDY_PATIENT_ID %in% UK_data$STUDY_PATIENT_ID),]
+min(UK_Time_data$ICU_ADMIT_DATE,na.rm = T)
+max(UK_Time_data$ICU_ADMIT_DATE,na.rm = T)
+
+#For UTSW
+UTSW_Time_data <- UTSW_Time_data[which(UTSW_Time_data$PATIENT_NUM %in% UTSW_data$STUDY_PATIENT_ID),]
+min(UTSW_Time_data$ICU_ADMSN_TIME,na.rm = T)
+max(UTSW_Time_data$ICU_ADMSN_TIME,na.rm = T)
+
