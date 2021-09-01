@@ -37,19 +37,18 @@ plot_risk_categoryAndIncidence_func <- function(plot_data,y_left_max,outcome_nam
     scale_y_continuous(limits = c(0, y_left_max), breaks = seq(0, y_left_max, by = 200), 
                        sec.axis = sec_axis(~./scale_2nd_y, name = "Outcome Incidence (%)")) +     # adds the secondary Y-axis
     scale_color_manual(breaks = c("UK", "UTSW"),values=c("dodgerblue3", "firebrick3")) + 
-    labs(x= "Predicted Risk Category", y = "Number of Patients", title = paste("Predicted Risk vs.",outcome_name,"Incidence"))+ 
+    labs(x= "Predicted Risk Category", y = "Number of Patients")+ 
     theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
                        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +
     theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
-          axis.title = element_text(size = 14),
-          axis.text = element_text(size = 12),
+          axis.title = element_text(size = 22),
+          axis.text = element_text(size = 19),
           axis.title.x = element_text(margin =ggplot2::margin(t = 10, r = 0, b = 0, l = 0)),
           axis.title.y.left =  element_text(margin =ggplot2::margin(t = 0, r = 5, b = 0, l = 0)),
           axis.title.y.right =  element_text(margin =ggplot2::margin(t = 0, r = 0, b = 0, l = 15)),
           legend.position = "top",
           legend.title = element_blank(),
-          legend.text =  element_text(size = 14),
-          plot.title = element_text(hjust = 0.5, size = 16))
+          legend.text =  element_text(size = 22))
   return(p)
 }
 
@@ -78,10 +77,10 @@ plot_mortality_data <- process_catogory_data_func(comb_mortality_category_df)
 outcome_name <- "Mortality"
 max_n_pts_inCategory <- 1250
 scale_2nd_y <- 20
-p <- plot_risk_categoryAndIncidence_func(plot_mortality_data,max_n_pts_inCategory,outcome_name,scale_2nd_y)
+p1 <- plot_risk_categoryAndIncidence_func(plot_mortality_data,max_n_pts_inCategory,outcome_name,scale_2nd_y)
 
 tiff(paste0(proj_dir,"RiskCategory_Plot/",outcome_name,".tiff"), units="in", width=10, height=7, res=300)
-print(p)
+print(p1)
 dev.off()
 
 
@@ -107,13 +106,25 @@ plot_data <- process_catogory_data_func(comb_category_df)
 outcome_name <- "MAKE"
 max_n_pts_inCategory <- 1250
 scale_2nd_y <- 15
-p <- plot_risk_categoryAndIncidence_func(plot_data,max_n_pts_inCategory,outcome_name,scale_2nd_y)
-p
+p2 <- plot_risk_categoryAndIncidence_func(plot_data,max_n_pts_inCategory,outcome_name,scale_2nd_y)
+p2
 
-tiff(paste0(proj_dir,"RiskCategory_Plot/",outcome_name,".tiff"), units="in", width=10, height=7, res=300)
-print(p)
+tiff(paste0(proj_dir,"RiskCategory_Plot/",outcome_name,".tiff"), units="in", width=14, height=10, res=300)
+print(p2)
 dev.off()
 
+################################################################################################## 
+#Combine two plot
+################################################################################################## 
+library(ggpubr)
+p3 <- ggarrange(p1, p2,
+                labels = c("A.Hospital Mortality", "B.MAKE"),
+                hjust = c(-0.04,-0.08),
+                font.label = list(size = 25, color = "black", face = "bold", family = NULL),
+                ncol = 1, nrow = 2)
+tiff(paste0(proj_dir,"RiskCategory_Plot/","Mortality_And_MAKE",".tiff"), units="in", width=14, height=14, res=300)
+print(p3)
+dev.off()
 
 ################################################################################################## 
 ######                         MAKE For survivors                                           ############## 
@@ -137,13 +148,12 @@ plot_data <- process_catogory_data_func(comb_category_df)
 outcome_name <- "MAKE (Survivors)"
 max_n_pts_inCategory <- 1250
 scale_2nd_y <- 20
-p <- plot_risk_categoryAndIncidence_func(plot_data,max_n_pts_inCategory,outcome_name,scale_2nd_y)
-p
+p4 <- plot_risk_categoryAndIncidence_func(plot_data,max_n_pts_inCategory,outcome_name,scale_2nd_y)
+p4
 
-tiff(paste0(proj_dir,"RiskCategory_Plot/",outcome_name,".tiff"), units="in", width=10, height=7, res=300)
-print(p)
+tiff(paste0(proj_dir,"RiskCategory_Plot/",outcome_name,".tiff"), units="in", width=14, height=10, res=300)
+print(p4)
 dev.off()
-
 
 
    
