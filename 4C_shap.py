@@ -123,7 +123,7 @@ def intersection(lst1, lst2):
 
 def change_feature_name(df):
     df = df.rename(columns={"UrineOutput_D0toD3": "Urine Output", 
-                            "Vasopressor_ICUD0toD3": "Vasopressor Exposure",
+                            "Vasopressor_ICUD0toD3": "Vasopressor",
                             "FI02_D1_HIGH": "FiO2 (High)",
                             "Platelets_D1_LOW": "Platelets (Low)",
                             "AGE": "Age",
@@ -139,7 +139,7 @@ def change_feature_name(df):
                             "Temperature_D1_HIGH": "Temperature (High)",
                             "Hemoglobin_D1_LOW": "Hemoglobin (Low)",
                             "Admit_sCr": "ICU admission sCr",
-                            "Sodium_D1_LOW": "Sodium (Low)"})
+                            "Sodium_D1_LOW": "Serum Sodium (Low)"})
     return df
 
 #######################################################################################
