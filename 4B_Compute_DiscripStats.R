@@ -1,35 +1,6 @@
 source("TAKI_Ultility.R")
 library(lubridate)
 
-change_feature_name_intable <- function(input_tb,name_tochange,updated_name){
-  var_ind <- which(input_tb[,1] == name_tochange)
-  if (length(var_ind) > 0 ){
-    input_tb[var_ind,1] <- updated_name
-  }
-  
-  return(input_tb)
-}
-change_listoffeature_name_intable <- function(input_tb){
-  input_tb <- change_feature_name_intable(input_tb,"UrineOutput_D0toD3","Urine Output")
-  input_tb <- change_feature_name_intable(input_tb,"Vasopressor_ICUD0toD3","Vasopressor Exposure")
-  input_tb <- change_feature_name_intable(input_tb,"FI02_D1_HIGH","FiO2 (High)")
-  input_tb <- change_feature_name_intable(input_tb,"Platelets_D1_LOW","Platelets (Low)")
-  input_tb <- change_feature_name_intable(input_tb,"AGE","Age")
-  input_tb <- change_feature_name_intable(input_tb,"BUN_D0toD3_HIGH","BUN (High)")
-  input_tb <- change_feature_name_intable(input_tb,"HR_D1_HIGH","Heart Rate (High")
-  input_tb <- change_feature_name_intable(input_tb,"LAST_KDIGO_ICU_D0toD3","Last KDIGO")
-  input_tb <- change_feature_name_intable(input_tb,"PH_D1_LOW","pH (Low)")
-  input_tb <- change_feature_name_intable(input_tb,"Bilirubin_D1_HIGH","Bilirubin (High)")
-  input_tb <- change_feature_name_intable(input_tb,"MAX_KDIGO_ICU_D0toD3","Maximum KDIGO")
-  input_tb <- change_feature_name_intable(input_tb, "ECMO_ICUD0toD3","ECMO")
-  input_tb <- change_feature_name_intable(input_tb, "Hours_inICUD0toD3","Hours in ICU")
-  input_tb <- change_feature_name_intable(input_tb, "Temperature_D1_LOW","Temperature (Low)")
-  input_tb <- change_feature_name_intable(input_tb, "Temperature_D1_HIGH","Temperature (High)")
-  input_tb <- change_feature_name_intable(input_tb, "Hemoglobin_D1_LOW","Hemoglobin (Low)")
-  input_tb <- change_feature_name_intable(input_tb, "Admit_sCr","ICU admission sCr")
-  input_tb <- change_feature_name_intable(input_tb, "Sodium_D1_LOW","Sodium (Low)")
-  return(input_tb)
-}
 
 
 #Data dir
