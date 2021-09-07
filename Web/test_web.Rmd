@@ -1,0 +1,64 @@
+---
+#title: "TestWeb"
+#author: "Lucas"
+date: "9/2/2021"
+runtime: shiny
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+![](/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/TAKI html/taki/images/banners/banner_Homepage.png)
+
+## AKI Predictor of Outcomes (AKIPO)
+The AKI predictor of Outcomes (AKIPO) is only appropriate for patients admitted to an intensive care unit (ICU) and who experience AKI during/within the first 3 days admitted to the ICU.
+
+After individual patient characteristics have been provided, AKIPO will evaluate a predicted risk for the outcomes of hospital mortality and experiencing a Major Adverse Kidney Event (MAKE) in the 90 days following discharge from the ICU. All features correspond to the first 3 days in the ICU. The predicted risks are calculated based on training a logistic regression model on a total of 6816 patients that were admitted to the University of Kentucky Chandler Hospital ICU from 2009-2017. The model was additionally validated on an external cohort of 1792 patients admitted to the University of Texas Southwestern hospital ICU from 2009-2016. For details on model development and validation, see reference below.
+
+In order to have the most accurate prediction, please enter all available information of the patient below. Extreme caution is required when using the AKIPO for therapeutic decisions in individual patients. If any values provided are outside of the range of values in the development cohort, you will be warned and the minimum/maximum value in the development cohort will be used for prediction.
+
+## {.tabset}
+
+### Hospital Mortality
+```{r echo = FALSE, attr.source="style='display:inline-block;'", collapse=TRUE}
+numericInput("age_yrs", "Age (years):", value = "", min = 18, max = 200,step = 1, width = 500)
+selectInput("Vassopressor",
+  "Vassopressor (Exp/Non-Exp):",
+  choices = c("Yes","No","[Select]"),
+  selected = "[Select]",
+  multiple = FALSE,
+  selectize = TRUE,
+  width = 500,
+  size = NULL
+)
+numericInput("fio2", "Highest FiO2 (%):", value = "", min = 0, max = 200,step = 1, width = 500)
+numericInput("platelets_low", "Lowest Platelets (k/uL):", value = "", min = 0, max = 200,step = 1, width = 500)
+numericInput("bun_high", "Highest BUN (mg/dL):", value = "", min = 0, max = 200,step = 1, width = 500)
+numericInput("temp_low", "Lowest Temperature (C):", value = "", min = 0, max = 200,step = 1, width = 500)
+numericInput("hoursinicu", "Hours in ICU (hours):", value = "", min = 0, max = 200,step = 1, width = 500)
+numericInput("bilirubin_high", "Highest Bilirubin ():", value = "", min = 0, max = 200,step = 1, width = 500)
+numericInput("lastKDIGO", "Last KDIGO:", value = "", min = 0, max = 200,step = 1, width = 500)
+numericInput("ph_low", "Lowest pH:", value = "", min = 0, max = 200,step = 1, width = 500)
+numericInput("hr_high", "Highest Heart Rate ():", value = "", min = 0, max = 200,step = 1, width = 500)
+numericInput("temp_high", "Highest Temperature (C):", value = "", min = 0, max = 200,step = 1, width = 500)
+
+selectInput("ecmo",
+  "ECMO (Yes/No):",
+  choices = c("Yes","No","[Select]"),
+  selected = "[Select]",
+  multiple = FALSE,
+  selectize = TRUE,
+  width = 500,
+  size = NULL
+)
+numericInput("maxKDIGO", "Maximum KDIGO:", value = "", min = 0, max = 200,step = 1, width = 500)
+#Get input
+#renderPrint(input$age_yrs)
+#renderPrint(input$Vassopressor)
+```
+
+### MAKE
+
+(tab content)
