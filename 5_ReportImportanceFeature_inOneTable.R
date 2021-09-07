@@ -16,7 +16,7 @@ for (i in 1:length(method_names)){
 }
 all_importance_df <- do.call(cbind,imporatnce_list)
 top15_importance_df <- all_importance_df[1:15,]
-write.csv(top15_importance_df,paste0(outdir,"Top15FeatureRanking_4Methods.csv"),row.names = F)
+#write.csv(top15_importance_df,paste0(outdir,"Top15FeatureRanking_4Methods.csv"),row.names = F)
 
 
 ###MAKE 
@@ -35,4 +35,4 @@ for (i in 1:length(method_names)){
 }
 all_importance_df <- do.call(cbind,imporatnce_list)
 top15_importance_df <- all_importance_df[1:15,]
-write.csv(top15_importance_df,paste0(outdir,"Top15FeatureRanking_4Methods.csv"),row.names = F)
+#write.csv(top15_importance_df,paste0(outdir,"Top15FeatureRanking_4Methods.csv"),row.names = F)
