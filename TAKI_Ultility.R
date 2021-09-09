@@ -3259,7 +3259,7 @@ change_listoffeature_name_intable <- function(input_tb){
 
 change_listoffeature_name_intable2 <- function(input_tb){
   input_tb <- change_feature_name_intable(input_tb,"UrineOutput_D0toD3","Urine Output")
-  input_tb <- change_feature_name_intable(input_tb,"Vasopressor_ICUD0toD3","Vasopressor Exposure")
+  input_tb <- change_feature_name_intable(input_tb,"Vasopressor_ICUD0toD3","Vasopressor")
   input_tb <- change_feature_name_intable(input_tb,"FI02_D1_HIGH","FiO2 (High)")
   input_tb <- change_feature_name_intable(input_tb,"Platelets_D1_LOW","Platelets (Low)")
   input_tb <- change_feature_name_intable(input_tb,"AGE","Age")
@@ -3282,7 +3282,7 @@ change_listoffeature_name_intable2 <- function(input_tb){
   input_tb <- change_feature_name_intable(input_tb, "VAD_ICUD0toD3","VAD")
   input_tb <- change_feature_name_intable(input_tb, "Mechanical_Hemodynamic_Support","Mechanical Hemodynamic Support")
   input_tb <- change_feature_name_intable(input_tb, "Hematocrit_D1_LOW","Hematocrit (Low)")
-  input_tb <- change_feature_name_intable(input_tb, "FI02_D1_LOW","FI02 (Low)")
+  input_tb <- change_feature_name_intable(input_tb, "FI02_D1_LOW","FiO2 (Low)")
   input_tb <- change_feature_name_intable(input_tb, "PO2_D1_HIGH","PO2 (High)")
   input_tb <- change_feature_name_intable(input_tb, "Hemoglobin_D1_HIGH","Hemoglobin (High)")
   input_tb <- change_feature_name_intable(input_tb, "MAP_D1_LOW","MAP (Low)")
@@ -3292,6 +3292,10 @@ change_listoffeature_name_intable2 <- function(input_tb){
   input_tb <- change_feature_name_intable(input_tb, "MAP_D1_HIGH","MAP (High)")
   input_tb <- change_feature_name_intable(input_tb, "PO2_D1_LOW","PO2 (Low)")
   input_tb <- change_feature_name_intable(input_tb, "Bicarbonate_D1_LOW","Bicarbonate (Low)")
+  input_tb <- change_feature_name_intable(input_tb, "Admit_KDIGO_ICU","ICU admission KDIGO")
+  input_tb <- change_feature_name_intable(input_tb, "WBC_D1_HIGH","WBC (High)")
+  input_tb <- change_feature_name_intable(input_tb, "onRRT_ICUD0toD3","on RRT")
+  input_tb <- change_feature_name_intable(input_tb, "ELX_GRP_15","Liver Disease")
   
   
   
