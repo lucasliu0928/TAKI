@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 import shap
+import pickle
 
 def plot_shap_summary_trainAndTest(explainer, TRAIN_X, TEST_X, ticks_value, outdir,outfile):
     LARGE_SIZE =  50
@@ -70,11 +71,19 @@ def plot_shap_summary(explainer, X, output_dir, outfile):
     f.savefig(output_dir + outfile, bbox_inches='tight', dpi=600)
     
 
+
 def plot_individual_shap(explainer, Sample_X,value_threshold, output_dir, outfile):
     shap_value = explainer.shap_values(Sample_X)
     #Using logit will change log-odds numbers into probabilities, the defualt shows the the log-odds
     #We do not have to chaknge link to "logit", because we use RF_regressor classfier, the y_pred is alreayd in proabily form
-    shap.force_plot(explainer.expected_value, shap_value, Sample_X,contribution_threshold= value_threshold,show = False,matplotlib=True).savefig(output_dir + outfile,bbox_inches='tight',dpi = 500)
+    #shap.force_plot(explainer.expected_value, shap_value, Sample_X,contribution_threshold= value_threshold,show = False,matplotlib=True).savefig(output_dir + outfile,bbox_inches='tight',dpi = 500)
+    plt.figure()
+    shap.force_plot(explainer.expected_value, shap_value, Sample_X,contribution_threshold= value_threshold,show = False,matplotlib=True)
+    plt.xticks(fontsize= 16)
+    #plt.text(0.06, 0.405, plt_title, fontsize = 20)
+    plt.savefig(output_dir + outfile,bbox_inches='tight',dpi = 500)
+    plt.close()
+
 
 def get_mean_abs_shap_values (explainer,X,output_dir,out_file):
     shap_values_all = explainer.shap_values(X) #compute shap values for all X
@@ -147,7 +156,8 @@ def change_feature_name(df):
 #######################################################################################
 UK_data_dir = "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
 UTSW_data_dir = "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/Model_Feature_Outcome/"
-outdir = "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/Shap/"
+outdir = "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/Shap0907/"
+outmodeldir = "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/SavedModel/"
 
 #######################################################################################
 # Load data
@@ -188,6 +198,14 @@ test_X = change_feature_name(test_X)
 #model = RandomForestClassifier(max_depth=6, random_state=0, n_estimators=500)
 model = RandomForestRegressor(max_depth=6, random_state=0, n_estimators=500)
 model.fit(train_X, train_Y)
+
+# save the model to disk
+filename = outmodeldir + 'TAKI_Mortality_model.sav'
+pickle.dump(model, open(filename, 'wb'))
+
+# load the model from disk
+loaded_model = pickle.load(open(filename, 'rb'))
+y_pred = loaded_model.predict(test_X)
 
 # Create object that can calculate shap values
 explainer = shap.TreeExplainer(model) #
@@ -278,7 +296,11 @@ for pt in Sample_IDs:
     MAX_KDIGO = train_X.loc[pt,'Maximum KDIGO'] 
     LAST_KDIGO = train_X.loc[pt,'Last KDIGO']
     plot_individual_shap(explainer, sample_data,0.1,outdir,"/mortality/Examples/UK/" + 'Outcome' + str(outcome_label) + '_MAXKDIGO'+ str(MAX_KDIGO) + '_LASTKDIGO'+ str(LAST_KDIGO) +"_ID" + str(pt) + ".png")
- 
+
+
+
+    
+
 ##########################################################
 #MAKE
 ##########################################################
@@ -305,6 +327,14 @@ test_X = change_feature_name(test_X)
 #Use All data to train and get plot
 model = RandomForestRegressor(max_depth=6, random_state=0, n_estimators=500)
 model.fit(train_X, train_Y)
+
+# save the model to disk
+filename = outmodeldir + 'TAKI_MAKE_model.sav'
+pickle.dump(model, open(filename, 'wb'))
+
+# load the model from disk
+loaded_model = pickle.load(open(filename, 'rb'))
+y_pred = loaded_model.predict(test_X)
 
 # Create object that can calculate shap values
 explainer = shap.TreeExplainer(model) #
@@ -377,4 +407,4 @@ for pt in Sample_IDs:
     outcome_label = train_Y.loc[pt] 
     MAX_KDIGO = train_X.loc[pt,'Maximum KDIGO'] 
     LAST_KDIGO = train_X.loc[pt,'Last KDIGO']
-    plot_individual_shap(explainer, sample_data,0.1,outdir,"/make120drop50/Examples/UK/" + 'Outcome' + str(outcome_label) + '_MAXKDIGO'+ str(MAX_KDIGO) + '_LASTKDIGO'+ str(LAST_KDIGO) +"_ID" + str(pt) + ".png")
+    plot_individual_shap(explainer, sample_data, 0.1,outdir,"/make120drop50/Examples/UK/" + 'Outcome' + str(outcome_label) + '_MAXKDIGO'+ str(MAX_KDIGO) + '_LASTKDIGO'+ str(LAST_KDIGO) +"_ID" + str(pt) + ".png")
