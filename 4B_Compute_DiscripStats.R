@@ -4,8 +4,8 @@ library(lubridate)
 
 
 #Data dir
-UK_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/"
-UTSW_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/"
+UK_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/uky/"
+UTSW_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/utsw/"
 
 #out dir
 out_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/Discrip_Stats/"
@@ -22,7 +22,6 @@ UK_data <- Combine_featureAndoutcomes_func(UK_data_dir,feature_file,outcome_file
 
 #For UTSW
 UTSW_data <- Combine_featureAndoutcomes_func(UTSW_data_dir,feature_file,outcome_file,outcome_colname_list)
-
 
 ####################################################################################
 ###3.Add some variables
@@ -139,10 +138,11 @@ final_supp_tb3 <- final_supp_tb3[order(final_supp_tb3$UK_MAKE0_Var),]
 write.csv(final_supp_tb3,paste0(out_dir,"Supp_table3.csv"),row.names = F)
 
 ####################################################################################
-#### supp table4. Discriptive stats for All cohaort
+#### table1. Discriptive stats for All cohaort
+#'@NOte: Vasopressor_ICUD0toD3 is the same as  Pressor/Inotrope
 ####################################################################################
 var_list <- c("AGE","GENDER","RACE","BMI","CHARLSON_SCORE","TOTAL_ELIX","Diabetes","Hypertension","Baseline_eGFR","CKD",
-              "SOFA_TOTAL","APACHE_TOTAL","Days_inHOSP","Hours_inICUD0toD3","ECMO_ICUD0toD3","IABP_ICUD0toD3","VAD_ICUD0toD3","MV_ICUD0toD3","Days_MV_ICUD0toD3",
+              "SOFA_TOTAL","APACHE_TOTAL","Vasopressor_ICUD0toD3","Days_inHOSP","Hours_inICUD0toD3","ECMO_ICUD0toD3","IABP_ICUD0toD3","VAD_ICUD0toD3","MV_ICUD0toD3","Days_MV_ICUD0toD3",
               "Sepsis_Before_or_At_Admission","UrineOutput_D0toD3","UrineFlow_D0toD3","FluidOverload_inPercentage",
               "Bicarbonate_D1_AVGof(LOWHIGH)","BUN_D0toD3_HIGH","Hematocrit_D1_AVGof(LOWHIGH)","Hemoglobin_D1_AVGof(LOWHIGH)",
               "Baseline_sCr","Admit_sCr","Peak_SCr_inICU_D0_D3","LastSCr_inICU_D0_D3","MAX_KDIGO_ICU_D0toD3","LAST_KDIGO_ICU_D0toD3",
@@ -158,7 +158,7 @@ UTSW_tb4 <- compute_stats_func(UTSW_data,"UTSW",var_list)
 
 comb_supptb4 <- cbind(UK_tb4,UTSW_tb4)
 
-write.csv(comb_supptb4,paste0(out_dir,"Supp_table4.csv"),row.names = F)
+write.csv(comb_supptb4,paste0(out_dir,"table1.csv"),row.names = F)
 
 
 
