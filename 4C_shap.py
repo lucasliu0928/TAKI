@@ -30,7 +30,7 @@ def plot_shap_summary_trainAndTest(explainer, TRAIN_X, TEST_X, ticks_value, outd
     plt.figure(figsize=(16, 64))
     plt.subplot(1,2,1)
     shap.summary_plot(shap_values_train, TRAIN_X, plot_size=(32, 16), show=False, color_bar = False)
-    plt.title('UK', fontsize= LARGE_SIZE)
+    plt.title('UKY', fontsize= LARGE_SIZE)
     plt.xlabel('SHAP value',fontsize= MEDIUM_SIZE)
     plt.yticks(fontsize= SMALL_SIZE)
     plt.xticks(fontsize= SMALL_SIZE)
@@ -132,7 +132,7 @@ def intersection(lst1, lst2):
 
 def change_feature_name(df):
     df = df.rename(columns={"UrineOutput_D0toD3": "Urine Output", 
-                            "Vasopressor_ICUD0toD3": "Vasopressor",
+                            "Vasopressor_ICUD0toD3": "Pressor/Inotrope",
                             "FI02_D1_HIGH": "FiO2 (High)",
                             "Platelets_D1_LOW": "Platelets (Low)",
                             "AGE": "Age",
@@ -154,8 +154,8 @@ def change_feature_name(df):
 #######################################################################################
 #data dir
 #######################################################################################
-UK_data_dir = "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
-UTSW_data_dir = "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/Model_Feature_Outcome/"
+UK_data_dir = "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
+UTSW_data_dir = "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/utsw/Model_Feature_Outcome/"
 outdir = "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/Shap0907/"
 outmodeldir = "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/SavedModel/"
 
@@ -297,9 +297,6 @@ for pt in Sample_IDs:
     LAST_KDIGO = train_X.loc[pt,'Last KDIGO']
     plot_individual_shap(explainer, sample_data,0.1,outdir,"/mortality/Examples/UK/" + 'Outcome' + str(outcome_label) + '_MAXKDIGO'+ str(MAX_KDIGO) + '_LASTKDIGO'+ str(LAST_KDIGO) +"_ID" + str(pt) + ".png")
 
-
-
-    
 
 ##########################################################
 #MAKE
