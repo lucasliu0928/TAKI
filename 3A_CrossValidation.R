@@ -11,7 +11,7 @@ library(caret)
 
 
 #Data dir
-data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
+data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
 
 #out dir
 out_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/CV_performance/"
@@ -52,22 +52,22 @@ for (m in 1:length(model_name_list)){
   #CV
   cv_res <- cv2_func(model_data,outcome_colname,model_name,upsample_flag,N_sampling,NFolds,svmkernel = 'svmLinear2')
   final_pred <- cv_res[[1]]
-  write.csv(final_pred, paste0(outdir1,"Prediction_", model_name, ".csv"),row.names = F)
+  #write.csv(final_pred, paste0(outdir1,"Prediction_", model_name, ".csv"),row.names = F)
   
   #compute avg performance 
   final_importance_matrix <- cv_res[[2]]
   feature_indexes<- which(colnames(model_data) != outcome_colname)
   features <- colnames(model_data)[feature_indexes]
   avg_importance_matrix <- compute_avg_importance(final_importance_matrix,features,model_name)
-  write.csv(avg_importance_matrix, paste0(outdir1,"Importance_AVG_", model_name, ".csv"),row.names = F)
+  #write.csv(avg_importance_matrix, paste0(outdir1,"Importance_AVG_", model_name, ".csv"),row.names = F)
   
   #Compute perforamnce for each fold with each sampling
   eachfold_eachSample_perf_tb <- compute_performance_TrainCV_func(N_sampling,NFolds,final_pred)
-  write.csv(eachfold_eachSample_perf_tb, paste0(outdir1,"Performance_PerFoldPerSample_", model_name, ".csv"),row.names = F)
+  #write.csv(eachfold_eachSample_perf_tb, paste0(outdir1,"Performance_PerFoldPerSample_", model_name, ".csv"),row.names = F)
   
   #get CI and mean perforamnce
   CI_perf_tb <- perf_Mean_CI_func(eachfold_eachSample_perf_tb[,3:14])
-  write.csv(CI_perf_tb, paste0(outdir1,"Performance_AVG_CI_", model_name, ".csv"),row.names = T)
+  #write.csv(CI_perf_tb, paste0(outdir1,"Performance_AVG_CI_", model_name, ".csv"),row.names = T)
 }
 
 
@@ -201,22 +201,22 @@ for (m in 1:length(model_name_list)){
   #CV
   cv_res <- cv2_func(model_data,outcome_colname,model_name,upsample_flag,N_sampling,NFolds,svmkernel = "svmLinear2")
   final_pred <- cv_res[[1]]
-  write.csv(final_pred, paste0(outdir1,"Prediction_", model_name, ".csv"),row.names = F)
+  #write.csv(final_pred, paste0(outdir1,"Prediction_", model_name, ".csv"),row.names = F)
   
   #compute avg performance
   final_importance_matrix <- cv_res[[2]]
   feature_indexes<- which(colnames(model_data) != outcome_colname)
   features <- colnames(model_data)[feature_indexes]
   avg_importance_matrix <- compute_avg_importance(final_importance_matrix,features,model_name)
-  write.csv(avg_importance_matrix, paste0(outdir1,"Importance_AVG_", model_name, ".csv"),row.names = F)
+  #write.csv(avg_importance_matrix, paste0(outdir1,"Importance_AVG_", model_name, ".csv"),row.names = F)
   
   #Compute perforamnce for each fold with each sampling
   eachfold_eachSample_perf_tb <- compute_performance_TrainCV_func(N_sampling,NFolds,final_pred)
-  write.csv(eachfold_eachSample_perf_tb, paste0(outdir1,"Performance_PerFoldPerSample_", model_name, ".csv"),row.names = F)
+  #write.csv(eachfold_eachSample_perf_tb, paste0(outdir1,"Performance_PerFoldPerSample_", model_name, ".csv"),row.names = F)
   
   #get CI and mean perforamnce
   CI_perf_tb <- perf_Mean_CI_func(eachfold_eachSample_perf_tb[,3:14])
-  write.csv(CI_perf_tb, paste0(outdir1,"Performance_AVG_CI_", model_name, ".csv"),row.names = T)
+  #write.csv(CI_perf_tb, paste0(outdir1,"Performance_AVG_CI_", model_name, ".csv"),row.names = T)
 }
 
 
