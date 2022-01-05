@@ -159,4 +159,34 @@ print(p4)
 dev.off()
 
 
+
+################################################################################################## 
+#'@ADD010521                         Mortality for SOFA                                      ############## 
+################################################################################################## 
+#1. UKY
+UK_mortality_dir <- paste0(proj_dir,"CV_performance/mortality/UK_SOFA_Mortality_Risk_Catogory4_RF.csv")
+UK_mortality_catogory_df <- read.csv(UK_mortality_dir,stringsAsFactors = F)
+UK_mortality_catogory_df$Cohort_NAME <- "UKY"
+
+#2.UTSW
+UTSW_mortality_dir <- paste0(proj_dir,"ExternalV_performance/mortality/UTSW_SOFA_Mortality_Risk_Catogory4_RF.csv")
+UTSW_mortality_catogory_df <- read.csv(UTSW_mortality_dir,stringsAsFactors = F)
+UTSW_mortality_catogory_df$Cohort_NAME <- "UTSW"
+
+
+#3.Cobine two and get plot data
+comb_mortality_category_df <- rbind(UK_mortality_catogory_df,UTSW_mortality_catogory_df)
+plot_mortality_data <- process_catogory_data_func(comb_mortality_category_df)
+
+#plot
+outcome_name <- "Mortality"
+max_n_pts_inCategory <- 1250
+scale_2nd_y <- 20
+legend_pos <- "top"
+p1 <- plot_risk_categoryAndIncidence_func(plot_mortality_data,max_n_pts_inCategory,outcome_name,scale_2nd_y,legend_pos)
+p1 <- p1 +  theme(plot.margin=unit(c(0,0.2,1.2,0.2),"cm"))
+tiff(paste0(proj_dir,"RiskCategory_Plot/",outcome_name,".tiff"), units="in", width=10, height=7, res=300)
+print(p1)
+dev.off()
+
    
