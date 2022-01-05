@@ -1800,7 +1800,7 @@ compute_calibration_func <-function(perf_table){
   if(length(unique(pred_p)) == 1){ #if only one pred prob, val.prob error:  Error in solvet(info.matrix, tol = tol) : apparently singular matrix 
     calib_res <- c(NA,NA)
   }else{
-    res = val.prob(p = pred_p,y= acutal, pl=FALSE)
+    res = val.prob(p = pred_p,y= acutal, pl=TRUE)
     calib_res <- res[c("Intercept","Slope")]
   }
 
