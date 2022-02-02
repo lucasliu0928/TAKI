@@ -2,8 +2,8 @@ library(lubridate)
 source("TAKI_Ultility.R")
 
 #Raw data dir
-raw_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UKY/raw_csv_files/"
-outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/"
+raw_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/Taylors_Data/UKY/raw_csv_files/"
+outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/uky/"
 
 ##########################################################################################
 #Load data
@@ -142,8 +142,6 @@ for (i in 1:nrow(Final_SCR_df)){
 length(no_bl_scr_IDs) ##N of Resolved baseline by EPI: 25488
 no_bl_scr_IDs_df <- as.data.frame(no_bl_scr_IDs)
 write.csv(no_bl_scr_IDs_df,paste0(outdir,"NO_Measured_BaselineScr_IDs.csv"),row.names = F)
-
-
 write.csv(Final_SCR_df,paste0(outdir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df_AddedLastScr.csv"),row.names = F)
 
 
@@ -159,7 +157,6 @@ KDIGO_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 4))
 colnames(KDIGO_df) <- c("STUDY_PATIENT_ID","Admit_KDIGO_ICU","MAX_KDIGO_ICU_D0toD3","LAST_KDIGO_ICU_D0toD3")
 for (i in  1:length(analysis_ID)){
   if (i %% 1000 ==0){print(i)}
-
   curr_id <- analysis_ID[i]
   KDIGO_df[i,"STUDY_PATIENT_ID"] <- curr_id
   
@@ -252,7 +249,184 @@ for (i in  1:length(analysis_ID)){
   }
 }
 
-write.csv(KDIGO_df,paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"))
+#write.csv(KDIGO_df,paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"))
+write.csv(KDIGO_df,paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df_011522.csv"))
+
+#check #The only differnce is at ID 59158 which is excluded from analyis
+#So use either one to compute stats for final ID is fine
+KDIGO_df_old <- read.csv(paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"),stringsAsFactors = F)
+KDIGO_df_new <- read.csv(paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df_011522.csv"),stringsAsFactors = F)
+
+KDIGO_df_old[which(is.na(KDIGO_df_old)==T,arr.ind = T)] <- 0
+KDIGO_df_new[which(is.na(KDIGO_df_new)==T,arr.ind = T)] <- 0
+identical(KDIGO_df_old,KDIGO_df_new)
+
+final_id <-read.csv(paste0(outdir,"Final_Analysis_ID.csv"),stringsAsFactors = F)
+check_df <- KDIGO_df_new[which(KDIGO_df_new$STUDY_PATIENT_ID %in% final_id$STUDY_PATIENT_ID),]
+
+table(check_df$MAX_KDIGO_ICU_D0toD3)
+
+##########################################################################################
+#'@Added 011322
+#'KDIGO -D0 to D7
+#1.Maximum KDIGO 	(Maximum KDIGO score in ICU D0 to D7)
+##########################################################################################
+Final_SCR_df <- read.csv(paste0(outdir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df_AddedLastScr.csv"),stringsAsFactors = F)
+All_time_df <- read.csv(paste0(outdir,"All_Corrected_Timeinfo_ADD_D4toD7.csv"),stringsAsFactors = F)
+
+KDIGO_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 6))
+colnames(KDIGO_df) <- c("STUDY_PATIENT_ID",
+                        "MAX_KDIGO_ICU_D0toD3",
+                        "MAX_KDIGO_ICU_D0toD7",
+                        "MAX_KDIGO_ICU_D0toD1",
+                        "MAX_KDIGO_ICU_D2toD3",
+                        "MAX_KDIGO_ICU_D4toD7")
+for (i in  1:length(analysis_ID)){
+  if (i %% 1000 ==0){print(i)}
+  
+  #i <- which(analysis_ID == 59158)
+  curr_id <- analysis_ID[i]
+  KDIGO_df[i,"STUDY_PATIENT_ID"] <- curr_id
+  
+  #baseline Scr
+  curr_baseline_scr <- Final_SCR_df[which(Final_SCR_df[,"STUDY_PATIENT_ID"] ==curr_id),"Baseline_SCr"]
+  
+  #Time info
+  curr_time_df <- All_time_df[which(All_time_df[,"STUDY_PATIENT_ID"] == curr_id),]
+  curr_icu_start <- ymd_hms(curr_time_df[,"Updated_ICU_ADMIT_DATE"])
+  curr_icu_end <- ymd_hms(curr_time_df[,"Updated_ICU_DISCHARGE_DATE"])
+  curr_crrt_start <- ymd_hms(curr_time_df[,"Updated_CRRT_Start"])
+  curr_crrt_end <- ymd_hms(curr_time_df[,"Updated_CRRT_End"])
+  curr_hd_start <- ymd_hms(curr_time_df[,"Updated_HD_Start"])
+  curr_hd_end <- ymd_hms(curr_time_df[,"Updated_HD_End"])
+  
+  
+  #All SCr df
+  curr_scr_df <- raw_SCR_df[which(raw_SCR_df[,"STUDY_PATIENT_ID"] == curr_id),]
+  #curr_scr_df <- curr_scr_df[duplicated(curr_scr_df$SCR_ENTERED)==F,] #drop duplicated time point
+
+  
+  #Get actual days/times in ICU D0-D7
+  curr_actual_ICU_time_idxes <- which(colnames(curr_time_df) %in% 
+                                        c("Actual_D0_End","Actual_D1_End",
+                                          "Actual_D2_End","Actual_D3_End",
+                                          "Actual_D4_End","Actual_D5_End",
+                                          "Actual_D6_End","Actual_D7_End"))
+  curr_actual_ICU_time <- curr_time_df[,curr_actual_ICU_time_idxes]
+  curr_last_ICU_time <- max(ymd_hms(curr_actual_ICU_time),na.rm = T)
+  
+  #Get curr scr in ICU D0-D7, could be less than 7 days
+  curr_scr_inICUD0D7 <- get_value_df_inWindow_func(curr_scr_df,curr_icu_start,curr_last_ICU_time,"SCR_ENTERED")
+  
+  #1.Use scr in ICU D0-D7 to compute KDIGO
+  if (nrow(curr_scr_inICUD0D7) > 0 & is.na(curr_baseline_scr) == F){
+    #current KIDGO for all Scr in window
+    curr_SCR_KDIGO_df    <- get_KDIGO_Score_forScrdf_func(curr_baseline_scr,curr_scr_inICUD0D7)
+    colnames(curr_SCR_KDIGO_df)[1] <- "Time"
+  }else {
+    curr_SCR_KDIGO_df <- NULL
+  }
+  
+  #reformat time
+  ref_idxes <- which(nchar(curr_SCR_KDIGO_df[,"Time"]) !=19)
+  if (length(ref_idxes) > 0){
+    curr_SCR_KDIGO_df[ref_idxes,"Time"] <- paste(curr_SCR_KDIGO_df[ref_idxes,"Time"],"00:00:00")
+  }
+  
+  #2.Get MAX KDIGO score per day ICU D0 - D7
+  day_start_cols <- paste0("Actual_D",seq(0,7),"_Start") 
+  day_end_cols   <- paste0("Actual_D",seq(0,7),"_End")
+  
+  KDIGO_perDay_df <- as.data.frame(matrix(NA, nrow = 8, ncol = 4))
+  colnames(KDIGO_perDay_df) <- c("ICU_DAY","Actual_Start","Actual_End","MAX_KDIGO")
+  for (t in 1:8){
+    curr_d_start <- ymd_hms(curr_time_df[,day_start_cols[t]])
+    curr_d_end   <- ymd_hms(curr_time_df[,day_end_cols[t]])
+    
+    if (is.na(curr_d_start) == F){ #if patient is in ICU in current day
+      #1. get KDIGO score in current day using sCr
+      curr_kdigo_using_sCr <- get_maxKDIGO_usingScr_inOneDay(curr_SCR_KDIGO_df,curr_d_start,curr_d_end)
+      
+      #2. check if current day on RRT (with 48 hours extenstion), if so, KDIGO score = 4
+      if (is.na(curr_crrt_start)== F){
+        curr_on_crrt <- check_overlapp_manually_func(curr_crrt_start,curr_crrt_end + hours(48),curr_d_start,curr_d_end)
+      }else{
+        curr_on_crrt <- 0
+      }
+      if (is.na(curr_hd_start)== F){
+        curr_on_hd <- check_overlapp_manually_func(curr_hd_start,curr_hd_end + hours(48),curr_d_start,curr_d_end)
+      }else{
+        curr_on_hd <- 0
+      }
+      
+      #if on RRT, then kdigo score = 4
+      if (is.na(curr_on_crrt) == F & curr_on_crrt!=0){
+        curr_kidgo_score <- 4
+      }else if (is.na(curr_on_hd) == F & curr_on_hd!=0){
+        curr_kidgo_score <- 4
+      }else if (is.na(curr_kdigo_using_sCr) == F){ #if sCr is avaialble 
+        curr_kidgo_score <- curr_kdigo_using_sCr
+      }else{ #if not on RRT, no Scr avaiable
+        curr_kidgo_score <- NA
+      }
+      
+      KDIGO_perDay_df[t,"ICU_DAY"]      <- paste0("D",t-1)
+      KDIGO_perDay_df[t,"Actual_Start"] <- as.character(curr_d_start)
+      KDIGO_perDay_df[t,"Actual_End"]   <- as.character(curr_d_end)
+      KDIGO_perDay_df[t,"MAX_KDIGO"]    <- curr_kidgo_score
+    }else {
+      KDIGO_perDay_df[t,"ICU_DAY"]      <- paste0("D",t-1)
+      KDIGO_perDay_df[t,"Actual_Start"] <- as.character(curr_d_start)
+      KDIGO_perDay_df[t,"Actual_End"]   <- as.character(curr_d_end)
+      KDIGO_perDay_df[t,"MAX_KDIGO"]    <- NA
+    }
+    
+  }
+  
+  #3.Find max KDIGO D0-D1, D2-D3, D4-D7, D0-D3, D0-D7
+  max_KDIGO_D0D1 <- get_MAX_KDIGO_inMultiple_days(KDIGO_perDay_df, c("D0","D1"))
+  max_KDIGO_D2D3 <- get_MAX_KDIGO_inMultiple_days(KDIGO_perDay_df, c("D2","D3"))
+  max_KDIGO_D4D7 <- get_MAX_KDIGO_inMultiple_days(KDIGO_perDay_df, c("D4","D5","D6","D7"))
+  
+  #4.Double check with previous results
+  max_KDIGO_D0D3 <- get_MAX_KDIGO_inMultiple_days(KDIGO_perDay_df, c("D0","D1","D2","D3"))
+  max_KDIGO_D0D7 <- get_MAX_KDIGO_inMultiple_days(KDIGO_perDay_df, c("D0","D1","D2","D3","D4","D5","D6","D7"))
+  
+  
+  KDIGO_df[i,"MAX_KDIGO_ICU_D0toD3"]   <- max_KDIGO_D0D3
+  KDIGO_df[i,"MAX_KDIGO_ICU_D0toD7"]   <- max_KDIGO_D0D7
+  KDIGO_df[i,"MAX_KDIGO_ICU_D0toD1"]   <- max_KDIGO_D0D1
+  KDIGO_df[i,"MAX_KDIGO_ICU_D2toD3"]   <- max_KDIGO_D2D3
+  KDIGO_df[i,"MAX_KDIGO_ICU_D4toD7"]   <- max_KDIGO_D4D7
+  
+  
+}
+
+write.csv(KDIGO_df,paste0(outdir,"KDIGO_MAX_ICU_D0D7_df.csv"))
+
+#onset AKI numbers
+#8482
+AKI_onset_d0d1 <- length(which(KDIGO_df$MAX_KDIGO_ICU_D0toD1 %in% c(1,2,3,4)))
+#1319
+AKI_onset_d2d3 <- length(which((is.na(KDIGO_df$MAX_KDIGO_ICU_D0toD1)==T |
+                                  KDIGO_df$MAX_KDIGO_ICU_D0toD1 == 0) &
+                                 KDIGO_df$MAX_KDIGO_ICU_D2toD3 %in% c(1,2,3,4)))
+#645
+AKI_onset_d4d7 <- length(which((is.na(KDIGO_df$MAX_KDIGO_ICU_D0toD1)==T | KDIGO_df$MAX_KDIGO_ICU_D0toD1 == 0) &
+                               (is.na(KDIGO_df$MAX_KDIGO_ICU_D2toD3)==T | KDIGO_df$MAX_KDIGO_ICU_D2toD3 == 0) &
+                                 KDIGO_df$MAX_KDIGO_ICU_D4toD7 %in% c(1,2,3,4)))
+
+#Compare with previous version
+KDIGO_df_old <- read.csv(paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df_011522.csv"),stringsAsFactors = F)
+KDIGO_df_new <- read.csv(paste0(outdir,"KDIGO_MAX_ICU_D0D7_df.csv"),stringsAsFactors = F)
+
+KDIGO_df_old[which(is.na(KDIGO_df_old)==T,arr.ind = T)] <- 0
+KDIGO_df_new[which(is.na(KDIGO_df_new)==T,arr.ind = T)] <- 0
+
+identical(KDIGO_df_old$MAX_KDIGO_ICU_D0toD3,KDIGO_df_new$MAX_KDIGO_ICU_D0toD3)
+
+table(KDIGO_df_old$MAX_KDIGO_ICU_D0toD3)
+table(KDIGO_df_new$MAX_KDIGO_ICU_D0toD3)
 
 ########################################################################################
 #'@NOTE_CHECK: Check all on RRT inICU_D0_D3 must has KDIGO=4, not on RRT IDs must not have KDIGO=4
