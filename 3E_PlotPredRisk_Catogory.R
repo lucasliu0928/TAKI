@@ -1,5 +1,10 @@
 source("TAKI_Ultility.R")
 library(ggplot2)
+library("extrafont")
+library(extrafontdb)
+font_import()
+fonts()
+loadfonts(device = "postscript") ## for postscript devie()
 
 process_catogory_data_func <- function(predicted_catogory_df){
   #predicted_catogory_df <- UK_mortality_catogory_df
@@ -31,9 +36,9 @@ plot_risk_categoryAndIncidence_func <- function(plot_data,y_left_max,outcome_nam
   p<-ggplot(data=plot_data, aes(x=Risk_Category, y=NUM_PTs_PredINCatogory)) +
     geom_bar(aes(fill = Cohort_NAME), position=position_dodge(),stat="identity")+
     scale_fill_manual(breaks = c("UKY", "UTSW"),values=c("dodgerblue4", "firebrick4")) + 
-    geom_point(aes(x = Risk_Category, y = scale_2nd_y*PERC_PTs_OUTCOME1,shape = Cohort_NAME,color = Cohort_NAME), size = 5) + #scale the second y by 12
+    geom_point(aes(x = Risk_Category, y = scale_2nd_y*PERC_PTs_OUTCOME1,shape = Cohort_NAME,color = Cohort_NAME), size = 8) + #scale the second y by 12
     scale_shape_manual(breaks = c("UKY", "UTSW"), values=c(15, 19)) + 
-    geom_line(aes(x = Risk_Category, y = scale_2nd_y*PERC_PTs_OUTCOME1, group = Cohort_NAME,color = Cohort_NAME), size = 1) + #scale the second y by 12
+    geom_line(aes(x = Risk_Category, y = scale_2nd_y*PERC_PTs_OUTCOME1, group = Cohort_NAME,color = Cohort_NAME), size = 2) + #scale the second y by 12
     scale_y_continuous(limits = c(0, y_left_max), breaks = seq(0, y_left_max, by = 200), 
                        sec.axis = sec_axis(~./scale_2nd_y, name = "Outcome Incidence (%)")) +     # adds the secondary Y-axis
     scale_color_manual(breaks = c("UKY", "UTSW"),values=c("dodgerblue3", "firebrick3")) + 
@@ -127,6 +132,20 @@ p3 <- ggarrange(p1, p2,
 tiff(paste0(proj_dir,"RiskCategory_Plot/","Mortality_And_MAKE",".tiff"), units="in", width=20, height=16, res=300)
 print(p3)
 dev.off()
+
+#EPS format
+p3 <- ggarrange(p1, p2,
+                labels = c("A.Hospital Mortality", "B.MAKE"),
+                hjust = c(-0.04,-0.08),
+                font.label = list(size = 30, color = "black", face = "bold", family = NULL, align = "hv"),
+                ncol = 1, nrow = 2)
+postscript(paste0(proj_dir,"RiskCategory_Plot/","Mortality_And_MAKE",".eps"), 
+           height = 16, width = 20,
+           family = "Arial", paper = "special", onefile = FALSE,
+           horizontal = FALSE,colormodel= "cmyk")
+print(p3)
+dev.off()
+
 
 ################################################################################################## 
 ######                         MAKE For survivors                                           ############## 
