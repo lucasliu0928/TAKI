@@ -12,6 +12,12 @@ out_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Proje
 
 ####################################################################################
 #### 1. Load data
+#'@IMPORTANT_NOTE_For_sCr:
+#'In "All_Feature_NOTimputed.csv, "Baseline_sCr" contains values measured values with reolved by EPI(Resolve EGFR = 75)
+#'But in  add_listofvar_func, for data of discrptiive stats
+#'"Baseline_sCr":                measured scr, missings are coded as NA
+#'"Baseline_sCr_Resolving75EPI": measured scr, missing are filled with revolsing EPi with 75
+#'"Baseline_sCr_RegImputation":  measured scr, and missings are filled with regression model (Refer to function for details)
 ####################################################################################
 feature_file <- "Model_Feature_Outcome/All_Feature_NOTimputed.csv"
 outcome_file <- "Model_Feature_Outcome/All_outcome.csv"
@@ -141,15 +147,20 @@ write.csv(final_supp_tb3,paste0(out_dir,"Supp_table3.csv"),row.names = F)
 #### table1. Discriptive stats for All cohaort
 #'@NOte: Vasopressor_ICUD0toD3 is the same as  Pressor/Inotrope
 ####################################################################################
-var_list <- c("AGE","GENDER","RACE","BMI","CHARLSON_SCORE","TOTAL_ELIX","Diabetes","Hypertension","Baseline_eGFR","CKD",
+var_list <- c("AGE","GENDER","RACE","BMI","CHARLSON_SCORE","TOTAL_ELIX","Diabetes","Hypertension","Baseline_eGFR",
+              "CKD","CKD_UseDiagTerms","CKD_UseICDCodes",
               "SOFA_TOTAL","APACHE_TOTAL","Vasopressor_ICUD0toD3","Days_inHOSP","Hours_inICUD0toD3","ECMO_ICUD0toD3","IABP_ICUD0toD3","VAD_ICUD0toD3","MV_ICUD0toD3","Days_MV_ICUD0toD3",
               "Sepsis_Before_or_At_Admission","UrineOutput_D0toD3","UrineFlow_D0toD3","FluidOverload_inPercentage",
               "Bicarbonate_D1_AVGof(LOWHIGH)","BUN_D0toD3_HIGH","Hematocrit_D1_AVGof(LOWHIGH)","Hemoglobin_D1_AVGof(LOWHIGH)",
-              "Baseline_sCr","Admit_sCr","Peak_SCr_inICU_D0_D3","LastSCr_inICU_D0_D3","MAX_KDIGO_ICU_D0toD3","LAST_KDIGO_ICU_D0toD3",
+              "Baseline_sCr",
+              "Baseline_sCr_Measured_And_Resolving75EPI",
+              "Baseline_sCr_OnlyResolving75EPI",
+              "Baseline_sCr_Measured_And_RegImputation",
+              "Baseline_sCr_OnlyRegImputation",
+              "Admit_sCr","Peak_SCr_inICU_D0_D3","LastSCr_inICU_D0_D3","MAX_KDIGO_ICU_D0toD3","LAST_KDIGO_ICU_D0toD3",
               "onRRT_ICUD0toD3","RRTinfo_ICUD0toD3",
-              "CRRT_Days_inICUD0toD3","HD_Days_inICUD0toD3")
-
-
+              "CRRT_Days_inICUD0toD3","HD_Days_inICUD0toD3",
+              "Vasopressor_NUMMeds_ICUD0toD3")
 #For UK
 UK_tb4 <- compute_stats_func(UK_data,"UK",var_list)
 
@@ -160,7 +171,7 @@ comb_supptb4 <- cbind(UK_tb4,UTSW_tb4)
 
 write.csv(comb_supptb4,paste0(out_dir,"table1.csv"),row.names = F)
 
-
+table(UK_data$Vasopressor_NUMMeds_ICUD0toD3)
 
 ####################################################################################
 #### 7. Final ID raw time info
