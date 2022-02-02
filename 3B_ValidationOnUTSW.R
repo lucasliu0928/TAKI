@@ -30,8 +30,8 @@ main_func <-function(train_data,Validation_data,outcome_colname,upsample_flag,N_
 
 
 #Data dir
-UK_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
-UTSW_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/Model_Feature_Outcome/"
+UK_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/uky/Model_Feature_Outcome/"
+UTSW_data_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/utsw/Model_Feature_Outcome/"
 
 #out dir
 out_dir <- "//Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/ExternalV_performance/"
@@ -133,6 +133,122 @@ upsample_flag <- 3 #random sample 0.8 of train data with replacement for bootstr
 N_sampling <- 10
 method_list <- c("SVM","RF","LogReg","XGB")
 main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list)
+
+
+
+####################################################################################### 
+######                           Mortality Prediction   4                  ############
+#feature file: SOFA.csv, directly get risk w/o train models on UK
+#Outcome file: All_outcome.csv
+#Rules: "Serial evaluation of the SOFA score to predict outcome in critically ill patients"
+#Initial SOFA, Mortality Risk 
+#0-1,   0
+#2-3,   0.06
+#4-5,   0.20
+#6-7,   0.22
+#8-9,   0.33
+#10-11, 0.50
+#>11,   0.96
+####################################################################################### 
+#1.Feature file
+feature_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/utsw/xilong_extracted/"
+feature_file <- "All variables for each patients 07212021.csv"
+
+#2.Outcome column name
+outcome_file <- "All_outcome.csv"
+outcome_colname <- "Death_inHOSP"
+
+#3.Outdir for mortality
+outdir1 <- paste0(out_dir,"mortality/SOFA_Direct/")
+
+
+#1.Get model data
+feature_data <- read.csv(paste0(feature_dir,feature_file),stringsAsFactors = F)
+Outcome_data    <- read.csv(paste0(UTSW_data_dir,outcome_file),stringsAsFactors = F)
+#2.Computer predcition
+pred_df <- as.data.frame(matrix(NA, nrow = nrow(feature_data),ncol = 4))
+colnames(pred_df) <- c("ID","SOFA","pred_prob","Label")
+for (i in 1:nrow(feature_data)){
+  curr_id    <- feature_data[i,"STUDY_PATIENT_ID"]
+  curr_sofa  <- feature_data[i,"SOFA"]
+  curr_label <- Outcome_data[which(Outcome_data$STUDY_PATIENT_ID == curr_id),"Death_inHOSP"]
+  curr_risk  <- compute_sofa_direct_risk(curr_sofa)
+
+  pred_df[i,"ID"] <- curr_id
+  pred_df[i,"SOFA"] <- curr_sofa
+  pred_df[i,"pred_prob"] <- curr_risk
+  pred_df[i,"Label"] <- curr_label
+  
+}
+
+#get prediction class from predicted risk
+pred_df$pred_class <- get_pred_class_func(pred_df[,"pred_prob"])
+write.csv(pred_df, paste0(outdir1,"Prediction_SOFADirect.csv"),row.names = F)
+
+#Get performance
+pred_df$TrainingSample_Index <- "S1" #Add a training index so that the following perforamcne fucntion can be used
+eachSample_perf_tb <- compute_performance_ExternalValidation_func(1,pred_df)
+write.csv(eachSample_perf_tb, paste0(outdir1,"Performance_PerFoldPerSample_SOFADirect.csv"),row.names = F)
+
+#'@NOTE: Cannot get CI and mean perforamnce since the score is directly comptued, there is no training sample differntce compring to other methods
+
+
+####################################################################################### 
+######                           Mortality Prediction   5                  ############
+#feature file: APACHE.csv,  directly get risk w/o train models on UK
+#Outcome file: All_outcome.csv
+#Rules: "APACHE II: A severity of disease classification system"
+#APACHE II, Mortality Risk 
+#0-4,   0.04
+#5-9,   0.07
+#10-14, 0.13
+#15-19, 0.25
+#20-24, 0.42
+#25-29, 0.55
+#30-34, 0.73
+#>=35,  0.84
+####################################################################################### 
+#1.Feature file
+feature_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/utsw/xilong_extracted/"
+feature_file <- "All variables for each patients 07212021.csv"
+
+#2.Outcome column name
+outcome_file <- "All_outcome.csv"
+outcome_colname <- "Death_inHOSP"
+
+#3.Outdir for mortality
+outdir1 <- paste0(out_dir,"mortality/APACHE_Direct/")
+
+#1.Get model data
+feature_data <- read.csv(paste0(feature_dir,feature_file),stringsAsFactors = F)
+Outcome_data    <- read.csv(paste0(UTSW_data_dir,outcome_file),stringsAsFactors = F)
+
+#2.Computer predcition
+pred_df <- as.data.frame(matrix(NA, nrow = nrow(feature_data),ncol = 4))
+colnames(pred_df) <- c("ID","APACHE","pred_prob","Label")
+for (i in 1:nrow(feature_data)){
+  curr_id    <- feature_data[i,"STUDY_PATIENT_ID"]
+  curr_apache  <- feature_data[i,"APACHE"]
+  curr_label <- Outcome_data[which(Outcome_data$STUDY_PATIENT_ID == curr_id),"Death_inHOSP"]
+  curr_risk  <- compute_apache_direct_risk(curr_apache)
+  
+  pred_df[i,"ID"] <- curr_id
+  pred_df[i,"APACHE"] <- curr_apache
+  pred_df[i,"pred_prob"] <- curr_risk
+  pred_df[i,"Label"] <- curr_label
+  
+}
+
+#get prediction class from predicted risk
+pred_df$pred_class <- get_pred_class_func(pred_df[,"pred_prob"])
+write.csv(pred_df, paste0(outdir1,"Prediction_APACHEDirect.csv"),row.names = F)
+
+#Get performance
+pred_df$TrainingSample_Index <- "S1" #Add a training index so that the following perforamcne fucntion can be used
+eachSample_perf_tb <- compute_performance_ExternalValidation_func(1,pred_df)
+write.csv(eachSample_perf_tb, paste0(outdir1,"Performance_PerFoldPerSample_APACHEDirect.csv"),row.names = F)
+
+#'@NOTE: Cannot get CI and mean perforamnce since the score is directly comptued, there is no training sample differntce compring to other methods
 
 
 
@@ -266,3 +382,5 @@ upsample_flag <- 3 #random sample 0.8 of train data with replacement for bootstr
 N_sampling <- 10
 method_list <- c("SVM","RF","LogReg","XGB")
 main_func(train_data,Validation_data,outcome_colname,upsample_flag,N_sampling,outdir1,method_list,n_tress_RF=500,svmkernel = 'svmLinear2',random_perc=0.8)
+
+
