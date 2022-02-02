@@ -2,8 +2,8 @@ library(lubridate)
 source("/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/TAKI_Code/TAKI_Ultility.R")
 
 #Raw data dir
-raw_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UTSW/raw_csv_files/"
-outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/"
+raw_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/Taylors_Data/UTSW/raw_csv_files/"
+outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/utsw/"
 
 
 ##########################################################################################
@@ -659,3 +659,77 @@ for (i in 1:nrow(updated_TimeInfo_df)){
 
 write.csv(updated_TimeInfo_df,paste0(outdir,"All_Corrected_Timeinfo.csv"),row.names = F)
 
+##########################################################################################
+#'@updated011322 
+#### Add 1. D4-D7 start and end time, 
+####     2. D4-D7 Start actual hours for each day, and actual days in D4,D5,D6,D7
+
+#### D4 Start  == D3 end + 1 sec, D4 End == the same day of D4 start at 23:59:59
+#### D5 Start  == D4 end + 1 sec, D5 End == the same day of D5 start at 23:59:59
+#### D6 Start  == D5 end + 1 sec, D6 End == the same day of D6 start at 23:59:59
+##########################################################################################
+updated_TimeInfo_df <- read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
+
+updated_TimeInfo_df$D4_Start <- NA
+updated_TimeInfo_df$D4_End <-  NA
+updated_TimeInfo_df$D5_Start <- NA
+updated_TimeInfo_df$D5_End <- NA
+updated_TimeInfo_df$D6_Start <- NA
+updated_TimeInfo_df$D6_End <- NA
+updated_TimeInfo_df$D7_Start <- NA
+updated_TimeInfo_df$D7_End <-NA
+
+updated_TimeInfo_df$Actual_D4_Start <- NA
+updated_TimeInfo_df$Actual_D4_End <-  NA
+updated_TimeInfo_df$Actual_D5_Start <- NA
+updated_TimeInfo_df$Actual_D5_End <- NA
+updated_TimeInfo_df$Actual_D6_Start <- NA
+updated_TimeInfo_df$Actual_D6_End <- NA
+updated_TimeInfo_df$Actual_D7_Start <- NA
+updated_TimeInfo_df$Actual_D7_End <-NA
+updated_TimeInfo_df$Actual_D4_ICUHours <- NA
+updated_TimeInfo_df$Actual_D5_ICUHours <- NA
+updated_TimeInfo_df$Actual_D6_ICUHours <- NA
+updated_TimeInfo_df$Actual_D7_ICUHours <- NA
+updated_TimeInfo_df$Actual_ICU_StaysD0_D7 <- NA
+for (i in 1:nrow(updated_TimeInfo_df)){
+  if (i %% 1000 ==0){print(i)}
+  
+  #Time info
+  curr_time_df <- updated_TimeInfo_df[i,]
+  curr_icu_start <- ymd_hms(curr_time_df[,"Updated_ICU_ADMIT_DATE"])
+  curr_icu_end   <- ymd_hms(curr_time_df[,"Updated_ICU_DISCHARGE_DATE"])
+  
+  #Get ICU D0 to D7 start and end time
+  curr_D0D7_df <- get_D0toD7_dates_func(curr_icu_start,curr_icu_end)
+  
+  updated_TimeInfo_df$D4_Start[i] <- curr_D0D7_df[which(curr_D0D7_df[,"Day"] == 4 ),"Day_start"]
+  updated_TimeInfo_df$D4_End[i]   <- curr_D0D7_df[which(curr_D0D7_df[,"Day"] == 4 ),"Day_End"]
+  updated_TimeInfo_df$D5_Start[i] <- curr_D0D7_df[which(curr_D0D7_df[,"Day"] == 5 ),"Day_start"]
+  updated_TimeInfo_df$D5_End[i]   <- curr_D0D7_df[which(curr_D0D7_df[,"Day"] == 5 ),"Day_End"]
+  updated_TimeInfo_df$D6_Start[i] <- curr_D0D7_df[which(curr_D0D7_df[,"Day"] == 6 ),"Day_start"]
+  updated_TimeInfo_df$D6_End[i]   <- curr_D0D7_df[which(curr_D0D7_df[,"Day"] == 6 ),"Day_End"]
+  updated_TimeInfo_df$D7_Start[i] <- curr_D0D7_df[which(curr_D0D7_df[,"Day"] == 7 ),"Day_start"]
+  updated_TimeInfo_df$D7_End[i]   <- curr_D0D7_df[which(curr_D0D7_df[,"Day"] == 7 ),"Day_End"]
+  
+  #Get the actual hours for each day 
+  curr_filtered_D0D7_df <- compute_actualhours_EachDay(curr_D0D7_df,curr_icu_end)
+  updated_TimeInfo_df$Actual_D4_Start[i] <- curr_filtered_D0D7_df[which(curr_filtered_D0D7_df[,"Day"] == 4 ),"Day_start"]
+  updated_TimeInfo_df$Actual_D4_End[i]   <- curr_filtered_D0D7_df[which(curr_filtered_D0D7_df[,"Day"] == 4 ),"Day_End"]
+  updated_TimeInfo_df$Actual_D5_Start[i] <- curr_filtered_D0D7_df[which(curr_filtered_D0D7_df[,"Day"] == 5 ),"Day_start"]
+  updated_TimeInfo_df$Actual_D5_End[i]   <- curr_filtered_D0D7_df[which(curr_filtered_D0D7_df[,"Day"] == 5 ),"Day_End"]
+  updated_TimeInfo_df$Actual_D6_Start[i] <- curr_filtered_D0D7_df[which(curr_filtered_D0D7_df[,"Day"] == 6 ),"Day_start"]
+  updated_TimeInfo_df$Actual_D6_End[i]   <- curr_filtered_D0D7_df[which(curr_filtered_D0D7_df[,"Day"] == 6 ),"Day_End"]
+  updated_TimeInfo_df$Actual_D7_Start[i] <- curr_filtered_D0D7_df[which(curr_filtered_D0D7_df[,"Day"] == 7 ),"Day_start"]
+  updated_TimeInfo_df$Actual_D7_End[i]   <- curr_filtered_D0D7_df[which(curr_filtered_D0D7_df[,"Day"] == 7 ),"Day_End"]
+  
+  updated_TimeInfo_df$Actual_D4_ICUHours[i] <- curr_filtered_D0D7_df[which(curr_filtered_D0D7_df[,"Day"] == 4 ),"Hours_InOneDay"]
+  updated_TimeInfo_df$Actual_D5_ICUHours[i] <- curr_filtered_D0D7_df[which(curr_filtered_D0D7_df[,"Day"] == 5 ),"Hours_InOneDay"]
+  updated_TimeInfo_df$Actual_D6_ICUHours[i] <- curr_filtered_D0D7_df[which(curr_filtered_D0D7_df[,"Day"] == 6 ),"Hours_InOneDay"]
+  updated_TimeInfo_df$Actual_D7_ICUHours[i] <- curr_filtered_D0D7_df[which(curr_filtered_D0D7_df[,"Day"] == 7 ),"Hours_InOneDay"]
+  
+  #Get the actual stayed days D0,D1,D2,D3,D4,D5,D6,D7
+  updated_TimeInfo_df$Actual_ICU_StaysD0_D7[i] <- get_acutal_Days_inICU(curr_filtered_D0D7_df)
+}
+
+write.csv(updated_TimeInfo_df,paste0(outdir,"All_Corrected_Timeinfo_ADD_D4toD7.csv"),row.names = F)
