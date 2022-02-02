@@ -38,7 +38,7 @@ plot_calibration_manually <- function(riskCategory,model_name,risk_category_name
 }
 
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/"
-outdir <- "/Users/lucasliu/Desktop/Calibration_Explanation/"
+outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/Calibration_Explanation010522/"
 
 ################################################################################################## 
 ######                         Mortality                                            ############## 
@@ -64,10 +64,10 @@ UTSW_riskCategory1     <-  compute_avg_pred_risk_and_risk_category2("UTSW",outco
 UTSW_riskCategory2     <-  compute_avg_pred_risk_and_risk_category2("UTSW",outcome_name,UTSW_mortality_dir,method_name,model2,risk_category_list,risk_category_names)
 UTSW_riskCategory3     <-  compute_avg_pred_risk_and_risk_category2("UTSW",outcome_name,UTSW_mortality_dir,method_name,model3,risk_category_list,risk_category_names)
 
-p1 <- plot_calibration_manually(UK_riskCategory1,model1,risk_category_names)
+p1 <- plot_calibration_manually(UK_riskCategory1,"Clinical Model",risk_category_names)
 p2 <- plot_calibration_manually(UK_riskCategory2,model2,risk_category_names)
 p3 <- plot_calibration_manually(UK_riskCategory3,model3,risk_category_names)
-p4 <- plot_calibration_manually(UTSW_riskCategory1,model1,risk_category_names)
+p4 <- plot_calibration_manually(UTSW_riskCategory1,"Clinical Model",risk_category_names)
 p5 <- plot_calibration_manually(UTSW_riskCategory2,model2,risk_category_names)
 p6 <- plot_calibration_manually(UTSW_riskCategory3,model3,risk_category_names)
 
@@ -116,9 +116,9 @@ UK_MAKEriskCategory2 <- compute_avg_pred_risk_and_risk_category2("UK",outcome_na
 UTSW_MAKEriskCategory1 <- compute_avg_pred_risk_and_risk_category2("UTSW",outcome_name,UTSW_MAKE_dir,method_name,model1,risk_category_list,risk_category_names)
 UTSW_MAKEriskCategory2 <- compute_avg_pred_risk_and_risk_category2("UTSW",outcome_name,UTSW_MAKE_dir,method_name,model2,risk_category_list,risk_category_names)
 
-p7 <- plot_calibration_manually(UK_MAKEriskCategory1,model1,risk_category_names)
+p7 <- plot_calibration_manually(UK_MAKEriskCategory1,"Clinical Model",risk_category_names)
 p8 <- plot_calibration_manually(UK_MAKEriskCategory2,model2,risk_category_names)
-p9 <- plot_calibration_manually(UTSW_MAKEriskCategory1,model1,risk_category_names)
+p9 <- plot_calibration_manually(UTSW_MAKEriskCategory1,"Clinical Model",risk_category_names)
 p10 <- plot_calibration_manually(UTSW_MAKEriskCategory2,model2,risk_category_names)
 
 
