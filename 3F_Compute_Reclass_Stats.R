@@ -12,11 +12,16 @@ baseline_model_file  <- "/SOFA/Prediction_RF.csv"
 comprison_model_file1 <- "/APACHE/Prediction_RF.csv"
 comprison_model_file2 <- "/SelectedClinicalFeature15Vars/Prediction_RF.csv"
 
+#compare APAHCE and SOFA
 reclass_res1 <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file1,cutoff = c(0,0.5,1))
 colnames(reclass_res1)[2] <- paste0("APACHEvsSOFA_",colnames(reclass_res1)[2])
+#compare clinical model and SOFA
 reclass_res2 <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file2,cutoff = c(0,0.5,1))
 colnames(reclass_res2)[2] <- paste0("SelectedClinicalFeature15VarsvsSOFA_",colnames(reclass_res2)[2])
-comb_res <- cbind(reclass_res1,reclass_res2)
+#compare clinical model and APAHCE
+reclass_res3 <- compute_IDI_NRI_func(perf_dir,comprison_model_file1,comprison_model_file2,cutoff = c(0,0.5,1))
+colnames(reclass_res3)[2] <- paste0("SelectedClinicalFeature15VarsvsAPACHE_",colnames(reclass_res3)[2])
+comb_res <- cbind(reclass_res1,reclass_res2,reclass_res3)
 write.csv(comb_res,paste0(perf_dir,"UK_SelectedClinicalFeature15Vars_Mortality_ReclassResults_RF.csv"))
 
 #2. UTSW
@@ -29,7 +34,11 @@ reclass_res1 <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_mode
 colnames(reclass_res1)[2] <- paste0("APACHEvsSOFA_",colnames(reclass_res1)[2])
 reclass_res2 <- compute_IDI_NRI_func(perf_dir,baseline_model_file,comprison_model_file2,cutoff = c(0,0.5,1))
 colnames(reclass_res2)[2] <- paste0("SelectedClinicalFeature15VarsvsSOFA_",colnames(reclass_res2)[2])
-comb_res <- cbind(reclass_res1,reclass_res2)
+
+#compare clinical model and APAHCE
+reclass_res3 <- compute_IDI_NRI_func(perf_dir,comprison_model_file1,comprison_model_file2,cutoff = c(0,0.5,1))
+colnames(reclass_res3)[2] <- paste0("SelectedClinicalFeature15VarsvsAPACHE_",colnames(reclass_res3)[2])
+comb_res <- cbind(reclass_res1,reclass_res2,reclass_res3)
 write.csv(comb_res,paste0(perf_dir,"UTSW_SelectedClinicalFeature15Vars_Mortality_ReclassResults_RF.csv"))
 
 ###############################################################
