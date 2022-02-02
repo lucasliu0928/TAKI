@@ -1,10 +1,10 @@
 library(lubridate)
 
 #Raw data dir
-intermediate_dir1 <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/xilong_extracted/"
-intermediate_dir2 <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/"
+intermediate_dir1 <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/utsw/xilong_extracted/"
+intermediate_dir2 <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/utsw/"
 
-outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/utsw/"
+outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/utsw/"
 
 
 ##########################################################################################
@@ -29,15 +29,22 @@ raw_CharlsonAndElix_df[which(is.na(raw_CharlsonAndElix_df[,elix_col_names]==T),a
 #Use imputed eGFR for CKD (imputed means set to 75 )
 baselineEGFR_df <- read.csv(paste0(intermediate_dir2,"Baseline_EGFR.csv"),stringsAsFactors = F)
 
+#Use Diagnosis terms for CKD 
+CKD_df <- read.csv(paste0(intermediate_dir2,"All_CKD_UseDiagTerms.csv"),stringsAsFactors = F)
+##Use ICD codes for CKD
+CKD_df2 <- read.csv(paste0(intermediate_dir2,"All_CKD_UseDiagCodes.csv"),stringsAsFactors = F)
 
-Final_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 6))
-colnames(Final_df) <- c("STUDY_PATIENT_ID","CHARLSON_SCORE","TOTAL_ELIX","Diabetes","Hypertension","CKD")
+Final_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 8))
+colnames(Final_df) <- c("STUDY_PATIENT_ID","CHARLSON_SCORE","TOTAL_ELIX","Diabetes",
+                        "Hypertension","CKD","CKD_UseDiagTerms","CKD_UseICDCodes")
 for (i in 1:length(analysis_ID)){
   curr_id <- analysis_ID[i]
   Final_df[i,"STUDY_PATIENT_ID"] <- curr_id
   
   curr_charlsonAndElix_df     <-  raw_CharlsonAndElix_df[which(raw_CharlsonAndElix_df[,"STUDY_PATIENT_ID"] == curr_id),]
   curr_baselineEGFR_df <-  baselineEGFR_df[which(baselineEGFR_df[,"STUDY_PATIENT_ID"] == curr_id),]
+  curr_ckd_diag_df     <-  CKD_df[which(CKD_df[,"STUDY_PATIENT_ID"] == curr_id),]
+  curr_ckd_diag_df2     <-  CKD_df2[which(CKD_df2[,"STUDY_PATIENT_ID"] == curr_id),]
   
   #Charlson score
   Final_df[i,"CHARLSON_SCORE"] <- curr_charlsonAndElix_df[,"charlson_F"]
@@ -65,6 +72,21 @@ for (i in 1:length(analysis_ID)){
   }else{
     Final_df[i,"CKD"] <- 0
   }
+  
+  #CKD version 2: use diagnosis term
+  if(curr_ckd_diag_df[,"CKD_UseDiagTerms"] == 1){
+    Final_df[i,"CKD_UseDiagTerms"] <- 1
+  }else{
+    Final_df[i,"CKD_UseDiagTerms"] <- 0
+  }
+  
+  #CKD version 3: use ICD codes
+  if(curr_ckd_diag_df2[,"CKD_UseDiagCodes"] == 1){
+    Final_df[i,"CKD_UseICDCodes"] <- 1
+  }else{
+    Final_df[i,"CKD_UseICDCodes"] <- 0
+  }
+  
 }
 
 write.csv(Final_df,paste0(outdir,"All_Charlson_ELIX_Diabetes_Hypertension_CKD.csv"),row.names = F)
