@@ -152,6 +152,10 @@ outdir   <- paste0(proj_dir,"mortality/")
 
 unique_important_f_df <- get_important_features_and_cooordinates(perf_dir,select_f_dir,15)
 unique_important_f_df <- change_f_names_func(unique_important_f_df)
+#Report unselected/selected status features
+write.csv(unique_important_f_df,paste0(outdir,"Top15UnionFeatures_SelectionStatus.csv"))
+
+
 mortality_plot <- plot_topfeatures_func(unique_important_f_df,"Hospital Mortality")
 png(paste0(outdir,"Mortality_Important_feature_plot.png"),width = 3000,height = 3000,res = 120)
 print(mortality_plot)
@@ -172,6 +176,7 @@ print(mortality_venn_p)
 dev.off()
 
 
+
 ########################### MAKE  ########################### 
 perf_dir <- paste0(proj_dir, "make120_drop50/AllClinicalFeature/")
 select_f_dir <- paste0(proj_dir, "make120_drop50/SelectedClinicalFeature14Vars/")
@@ -180,6 +185,10 @@ outdir   <- paste0(proj_dir,"make120_drop50/")
 
 unique_important_f_df <- get_important_features_and_cooordinates(perf_dir,select_f_dir,15)
 unique_important_f_df <- change_f_names_func(unique_important_f_df)
+
+#Report unselected/selected status features
+write.csv(unique_important_f_df,paste0(outdir,"Top15UnionFeatures_SelectionStatus.csv"))
+
 
 MAKE_plot <- plot_topfeatures_func_MAKE(unique_important_f_df,"MAKE")
 png(paste0(outdir,"MAKE_Important_feature_plot.png"),width = 3000,height = 3000,res = 300)
@@ -203,7 +212,7 @@ dev.off()
 
 
 
-########################### Cobine Make and mortality 
+########################### Combine Make and mortality 
 library(ggpubr)
 outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/Important_feature_Venn_Plots/"
 scatter_plot <- ggarrange(mortality_plot,MAKE_plot, 
