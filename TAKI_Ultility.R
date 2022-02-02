@@ -804,6 +804,40 @@ get_D0toD3_dates_func <- function(icu_start,icu_end){
   return(D0D3_df)
 }
 
+
+get_D0toD7_dates_func <- function(icu_start,icu_end){
+  D0D7_df <- as.data.frame(matrix(NA, nrow = 8, ncol = 3))
+  colnames(D0D7_df) <- c("Day","Day_start","Day_End")
+  D0D7_df$Day <- seq(0,7)
+  for (i in 1:8){
+    if (i == 1){
+      if (nchar(as.character(icu_start)) == 10){
+        D0D7_df[i, "Day_start"] <- paste(as.character(icu_start),"00:00:00")
+      }else{    
+        D0D7_df[i, "Day_start"] <- as.character(icu_start)
+      }
+      D0D7_df[i, "Day_End"]   <- as.character(get_sameDay_lasttime_func(icu_start))
+    }else{
+      D0D7_df[i, "Day_start"] <- paste(as.character(ymd_hms(D0D7_df[i-1, "Day_End"]) + seconds(1)),"00:00:00")
+      D0D7_df[i, "Day_End"]   <- as.character(get_sameDay_lasttime_func(ymd_hms(D0D7_df[i, "Day_start"])))
+    }
+  }
+  
+  #Reformat Add 00:00:00
+  aval_n <- length(which(is.na(D0D7_df[,"Day_start"])==F))
+  for (i in 1:aval_n){
+    curr_start <- D0D7_df[i,"Day_start"]
+    if (nchar(curr_start) == 10){
+      D0D7_df[i,"Day_start"] <- paste(D0D7_df[i,"Day_start"],"00:00:00")
+    }
+    curr_end <- D0D7_df[i,"Day_End"]
+    if (nchar(curr_end) == 10){
+      D0D7_df[i,"Day_End"] <- paste(D0D7_df[i,"Day_End"],"00:00:00")
+    }
+  }
+  return(D0D7_df)
+}
+
 #get Scr df in window
 get_value_df_inWindow_func <- function(pt_df,window_start, window_end,time_col){
   # pt_df <- pt_scr_df
@@ -1023,7 +1057,7 @@ get_RRT_KDIGO_df_ICUD0D3 <- function(rrt_start,rrt_end,rrt_end_extension,icu_sta
   curr_end_plus48hours <- rrt_end + hours(rrt_end_extension)
   
   #1.Get KDIGO df for all RRT duration + 48 hours
-  rrt_time_byday <- seq(rrt_start,curr_end_plus48hours,by="hours")
+  rrt_time_byday <- seq(rrt_start,curr_end_plus48hours,by="5 min")
   RRT_KDIGO_df <- as.data.frame(matrix(NA, nrow  = length(rrt_time_byday), ncol = 2))
   colnames(RRT_KDIGO_df) <- c("Time","KDIGO")
   RRT_KDIGO_df[,"Time"] <- as.character(rrt_time_byday)
@@ -1039,6 +1073,74 @@ get_RRT_KDIGO_df_ICUD0D3 <- function(rrt_start,rrt_end,rrt_end_extension,icu_sta
     inICUd0_d3_idxes <- which(ymd_hms(RRT_KDIGO_df[,"Time"]) >= icu_start & ymd_hms(RRT_KDIGO_df[,"Time"]) <= last_icu_time)
     if(length(inICUd0_d3_idxes) >0){
       RRT_KDIGO_df <- RRT_KDIGO_df[inICUd0_d3_idxes,]
+    }else{
+      RRT_KDIGO_df <- NULL
+    }
+  }else{ #remove every thing
+    RRT_KDIGO_df <- NULL
+  }
+  
+  return(RRT_KDIGO_df)
+  
+}
+
+#Added 011422
+get_maxKDIGO_usingScr_inOneDay <- function(input_kdigo_df, day_start_t, day_end_t){
+  # input_kdigo_df <- curr_SCR_KDIGO_df
+  # day_start_t    <-  curr_d_start #00:00:00 or ICU start
+  # day_end_t      <-  curr_d_end  #23:59:59 or ICU end
+
+  #Start t :#00:00:00 or ICU start
+  #End   t : #23:59:59 or ICU end
+  #So use >= and <=
+  idxes <- which(ymd_hms(input_kdigo_df[,"Time"]) >= day_start_t &  
+                   ymd_hms(input_kdigo_df[,"Time"]) <= day_end_t)
+  if (length(idxes) > 0){
+    max_kdigo <- max(input_kdigo_df[idxes,"KDIGO"]) #max KDIGO in current day
+  }else{
+    max_kdigo <- NA
+  }
+  return(max_kdigo)
+}
+get_MAX_KDIGO_inMultiple_days <- function(input_kdigo_perday_df,ICU_days){
+  KDIGO_df_multipledays <- input_kdigo_perday_df[which(input_kdigo_perday_df[,"ICU_DAY"] %in% ICU_days),]
+  all_max_values <- KDIGO_df_multipledays[,"MAX_KDIGO"]
+  if (all(is.na(all_max_values))==T){
+    max_score <- NA
+  }else{
+    max_score <- max(all_max_values,na.rm = T)
+  }
+  return(max_score)
+}
+
+
+#'@TODELETE
+get_RRT_KDIGO_df_ICUD0D7 <- function(rrt_start,rrt_end,rrt_end_extension,icu_start,last_icu_time){
+  # rrt_start <- curr_hd_start
+  # rrt_end <- curr_hd_end
+  # rrt_end_extension <- 48
+  # icu_start <- curr_icu_start
+  # last_icu_time <- curr_last_ICU_time
+  
+  curr_end_plus48hours <- rrt_end + hours(rrt_end_extension)
+  
+  #1.Get KDIGO df for all RRT duration + 48 hours
+  rrt_time_byday <- seq(rrt_start,curr_end_plus48hours,by="hours")
+  RRT_KDIGO_df <- as.data.frame(matrix(NA, nrow  = length(rrt_time_byday), ncol = 2))
+  colnames(RRT_KDIGO_df) <- c("Time","KDIGO")
+  RRT_KDIGO_df[,"Time"] <- as.character(rrt_time_byday)
+  RRT_KDIGO_df[,"KDIGO"] <- 4
+  
+  
+  #if overlap between RRT time and ICU d0 to d7
+  if (is.na(rrt_start) == F){
+    onRRT_D0_D7_flag<- check_overlapp_manually_func(rrt_start,curr_end_plus48hours,icu_start,last_icu_time)
+  }
+  
+  if(onRRT_D0_D7_flag == 1){ #if on RRT in D0 to D7
+    inICUd0_d7_idxes <- which(ymd_hms(RRT_KDIGO_df[,"Time"]) >= icu_start & ymd_hms(RRT_KDIGO_df[,"Time"]) <= last_icu_time)
+    if(length(inICUd0_d7_idxes) >0){
+      RRT_KDIGO_df <- RRT_KDIGO_df[inICUd0_d7_idxes,]
     }else{
       RRT_KDIGO_df <- NULL
     }
@@ -2464,6 +2566,67 @@ apache13_func <- function(age){
   return(apache_score)
 }
 
+compute_sofa_direct_risk <- function(sofa_score){
+  #Initial SOFA, Mortality Risk 
+  #0-1,   0
+  #2-3,   0.06
+  #4-5,   0.20
+  #6-7,   0.22
+  #8-9,   0.33
+  #10-11, 0.50
+  #>11,   0.96
+  
+  if (sofa_score %in% c(0,1)){
+    risk <- 0
+  }else if (sofa_score %in% c(2,3)){
+    risk <- 0.06
+  }else if (sofa_score %in% c(4,5)){
+    risk <- 0.20
+  }else if (sofa_score %in% c(6,7)){
+    risk <- 0.22
+  }else if (sofa_score %in% c(8,9)){
+    risk <- 0.33
+  }else if (sofa_score %in% c(10,11)){
+    risk <- 0.50
+  }else if (sofa_score > 11){
+    risk <- 0.96
+  }
+  return(risk)
+}
+
+
+compute_apache_direct_risk <- function(apahce_score){
+  #APACHE II, Mortality Risk 
+  #0-4,   0.04
+  #5-9,   0.07
+  #10-14, 0.13
+  #15-19, 0.25
+  #20-24, 0.42
+  #25-29, 0.55
+  #30-34, 0.73
+  #>=35,  0.84
+  
+  if (apahce_score %in% seq(0,4)){
+    risk <- 0.04
+  }else if (apahce_score %in% seq(5,9)){
+    risk <- 0.07
+  }else if (apahce_score %in% seq(10,14)){
+    risk <- 0.13
+  }else if (apahce_score %in% seq(15,19)){
+    risk <- 0.25
+  }else if (apahce_score %in% seq(20,24)){
+    risk <- 0.42
+  }else if (apahce_score %in% seq(25,29)){
+    risk <- 0.55
+  }else if (apahce_score %in% seq(30,34)){
+    risk <- 0.73
+  }else if (apahce_score >=35){
+    risk <- 0.84
+    
+  }
+  return(risk)
+}
+
 ########################################################################
 #### Imporatnce Matrix related
 ########################################################################
@@ -3119,7 +3282,9 @@ compute_stats_func <- function(input_df,cohort_name,ordered_parameters){
       
       if(curr_f == "Total_days_HDandCRRT"){ #becaseu the number of unique value is so small, so manually do this
         Final_table[i,2] <- compute_median_p25andp75_func(curr_values,2)
-      }else if (n_unique_values > 5){ #if continous, report median and Q1Q3 
+      }else if(curr_f == "Vasopressor_NUMMeds_ICUD0toD3"){ #cuz the number of unique is so large
+        Final_table[i,2] <- compute_n_perc_func(curr_values,2)
+      } else if (n_unique_values > 5){ #if continous, report median and Q1Q3 
             Final_table[i,2] <- compute_median_p25andp75_func(curr_values,2)
       }else{
             Final_table[i,2] <- compute_n_perc_func(curr_values,2)
@@ -3149,7 +3314,7 @@ add_var_func <- function(input_df,var_name_to_add,extra_var_df){
 
 
 add_listofvar_func <- function(input_df,extra_data_dir,cohort_name){
-  # extra_data_dir <- UK_intermediate_data_dir
+  # extra_data_dir <- UK_data_dir
   # input_df <- UK_data
   # cohort_name <- "UK"
   # 
@@ -3176,6 +3341,12 @@ add_listofvar_func <- function(input_df,extra_data_dir,cohort_name){
   #Days on MV
   dayson_machine_df <-read.csv(paste0(extra_data_dir,"All_ECMO_IABP_MV_VAD_Days_in_ICUD0toD3.csv"),stringsAsFactors = F)
   
+  #Vassopressor data to get numbers (none, single, or multiple)
+  if (cohort_name == "UK"){
+  vassopressor_df <- read.csv(paste0(extra_data_dir,"All_Nephrotoxin_Vasopressor.csv"),stringsAsFactors = F)
+  }
+  
+  #SOFA and APACHE
   if (cohort_name == "UK"){
      SOFA_APACHE_df <-read.csv(paste0(extra_data_dir,"All_SOFA_APACHE_With_NotImputedFeature.csv"),stringsAsFactors = F)
   }else{
@@ -3198,22 +3369,80 @@ add_listofvar_func <- function(input_df,extra_data_dir,cohort_name){
   
   input_df <- add_var_func(input_df,"SOFA_TOTAL",SOFA_APACHE_df)
   input_df <- add_var_func(input_df,"APACHE_TOTAL",SOFA_APACHE_df)
-  
- 
   input_df <- add_var_func(input_df,"Days_MV_ICUD0toD3",dayson_machine_df)
-
-  
-  #Recode as NA for baseline Scr and eGFR for patient has no meausred ID 
-  recode_indexes <- which(input_df$STUDY_PATIENT_ID %in% noBaseline_EGFR_IDs)
-  input_df[recode_indexes,c("Baseline_eGFR","Baseline_sCr")] <- NA
   
   input_df <- add_var_func(input_df,"CHARLSON_SCORE",charlson_elix_db_ht_ckd_df)
   input_df <- add_var_func(input_df,"TOTAL_ELIX",charlson_elix_db_ht_ckd_df)
   input_df <- add_var_func(input_df,"Diabetes",charlson_elix_db_ht_ckd_df)
   input_df <- add_var_func(input_df,"Hypertension",charlson_elix_db_ht_ckd_df)
   input_df <- add_var_func(input_df,"CKD",charlson_elix_db_ht_ckd_df)
-
+  input_df <- add_var_func(input_df,"CKD_UseDiagTerms",charlson_elix_db_ht_ckd_df)
+  input_df <- add_var_func(input_df,"CKD_UseICDCodes",charlson_elix_db_ht_ckd_df)
   input_df <- add_var_func(input_df,"LastSCr_inICU_D0_D3",lastScr_df)
+  
+  
+  #Baseline Scr
+  #'@Resolved_ANd_Meausred by resolving EPI     
+  input_df[,"Baseline_sCr_Measured_And_Resolving75EPI"] <- input_df[,"Baseline_sCr"]
+  
+  #'@Measured 
+  #Recode as NA for baseline Scr and eGFR for patient has no meausred ID 
+  recode_indexes <- which(input_df$STUDY_PATIENT_ID %in% noBaseline_EGFR_IDs)
+  input_df[recode_indexes,c("Baseline_eGFR","Baseline_sCr")] <- NA
+  
+  #'@NEWImputation_And_Measured (Regression use measured data: log(sCr)~age, gender, diabetes, hypertension, then use the formula to compute for missings)
+  #"these missing SCr values were imputed using a linear regression model derived from non-missings
+  #Log-transformed SCr was the dependent variable and independent predictors included age, gender, diabetes, hypertension, and their interactions. "
+  input_df_PTs_scrMeasured <- input_df[-recode_indexes,]
+  lm_log_model = lm(log(Baseline_sCr) ~ AGE + 
+                                        GENDER + 
+                                        Hypertension + 
+                                        Diabetes + 
+                                        AGE*GENDER*Hypertension*Diabetes , data = input_df_PTs_scrMeasured)
+  input_df[,"Baseline_sCr_Measured_And_RegImputation"] <- NA
+  for (i in 1:nrow(input_df)){
+    curr_df        <- input_df[i, c("Baseline_sCr","AGE","GENDER","Hypertension","Diabetes")]
+    curr_scr       <- curr_df[,"Baseline_sCr"]
+    
+    if (is.na(curr_scr) == F){ #if not missing, = measured value
+      curr_predict_scr <- curr_scr
+    }else{ # if it is missing, use regression model to predict value
+      curr_log_scr <- as.numeric(predict(lm_log_model,curr_df))
+      curr_predict_scr <- exp(curr_log_scr)
+    }
+    
+    input_df[i,"Baseline_sCr_Measured_And_RegImputation"] <- curr_predict_scr
+    
+  }
+  
+  #'@onlyRevolved by EPI
+  input_df[,"Baseline_sCr_OnlyResolving75EPI"] <- input_df[,"Baseline_sCr_Measured_And_Resolving75EPI"]
+  input_df[-recode_indexes,"Baseline_sCr_OnlyResolving75EPI"] <- NA
+  
+  #'@onlyNew_Imputation
+  input_df[,"Baseline_sCr_OnlyRegImputation"] <- input_df[,"Baseline_sCr_Measured_And_RegImputation"]
+  input_df[-recode_indexes,"Baseline_sCr_OnlyRegImputation"] <- NA
+  
+  
+  
+  
+  #First get vassopressor medication info
+  if (cohort_name == "UK"){
+    input_df <- add_var_func(input_df,"Vasopressor_Meds_ICUD0toD3",vassopressor_df)
+    
+    #Then get Numbers of Vassopressor use (none, single or multiple)
+    input_df$Vasopressor_NUMMeds_ICUD0toD3 <- NA
+    for (i in 1:nrow(input_df)){
+      curr_meds_info <- input_df[i,"Vasopressor_Meds_ICUD0toD3"]
+      if (is.na(curr_meds_info) == T){
+        curr_meds_num <- 0
+      }else{
+        curr_meds_num  <- length(unlist(strsplit(curr_meds_info,split = "$$", fixed = T)))
+      }
+      input_df[i,"Vasopressor_NUMMeds_ICUD0toD3"] <- curr_meds_num
+    
+    }
+  }
   
   return(input_df)
 }
