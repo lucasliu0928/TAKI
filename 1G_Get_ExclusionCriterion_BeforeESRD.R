@@ -2,8 +2,8 @@ library(lubridate)
 source("TAKI_Ultility.R")
 
 #Raw data dir
-raw_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UKY/raw_csv_files/"
-outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data_Extracted/uky/"
+raw_dir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/Taylors_Data/UKY/raw_csv_files/"
+outdir <- "/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/TAKI_Data_Extracted/uky/"
 
 ##########################################################################################
 #1. Load data
@@ -24,8 +24,8 @@ KidneyTransplant_df <-read.csv(paste0(outdir,"KidneyTransplant.csv"),stringsAsFa
 Src_df <-read.csv(paste0(outdir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df.csv"),stringsAsFactors = F)
 
 #6. KIDGO in D0-D3
-KIDGO_df <-read.csv(paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"),stringsAsFactors = F)
-
+#KIDGO_df <-read.csv(paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df.csv"),stringsAsFactors = F)
+KIDGO_df <-read.csv(paste0(outdir,"KDIGO_Admit_MAX_LAST_ICU_D0D3_df_011522.csv"),stringsAsFactors = F)
 
 #7. ICU_LOS
 All_time_df <-read.csv(paste0(outdir,"All_Corrected_Timeinfo.csv"),stringsAsFactors = F)
@@ -129,4 +129,4 @@ length(updated_inclusion_IDs7) #7801
 Final_Anlaysis_ID <-as.data.frame(updated_inclusion_IDs7)
 colnames(Final_Anlaysis_ID) <- "STUDY_PATIENT_ID"
 nrow(Final_Anlaysis_ID) #7801
-write.csv(Final_Anlaysis_ID,paste0(outdir,"Final_Analysis_ID_BeforeExclusionOfESRD.csv"),row.names = F)
+#write.csv(Final_Anlaysis_ID,paste0(outdir,"Final_Analysis_ID_BeforeExclusionOfESRD.csv"),row.names = F)
