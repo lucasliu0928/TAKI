@@ -15,9 +15,21 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 import shap
 import pickle
 
+# set the font globally
+plt.rcParams.update({'font.family':'sans-serif'})
+# set the font name for a font family
+plt.rcParams.update({'font.sans-serif':'Arial'}) #Arial
+plt.rcParams['font.sans-serif']
+
 def plot_shap_summary_trainAndTest(explainer, TRAIN_X, TEST_X, ticks_value, outdir,outfile):
+    
+    # TRAIN_X = train_X
+    # TEST_X =  test_X
+    # ticks_value = [0,1]
+    # outfile = "mortality/RF_15vars_UKandUTSW_Mortality2.eps"
+    
     LARGE_SIZE =  50
-    MEDIUM_SIZE = 40
+    MEDIUM_SIZE = 35
     SMALL_SIZE = 30
     TINY_SIZE = 20
 
@@ -30,38 +42,49 @@ def plot_shap_summary_trainAndTest(explainer, TRAIN_X, TEST_X, ticks_value, outd
     plt.figure(figsize=(16, 64))
     plt.subplot(1,2,1)
     shap.summary_plot(shap_values_train, TRAIN_X, plot_size=(32, 16), show=False, color_bar = False)
-    plt.title('UKY', fontsize= LARGE_SIZE)
+    plt.title('UKY', fontsize= MEDIUM_SIZE)
     plt.xlabel('SHAP value',fontsize= MEDIUM_SIZE)
     plt.yticks(fontsize= SMALL_SIZE)
     plt.xticks(fontsize= SMALL_SIZE)
     
     cb = plt.colorbar(ticks = ticks_value,aspect=1000)
     cb.set_ticklabels(['Low/Non-EXP.', 'High/EXP.'])
-    cb.set_label(label='Feature Value',size=SMALL_SIZE, labelpad=-100)
+    cb.set_label(label='Feature Value',size=SMALL_SIZE, labelpad=-150)
     cb.ax.tick_params(labelsize=SMALL_SIZE, length=0)
     cb.set_alpha(1)
     cb.outline.set_visible(False)
     bbox = cb.ax.get_window_extent().transformed(plt.gcf().dpi_scale_trans.inverted())
     cb.ax.set_aspect((bbox.height - 0.9) * 20)
 
+    #x-axis thickness
+    ax = plt.gca()
+    ax.spines['bottom'].set_linewidth(1)
+        
     plt.subplot(1,2,2)
     shap.summary_plot(shap_values_test, TEST_X, plot_size=(32, 16), show=False, color_bar = False)
-    plt.title('UTSW', fontsize= LARGE_SIZE)
+    plt.title('UTSW', fontsize= MEDIUM_SIZE)
     plt.xlabel('SHAP value',fontsize= MEDIUM_SIZE)
     plt.yticks(fontsize= SMALL_SIZE)
     plt.xticks(fontsize= SMALL_SIZE)
 
     cb = plt.colorbar(ticks = ticks_value,aspect=1000)
     cb.set_ticklabels(['Low/Non-EXP.', 'High/EXP.'])
-    cb.set_label(label='Feature Value',size=SMALL_SIZE, labelpad=-100)
+    cb.set_label(label='Feature Value',size=SMALL_SIZE, labelpad=-150)
     cb.ax.tick_params(labelsize=SMALL_SIZE, length=0)
     cb.set_alpha(1)
     cb.outline.set_visible(False)
     bbox = cb.ax.get_window_extent().transformed(plt.gcf().dpi_scale_trans.inverted())
     cb.ax.set_aspect((bbox.height - 0.9) * 20)
     
-    plt.subplots_adjust(wspace=0.8)
-    plt.savefig(outdir + outfile, bbox_inches='tight', dpi=300)
+    #x-axis thickness
+    ax = plt.gca()
+    ax.spines['bottom'].set_linewidth(1)
+        
+    #space between two figure
+    plt.subplots_adjust(wspace=0.6)
+    
+    #plt.savefig(outdir + outfile, bbox_inches='tight', dpi=300)
+    plt.savefig(outdir + outfile, bbox_inches='tight')
 
 
 def plot_shap_summary(explainer, X, output_dir, outfile):
@@ -199,19 +222,19 @@ test_X = change_feature_name(test_X)
 model = RandomForestRegressor(max_depth=6, random_state=0, n_estimators=500)
 model.fit(train_X, train_Y)
 
-# save the model to disk
-filename = outmodeldir + 'TAKI_Mortality_model.sav'
-pickle.dump(model, open(filename, 'wb'))
+# # save the model to disk
+# filename = outmodeldir + 'TAKI_Mortality_model.sav'
+# pickle.dump(model, open(filename, 'wb'))
 
-# load the model from disk
-loaded_model = pickle.load(open(filename, 'rb'))
-y_pred = loaded_model.predict(test_X)
+# # load the model from disk
+# loaded_model = pickle.load(open(filename, 'rb'))
+# y_pred = loaded_model.predict(test_X)
 
 # Create object that can calculate shap values
 explainer = shap.TreeExplainer(model) #
 
 #Plot shap summary for UK and UTSW together
-plot_shap_summary_trainAndTest(explainer,train_X, test_X, [0,1], outdir, "mortality/RF_15vars_UKandUTSW_Mortality.tiff")
+plot_shap_summary_trainAndTest(explainer,train_X, test_X, [0,1], outdir, "mortality/RF_15vars_UKandUTSW_Mortality.eps")
 
 # # Plot shap summary for UK
 # plot_shap_summary(explainer, train_X, outdir, "mortality/RF_15vars_AllUK_SHAP_HospMortality.png")
@@ -325,19 +348,19 @@ test_X = change_feature_name(test_X)
 model = RandomForestRegressor(max_depth=6, random_state=0, n_estimators=500)
 model.fit(train_X, train_Y)
 
-# save the model to disk
-filename = outmodeldir + 'TAKI_MAKE_model.sav'
-pickle.dump(model, open(filename, 'wb'))
+# # save the model to disk
+# filename = outmodeldir + 'TAKI_MAKE_model.sav'
+# pickle.dump(model, open(filename, 'wb'))
 
-# load the model from disk
-loaded_model = pickle.load(open(filename, 'rb'))
-y_pred = loaded_model.predict(test_X)
+# # load the model from disk
+# loaded_model = pickle.load(open(filename, 'rb'))
+# y_pred = loaded_model.predict(test_X)
 
 # Create object that can calculate shap values
 explainer = shap.TreeExplainer(model) #
 
 #Plot shap summary for UK and UTSW together
-plot_shap_summary_trainAndTest(explainer,train_X, test_X,[0,4], outdir,"make120drop50/RF_14vars_UKandUTSW_MAKE50.tiff")
+plot_shap_summary_trainAndTest(explainer,train_X, test_X,[0,4], outdir,"make120drop50/RF_14vars_UKandUTSW_MAKE50.eps")
 
 # # Plot shap summary UK
 # plot_shap_summary(explainer, train_X, outdir, "make120drop50/RF_14vars_AllUK_SHAP_MAKE50.png")
