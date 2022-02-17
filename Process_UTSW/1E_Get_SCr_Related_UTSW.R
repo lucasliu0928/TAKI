@@ -472,6 +472,85 @@ identical(KDIGO_df_old$MAX_KDIGO_ICU_D0toD3,KDIGO_df_new$MAX_KDIGO_ICU_D0toD3)
 table(KDIGO_df_old$MAX_KDIGO_ICU_D0toD3)
 table(KDIGO_df_new$MAX_KDIGO_ICU_D0toD3)
 
+####################################################################################
+#'@Updated 021122, compute the AKI incidence in entire ICU
+####################################################################################
+Final_SCR_df <- read.csv(paste0(outdir,"Scr_Baseline_Admit_Peak_NUM_ICU_D0D3_df_AddedLastScr.csv"),stringsAsFactors = F)
+All_time_df <- read.csv(paste0(outdir,"All_Corrected_Timeinfo_ADD_D4toD7.csv"),stringsAsFactors = F)
+
+KDIGO_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID),ncol = 2))
+colnames(KDIGO_df) <- c("STUDY_PATIENT_ID","MAX_KDIGO_ICU_AllTime")
+for (i in  1:length(analysis_ID)){
+  if (i %% 1000 ==0){print(i)}
+  curr_id <- analysis_ID[i]
+  KDIGO_df[i,"STUDY_PATIENT_ID"] <- curr_id
+  
+  #baseline Scr
+  curr_baseline_scr <- Final_SCR_df[which(Final_SCR_df[,"STUDY_PATIENT_ID"] ==curr_id),"Baseline_SCr"]
+  
+  #Time info
+  curr_time_df <- All_time_df[which(All_time_df[,"STUDY_PATIENT_ID"] == curr_id),]
+  curr_icu_start <- ymd_hms(curr_time_df[,"Updated_ICU_ADMIT_DATE"])
+  curr_icu_end <- ymd_hms(curr_time_df[,"Updated_ICU_DISCHARGE_DATE"])
+  curr_crrt_start <- ymd_hms(curr_time_df[,"Updated_CRRT_Start"])
+  curr_crrt_end <- ymd_hms(curr_time_df[,"Updated_CRRT_End"])
+  curr_hd_start <- ymd_hms(curr_time_df[,"Updated_HD_Start"])
+  curr_hd_end <- ymd_hms(curr_time_df[,"Updated_HD_End"])
+  
+  
+  #All SCr df
+  curr_scr_df <- raw_SCR_df[which(raw_SCR_df[,"STUDY_PATIENT_ID"] == curr_id),]
+  #curr_scr_df <- curr_scr_df[duplicated(curr_scr_df$SCR_ENTERED)==F,] #drop duplicated time point
+  
+  #Get curr scr in ICU 
+  curr_scr_inICU <- get_value_df_inWindow_func(curr_scr_df,curr_icu_start,curr_icu_end,"SCR_ENTERED")
+  
+  #1.Use scr in ICU to compute KDIGO
+  if (nrow(curr_scr_inICU) > 0 & is.na(curr_baseline_scr) == F){
+    #current KIDGO for all Scr in window
+    curr_SCR_KDIGO_df    <- get_KDIGO_Score_forScrdf_func(curr_baseline_scr,curr_scr_inICU)
+    colnames(curr_SCR_KDIGO_df)[1] <- "Time"
+    curr_kdigo_using_sCr <-  max(curr_SCR_KDIGO_df["KDIGO"],na.rm = T)
+  }else {
+    curr_SCR_KDIGO_df <- NULL
+    curr_kdigo_using_sCr <-  0
+  }
+  
+  #2. check if on RRT (with 48 hours extenstion), if so, KDIGO score = 4
+  if (is.na(curr_crrt_start)== F){
+    curr_on_crrt <- check_overlapp_manually_func(curr_crrt_start,curr_crrt_end + hours(48),curr_icu_start,curr_icu_end)
+  }else{
+    curr_on_crrt <- 0
+  }
+  if (is.na(curr_hd_start)== F){
+    curr_on_hd <- check_overlapp_manually_func(curr_hd_start,curr_hd_end + hours(48),curr_icu_start,curr_icu_end)
+  }else{
+    curr_on_hd <- 0
+  }
+  
+  #if on RRT, then kdigo score = 4, otherwise use sCr kdigo score, otherwise NA
+  if (is.na(curr_on_crrt) == F & curr_on_crrt!=0){
+    curr_kidgo_score <- 4
+  }else if (is.na(curr_on_hd) == F & curr_on_hd!=0){
+    curr_kidgo_score <- 4
+  }else if (is.na(curr_kdigo_using_sCr) == F){ #if sCr is avaialble 
+    curr_kidgo_score <- curr_kdigo_using_sCr
+  }else{ #if not on RRT, no Scr avaiable
+    curr_kidgo_score <- NA
+  }
+  
+  KDIGO_df[i,"MAX_KDIGO_ICU_AllTime"]   <- curr_kidgo_score
+  
+}
+
+#Get how many patient have AKI in ICU duration
+#  0    1    2    3    4 
+#7354 1533  546  489  580
+table(KDIGO_df$MAX_KDIGO_ICU_AllTime) 
+
+#output max KDIGO in ICU entire duration
+write.csv(KDIGO_df,paste0(outdir,"KDIGO_MAX_ICU_AllTime_df.csv"))
+
 ########################################################################################
 #'@NOTE_CHECK: Check all on RRT inICU_D0_D3 must has KDIGO=4, not on RRT IDs must not have KDIGO=4
 #'#NOTE: All patient on RRT in ICU_D0_D3 have KDIGO = 4
