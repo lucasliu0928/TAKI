@@ -174,12 +174,12 @@ write.csv(comb_supptb4,paste0(out_dir,"table1.csv"),row.names = F)
 table(UK_data$Vasopressor_NUMMeds_ICUD0toD3)
 
 ####################################################################################
-#### 7. Final ID raw time info
+#### 7. Final ID raw ICU time info
 ####################################################################################
-UK_Time_data <- read.csv("/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UKY/raw_csv_files/ADMISSION_INDX.csv",stringsAsFactors = F)
+UK_Time_data <- read.csv("/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/Taylors_Data/UKY/raw_csv_files/ADMISSION_INDX.csv",stringsAsFactors = F)
 UK_Time_data$ICU_ADMIT_DATE <- mdy_hm(UK_Time_data$ICU_ADMIT_DATE)
 
-UTSW_Time_data <- read.csv("/Volumes/LJL_ExtPro/Data/AKI_Data/Taylors_Data/UTSW/raw_csv_files/tIndexedIcuAdmission.csv",stringsAsFactors = F)
+UTSW_Time_data <- read.csv("/Volumes/LJL_ExtPro/Data/AKI_Data/TAKI_Data/Taylors_Data/UTSW/raw_csv_files/tIndexedIcuAdmission.csv",stringsAsFactors = F)
 UTSW_Time_data$ICU_ADMSN_TIME <- ymd_hms(UTSW_Time_data$ICU_ADMSN_TIME)
 
 
