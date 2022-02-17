@@ -26,16 +26,25 @@ compute_avg_pred_risk_and_risk_category2 <- function(cohort_name,outcome_name,pe
 
 plot_calibration_manually <- function(riskCategory,model_name,risk_category_names){
   p <- ggplot(riskCategory, aes(x=Risk_cateogry_upperbound, y=Proportion_ACUTAL_LABEL1)) + 
-    geom_point(color="blue",size = 5)+
+    geom_point(color="blue",size = 8)+
     #geom_line(color="blue")+
     #geom_smooth(method=glm, se=FALSE, linetype="dashed", color="darkred") +
-    geom_smooth(method=glm, method.args = list(family = "binomial"), se=FALSE, linetype="dashed", color="darkred",size = 3) +
+    geom_smooth(method=glm, method.args = list(family = "binomial"), 
+                se=FALSE, linetype="dashed", color="darkred",size = 5) +
     ylim(0,1) + 
     labs(title= model_name,x ="Predicted Probability", y = "Ratio of Positives") +
     scale_x_continuous(breaks=riskCategory$Risk_cateogry_upperbound,
-                       labels=risk_category_names)
+                       labels=risk_category_names) +
+    theme_bw() + 
+    theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +
+    theme(plot.title = element_text(color="black", size=30,face = "bold"),
+          axis.title = element_text(color="black", size=30,face = "bold"),
+          axis.text.x  = element_text(color="black", size=25),
+          axis.text.y  = element_text(color="black", size=25))
   return(p)
 }
+
 
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/"
 outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Project/TAKI_Project/Intermediate_Results/Prediction_results0806/Calibration_Explanation010522/"
@@ -52,8 +61,12 @@ model2 <- "SOFA"
 model3 <- "APACHE"
 
 risk_category_list <- c(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)
-risk_category_names <- c("<=10%","(10%, 20%]", "(20%, 30%]", "(30%, 40%]", 
-                         "(40%, 50%]", "(50%, 60%]", "(60%, 70%]", "(70%, 80%]","(80%, 90%]",">90%")
+# risk_category_names <- c("<=10%","(10%, 20%]", "(20%, 30%]", "(30%, 40%]",
+#                         "(40%, 50%]", "(50%, 60%]", "(60%, 70%]", "(70%, 80%]",
+#                         "(80%, 90%]",">90%")
+risk_category_names <- c("<=10%","10%-20%", "20%-30%", "30%-40%",
+                         "40%-50%", "50%-60%", "60%-70%", "70%-80%",
+                         "80%-90%",">90%")
 
 #1. UK
 UK_riskCategory1     <- compute_avg_pred_risk_and_risk_category2("UK",outcome_name,UK_mortality_dir,method_name,model1,risk_category_list,risk_category_names)
@@ -64,30 +77,32 @@ UTSW_riskCategory1     <-  compute_avg_pred_risk_and_risk_category2("UTSW",outco
 UTSW_riskCategory2     <-  compute_avg_pred_risk_and_risk_category2("UTSW",outcome_name,UTSW_mortality_dir,method_name,model2,risk_category_list,risk_category_names)
 UTSW_riskCategory3     <-  compute_avg_pred_risk_and_risk_category2("UTSW",outcome_name,UTSW_mortality_dir,method_name,model3,risk_category_list,risk_category_names)
 
+
 p1 <- plot_calibration_manually(UK_riskCategory1,"Clinical Model",risk_category_names)
 p2 <- plot_calibration_manually(UK_riskCategory2,model2,risk_category_names)
-p3 <- plot_calibration_manually(UK_riskCategory3,model3,risk_category_names)
+p3 <- plot_calibration_manually(UK_riskCategory3,paste0(model3," II "),risk_category_names)
 p4 <- plot_calibration_manually(UTSW_riskCategory1,"Clinical Model",risk_category_names)
 p5 <- plot_calibration_manually(UTSW_riskCategory2,model2,risk_category_names)
-p6 <- plot_calibration_manually(UTSW_riskCategory3,model3,risk_category_names)
+p6 <- plot_calibration_manually(UTSW_riskCategory3,paste0(model3," II "),risk_category_names)
 
-png(paste0(outdir,"Mortality_UK_",model1,".png"),res = 100,width = 800,height = 500)
+
+png(paste0(outdir,"Mortality_UK_",model1,".png"),res = 105,width = 1800,height = 800)
 print(p1)
 dev.off()
-png(paste0(outdir,"Mortality_UK_",model2,".png"),res = 100,width = 800,height = 500)
+png(paste0(outdir,"Mortality_UK_",model2,".png"),res = 105,width = 1800,height = 800)
 print(p2)
 dev.off()
-png(paste0(outdir,"Mortality_UK_",model3,".png"),res = 100,width = 800,height = 500)
+png(paste0(outdir,"Mortality_UK_",model3,".png"),res = 105,width = 1800,height = 800)
 print(p3)
 dev.off()
 
-png(paste0(outdir,"Mortality_UTSW_",model1,".png"),res = 100,width = 800,height = 500)
+png(paste0(outdir,"Mortality_UTSW_",model1,".png"),res = 105,width = 1800,height = 800)
 print(p4)
 dev.off()
-png(paste0(outdir,"Mortality_UTSW_",model2,".png"),res = 100,width = 800,height = 500)
+png(paste0(outdir,"Mortality_UTSW_",model2,".png"),res = 105,width = 1800,height = 800)
 print(p5)
 dev.off()
-png(paste0(outdir,"Mortality_UTSW_",model3,".png"),res = 100,width = 800,height = 500)
+png(paste0(outdir,"Mortality_UTSW_",model3,".png"),res = 105,width = 1800,height = 800)
 print(p6)
 dev.off()
 
@@ -104,9 +119,11 @@ model2 <- "KDIGO"
 # risk_category_names <- c("<=10%","(10%, 30%]", "(30%, 60%]", "(60%, 90%]", ">90%")
 
 risk_category_list <- c(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)
-risk_category_names <- c("<=10%","(10%, 20%]", "(20%, 30%]", "(30%, 40%]", 
-                         "(40%, 50%]", "(50%, 60%]", "(60%, 70%]", "(70%, 80%]","(80%, 90%]",">90%")
-
+# risk_category_names <- c("<=10%","(10%, 20%]", "(20%, 30%]", "(30%, 40%]", 
+#                          "(40%, 50%]", "(50%, 60%]", "(60%, 70%]", "(70%, 80%]","(80%, 90%]",">90%")
+risk_category_names <- c("<=10%","10%-20%", "20%-30%", "30%-40%",
+                         "40%-50%", "50%-60%", "60%-70%", "70%-80%",
+                         "80%-90%",">90%")
 
 #1. UK
 UK_MAKEriskCategory1 <- compute_avg_pred_risk_and_risk_category2("UK",outcome_name,UK_MAKE_dir,method_name,model1,risk_category_list,risk_category_names)
@@ -122,14 +139,14 @@ p9 <- plot_calibration_manually(UTSW_MAKEriskCategory1,"Clinical Model",risk_cat
 p10 <- plot_calibration_manually(UTSW_MAKEriskCategory2,model2,risk_category_names)
 
 
-png(paste0(outdir,"MAKE_UK_",model1,".png"),res = 100,width = 800,height = 500)
+png(paste0(outdir,"MAKE_UK_",model1,".png"),res = 105,width = 1800,height = 800)
 print(p7)
 dev.off()
-png(paste0(outdir,"MAKE_UK_",model2,".png"),res = 100,width = 800,height = 500)
+png(paste0(outdir,"MAKE_UK_",model2,".png"),res = 105,width = 1800,height = 800)
 print(p8)
 dev.off()
 
-png(paste0(outdir,"MAKE_UTSW_",model1,".png"),res = 100,width = 800,height = 500)
+png(paste0(outdir,"MAKE_UTSW_",model1,".png"),res = 105,width = 1800,height = 800)
 print(p9)
 dev.off()
 png(paste0(outdir,"MAKE_UTSW_",model2,".png"),res = 100,width = 800,height = 500)
