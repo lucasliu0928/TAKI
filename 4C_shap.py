@@ -154,24 +154,26 @@ def intersection(lst1, lst2):
     return list(set(lst1) & set(lst2))
 
 def change_feature_name(df):
+    #Updates remove low and high
+    #for temperature, since both high and low exsits in the table, use lowest temp and highest temp
     df = df.rename(columns={"UrineOutput_D0toD3": "Urine Output", 
                             "Vasopressor_ICUD0toD3": "Pressor/Inotrope",
-                            "FI02_D1_HIGH": "FiO2 (High)",
-                            "Platelets_D1_LOW": "Platelets (Low)",
+                            "FI02_D1_HIGH": "FiO2",
+                            "Platelets_D1_LOW": "Platelets",
                             "AGE": "Age",
-                            "BUN_D0toD3_HIGH": "BUN (High)",
-                            "HR_D1_HIGH": "Heart Rate (High)",
+                            "BUN_D0toD3_HIGH": "BUN",
+                            "HR_D1_HIGH": "Heart Rate",
                             "LAST_KDIGO_ICU_D0toD3": "Last KDIGO",
-                            "PH_D1_LOW": "pH (Low)",
-                            "Bilirubin_D1_HIGH": "Bilirubin (High)",
+                            "PH_D1_LOW": "pH",
+                            "Bilirubin_D1_HIGH": "Bilirubin",
                             "MAX_KDIGO_ICU_D0toD3": "Maximum KDIGO",
                             "ECMO_ICUD0toD3": "ECMO",
                             "Hours_inICUD0toD3": "Hours in ICU",
-                            "Temperature_D1_LOW": "Temperature (Low)",
-                            "Temperature_D1_HIGH": "Temperature (High)",
-                            "Hemoglobin_D1_LOW": "Hemoglobin (Low)",
+                            "Temperature_D1_LOW": "Lowest Temperature",
+                            "Temperature_D1_HIGH": "Highest Temperature",
+                            "Hemoglobin_D1_LOW": "Hemoglobin",
                             "Admit_sCr": "ICU admission sCr",
-                            "Sodium_D1_LOW": "Serum Sodium (Low)"})
+                            "Sodium_D1_LOW": "Serum Sodium"})
     return df
 
 #######################################################################################
