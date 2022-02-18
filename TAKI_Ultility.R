@@ -192,8 +192,8 @@ correct_overlap_CRRTHD <- function(CRRT_Start,CRRT_End,HD_Start,HD_End){
     HD_End <- ymd_hms(HD_End)
     
     #Compute event duration
-    CRRT_duration<-CRRT_End-CRRT_Start
-    HD_duration<-HD_End-HD_Start
+    CRRT_duration  <-  as.numeric(difftime(CRRT_End,CRRT_Start, units = "day"))
+    HD_duration    <-  as.numeric(difftime(HD_End,HD_Start, units = "day"))
     
     
     if (CRRT_Start == HD_Start & CRRT_End < HD_End){ #1. If CRRT Start = HD_Start and CRRT_End < HD_End
