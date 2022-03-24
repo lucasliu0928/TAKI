@@ -4,6 +4,7 @@ compute_avg_pred_risk_and_risk_category2 <- function(cohort_name,outcome_name,pe
   # cohort_name <- "UK"
   # outcome_name <- "Mortality"
   # method_name <- "RF"
+  # featureset_folder <- model1
 
   #1. Load pred table
   pred_df <- read.csv(paste0(perf_dir, featureset_folder, "/Prediction_",method_name,".csv"),stringsAsFactors = F)
@@ -18,7 +19,7 @@ compute_avg_pred_risk_and_risk_category2 <- function(cohort_name,outcome_name,pe
   risk_count$Proportion_ACUTAL_LABEL1     <-   as.numeric(lapply(strsplit(gsub("\\(|\\)","",risk_count$N_andPerc_AcutalLabel1),split = " "),'[[',2))/100
   
   #order the levels
-  risk_count$Risk_Category <- factor(risk_count$Risk_Category, levels = risk_category_names )
+  #risk_count$Risk_Category <- factor(risk_count$Risk_Category, levels = risk_category_names )
   
 
   return(risk_count)
