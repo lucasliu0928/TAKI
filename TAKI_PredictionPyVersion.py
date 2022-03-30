@@ -14,6 +14,7 @@ from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
 import scipy.stats as st
 import pickle
+import joblib
 
 def downsample_func(in_data,out_col,ran_state):
     # data of each class
@@ -230,8 +231,12 @@ perf_test = compute_performance(test_Y,pred_prob_test,pred_classes_test,"ALLUK")
 perf_test.to_csv(outdir + "Py_TAKI_Moratlity_UTSW_Perf_TrainedWithAllUK.csv")
 
 # save the full model to disk
-filename = outdir + 'TAKI_Mortality_Fullmodel.sav'
+filename = outdir + 'FullModel/TAKI_Mortality_Fullmodel.sav'
 pickle.dump(RF_model, open(filename, 'wb'))
+
+#2nd way of saving model
+filename = outdir + 'FullModel/TAKI_Mortality_Fullmodel.pkl'
+joblib.dump(RF_model, filename)
 
 ##########################################################
 #MAKE
@@ -283,5 +288,9 @@ perf_test = compute_performance(test_Y,pred_prob_test,pred_classes_test,"ALLUK")
 perf_test.to_csv(outdir + "Py_TAKI_MAKE_UTSW_Perf_TrainedWithAllUK.csv")
 
 # save the full model to disk
-filename = outdir + 'TAKI_MAKE_Fullmodel.sav'
+filename = outdir + 'FullModel/TAKI_MAKE_Fullmodel.sav'
 pickle.dump(RF_model, open(filename, 'wb'))
+
+#2nd way of saving model
+filename = outdir + 'FullModel/TAKI_MAKE_Fullmodel.pkl'
+joblib.dump(RF_model, filename)
