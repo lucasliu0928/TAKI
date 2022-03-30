@@ -1,0 +1,1136 @@
+/* CSS for public-facing portion of the IBI website                           */
+/* by Melissa Clarkson and Steve Roggenkamp                                   */
+/* Institute for Biomedical Informatics                                       */
+/* University of Kentucky                                                     */
+/*                                                                            */
+/* These custom styles override Bootstrap styling                             */
+/*                                                                            */
+/* Colors from UK web standards, http://webgov.uky.edu/standards              */
+/* #0033a0 = wildcat blue                                                     */
+/* #202c5f = dark blue                                                        */
+/* #a5acaf = medium gray                                                      */
+/* #fff = white                                                               */
+/* #000 = black                                                               */
+/*                                                                            */
+/* #337ab7 is used for blue text links (Bootstrap default)                    */
+/* #727272 is used for gray text on white background                             */
+/* #f0f0f0 is used for gray backgrounds with black text                       */
+/* #e1e1e1 is used for faint gray horizontal lines                            */
+/*                                                                            */
+/* Uses Muli (sans serif) and Lora (serif) from Google fonts                  */
+/* All type set in rem off base                                               */
+/* Muli weights 300 light, 400 regular, 600 semi-bold, 700 bold               */
+/*                                                                            */
+/* Responsive breakpoints ??-550 / 551-767 / 768-991 / 992-1199 / 1200-?? px  */
+
+
+/************************************************************************/
+/*** Setting basics  ****************************************************/
+
+html {
+    font-size: 12.5pt;
+}
+
+body {
+    background-color: #fff;
+    color: #000;
+    font-family: Muli, sans-serif;
+    font-size: 12.5pt;
+    line-height: 1.4;
+    margin-top: 120px; /* adjust for fixed header 120px in height */
+}
+
+@media (max-width: 767px) {
+    body {
+        margin-top: 80px; /* adjust for menu bar in fixed header not displayed at this 767px and narrower */
+    }
+}
+
+/************************************************************************/
+/*** Adjust Bootstrap column layout, add more space to gutters  *********/
+
+.col-xs-1, .col-sm-1, .col-md-1, .col-lg-1, .col-xs-2, .col-sm-2, .col-md-2, .col-lg-2, .col-xs-3, .col-sm-3, .col-md-3, .col-lg-3, .col-xs-4, .col-sm-4, .col-md-4, .col-lg-4, .col-xs-5, .col-sm-5, .col-md-5, .col-lg-5, .col-xs-6, .col-sm-6, .col-md-6, .col-lg-6, .col-xs-7, .col-sm-7, .col-md-7, .col-lg-7, .col-xs-8, .col-sm-8, .col-md-8, .col-lg-8, .col-xs-9, .col-sm-9, .col-md-9, .col-lg-9, .col-xs-10, .col-sm-10, .col-md-10, .col-lg-10, .col-xs-11, .col-sm-11, .col-md-11, .col-lg-11, .col-xs-12, .col-sm-12, .col-md-12, .col-lg-12 {
+    padding-right: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.row {
+    margin-left: -1.5rem;
+    margin-right: -1.5rem;
+}
+
+/************************************************************************/
+/*** Page sections and basic layout *************************************/
+
+.container {
+    -moz-box-shadow: 0 0 30px #a5acaf;
+    -webkit-box-shadow: 0 0 30px #a5acaf;
+    box-shadow: 0 0 30px #a5acaf;
+    padding: 20px;
+}
+
+.page-content {
+    margin: 2.5rem 3rem 2.5rem 3rem;
+}
+
+.layout-1-column {
+    max-width: 40rem;
+}
+
+.layout-1-column-intro {
+    margin-bottom: 2.5rem;
+    background-color: #f0f0f0;
+    padding: 1rem;
+    border-top: 1px solid #a5acaf;
+    border-bottom: 1px solid #a5acaf;
+}
+
+.layout-1-column-intro p {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 40rem;
+}
+
+@media (max-width: 991px) {
+    .page-content {
+        margin: 2.5rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .page-content {
+        margin: 1.5rem;
+    }
+}
+
+
+/************************************************************************/
+/*** Basic typography ***************************************************/
+
+
+h1, h2, h3, h4, p {
+    margin: 0;  /* set vertical margin for each selector in rem*/
+    padding: 0;
+}
+
+h1 {
+    font-size: 1.4rem;
+    font-weight: 400;
+    line-height: 1.6rem;
+    margin-bottom: 1rem;
+}
+
+h2, th {
+    color: #0033a0;
+    font-size: 1.7rem;
+    font-weight: 600;
+    margin: 2.5rem 0 1.2rem 0;
+}
+
+h2:first-of-type {
+    margin-top: 0;
+}
+
+/* space around pipe */
+.h2-space {
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+h3{
+    color: #000;
+    font-size: 1.2rem;
+    /*font-style: italic;*/
+    font-weight: 600;
+    line-height: 1.6rem;
+    margin: 1.5rem 0 0.8rem 0;
+}
+
+h4 {
+    color: #000;
+    font-size: 1.2rem;
+    font-style: italic;
+    font-weight: 400;
+    margin: 1.5rem 0 0.6rem 0;
+}
+
+p {
+    margin-bottom: 0.7rem;
+}
+
+ul, ol {
+    margin-bottom: 0;
+}
+
+blockquote {
+    font-size: 0.9rem;
+    font-style: italic;
+    border: none;
+    padding: 1rem 2rem 1rem 2rem;
+    margin: 0 0 1rem 0;
+    background-color: #f0f0f0;
+}
+
+.page-content a {
+    text-decoration: none;
+}
+
+.page-content a:hover {
+    color: #0033a0;
+    border-bottom: 1px solid #0033a0;
+    text-decoration: none;
+}
+
+.page-content li {
+    margin-bottom: 0.35rem;
+}
+
+@media (min-width: 768px) {
+    /* remove top margin on h3 in top summary bars for wide screens */
+    .person-profile  h3:first-of-type, .research-area-summary h3:first-of-type {
+        margin-top: 0;
+    }
+}
+
+
+/************************************************************************/
+/** Banner typography ***************************************************/
+
+.h1-larger {
+    font-size: 2.2rem;
+}
+
+.h1-med-larger {
+    font-size: 2.0rem;
+    line-height: 3.0rem;
+}
+
+.h1-smaller {
+    font-size: 1.1rem;
+    padding-left: 0.25rem;
+}
+
+.banner-homepage h1, .banner-menu-page h1 {
+    color: #fff;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    margin: 0 2.5rem 0.5rem 3rem;
+}
+
+/* for pages with individual info items, text is link to log or directory of info items */
+.banner-solid-blue a {
+    color: #fff;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin: 0 2.5rem 0.5rem 2.5rem;
+}
+
+.banner-solid-blue a:hover {
+    color: #a5acaf;
+    text-decoration: none;
+}
+
+@media (max-width: 991px) {
+    .banner-homepage h1,
+    .banner-menu-page h1 {
+        margin-left: 2rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .banner-homepage h1,
+    .banner-menu-page h1 {
+        margin-left: 1.5rem;
+    }
+}
+
+.column-banner {
+    border: 1px solid #a5acaf;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    background: #f0f0f0;
+}
+
+/************************************************************************/
+/*** H eader (menu / search) *********************************************/
+/*** three <nav> are #nav-uk-branding, #nav-men-wide, #nav-menu-narrow **/
+
+#nav-uk-branding {
+    height: 80px;
+    background: #0033a0;
+    padding: 15px 15px;
+    border-bottom: 1px solid #fff;
+}
+
+#nav-myuk-search div {
+    float: right;
+}
+
+#myuk-logo {
+    height: 30px;
+    margin: 10px;
+}
+
+#nav-myuk-search {
+    padding-right: 1.5rem;
+}
+
+.search-box {
+    padding-top: 10px;
+    line-height: 1rem;
+    font-size: 0.8rem;
+}
+
+/*
+::-webkit-input-placeholder {
+    color: #727272;
+}
+:-ms-input-placeholder {
+    color: #727272;
+}
+::-ms-input-placeholder {
+    color: #727272;
+}
+*/
+
+/* ::placeholder {
+ *     color: #727272;
+ * }
+ */
+
+/* navbar-toggle class from Bootstrap, used on hamburger button */
+.navbar-toggle {
+    border: 0;
+}
+
+.navbar-toggle:hover {
+    background: #202c5f;
+}
+
+/* three bars used to make hamburger button */
+.icon-bar {
+    background: #fff;
+}
+
+/* affects both wide and narrow menus, override Bootstrap */
+.nav > li > a,
+.nav > li > form {
+    padding: 0;
+    color: #fff;
+}
+
+#nav-menu-wide {
+    background: url("/static/assets/images/site/checkerboardGrid.png");
+    background-color: #202c5f;
+    margin: auto;
+    padding-right: 0;
+    height: 42px;
+    border-bottom: 1px solid #fff;
+    /* to center menu */
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* needed for background color change on rollover to cover full height of menubar */
+#nav-menu-wide > ul, #nav-menu-wide > ul > li, #nav-menu-wide > ul > li > a {
+    height: 100%;
+}
+
+#nav-menu-narrow {
+    background-color: #0033a0;
+    padding-bottom: 1rem;
+}
+
+#nav-menu-narrow ul {
+    margin: 0;
+}
+
+/* top level links in narrow menu */
+#nav-menu-narrow  ul li  a,
+#nav-menu-narrow ul li  form {
+    padding: 0.75rem 0.75rem 0.5rem 2rem;
+}
+
+f/* second level of links in narrow menu */
+#nav-menu-narrow  ul .dropdown-menu a {
+    padding: 0.25rem 1rem 0.5rem 3rem;
+    font-size: 0.9rem;
+}
+
+/* top level links in wide menu */
+#nav-menu-wide  ul li  a {
+    padding: 0.75rem 0.75rem 0 0.75rem;
+}
+
+/* second level of links in wide menu */
+#nav-menu-wide  ul .dropdown-menu a {
+    padding: 0.5rem 1rem 0.5rem 0.75rem;
+    font-size: 0.9rem;
+}
+
+.dropdown-menu, .navbar-nav .open .dropdown-menu {
+    margin: 0;
+}
+
+/* override Bootstrap transparent background */
+.navbar-nav .open .dropdown-menu {
+    background-color: #202c5f;
+}
+
+/* sets text on class="dropdown-menu" to white (until Bootstrap overrides on hover) */
+.dropdown-menu > li > a {
+    color: #fff;
+}
+
+/* override background color in Bootstrap when hovering over head of dropdown menu (headings coded as links, even though they link to nothing) */
+.nav .open > a,
+.nav .open > a:hover,
+.nav .open > a:focus,
+.nav > li > a:hover,
+.nav > li > a:focus {
+    background-color: #202c5f;
+}
+
+/** added to compensate for headers on each page */
+a.internal-ref {
+    display: block;
+    position: relative;
+    top: -140px;
+    visibility: hidden;
+}
+
+@media (max-width: 767px) {
+    #nav-menu-wide {
+        display: none;
+    }
+    #nav-myuk-search {
+        display: none;
+    }
+}
+
+@media (min-width: 768px) {
+    #nav-menu-narrow {
+        display: none;
+    }
+}
+
+@media (max-width: 550px) {
+    #ibi-logo {
+        width: 75%;
+    }
+}
+
+/************************************************************************/
+/** Banner layout *******************************************************/
+
+.banner-homepage {
+    height: 180px;
+    background: url("/static/assets/images/banners/banner_Homepage.png");
+    position: relative;
+    background-color: #202c5f; /* TEMP */
+}
+
+/* banners on all pages from menu except homepage, set individual background images using additional class*/
+.banner-menu-page {
+    height: 90px;
+    position: relative;
+    background-color: #202c5f; /* TEMP */
+}
+
+/* banner (without image) for pages with individual info items */
+.banner-solid-blue {
+    height: 50px;
+    position: relative;
+    background: #0033a0;
+}
+
+.banner-image-about {
+    background: url("/static/assets/images/banners/banner_About.png");
+}
+
+.banner-image-newsandevents {
+    background: url("/static/assets/images/banners/banner_NewsAndEvents.png");
+}
+
+.banner-image-people {
+    background: url("/static/assets/images/banners/banner_People.png");
+}
+
+.banner-image-research {
+    background: url("/static/assets/images/banners/banner_Research.png");
+}
+
+.banner-image-research-binfo {
+    background: url("/static/assets/images/banners/banner_Bioinformatics.png");
+}
+
+.banner-image-research-cinfo {
+    background: url("/static/assets/images/banner_ClinicalInformatics.png");
+}
+
+.banner-image-research-dmin {
+    background: url("/static/assets/images/banners/banner_DataMining.png");
+}
+
+.banner-image-research-hii {
+    background: url("/static/assets/images/banners/banner_HII.png");
+}
+
+.banner-image-research-krep {
+    background: url("/static/assets/images/banners/banner_KnowledgeRep.png");
+}
+
+.banner-image-research-nlp {
+    background: url("/static/assets/images/banners/banner_NLP.png");
+}
+
+.banner-image-research-phi {
+    background: url("/static/assets/images/banners/banner_PublicHealthInformatics.png");
+}
+
+
+/************************************************************************/
+/*** News, events, work products and other elements in main content *****/
+
+/* links such as "View news log" at end of partial lists news, events, projects */
+.log-link {
+    margin-top: 2rem;
+}
+
+/* text indicating there are no upcoming events */
+.empty-field {
+    font-style: italic;
+    color: #727272;
+    font-weight: 300;
+}
+
+/* space around pipe character separating date and time on event items */
+.datetime-space {
+    padding: 0 0.3rem 0 0.3rem;
+}
+
+.work-product-type {
+    color: #727272;
+}
+
+.work-product-venue {
+    font-style: italic;
+}
+
+.date, .work-product-type, .author, .note {
+    color: #727272;
+    font-size: 0.9rem;
+    font-weight: 300;
+    font-style: italic;
+}
+
+.date, .author {
+    margin-bottom: 0.4rem;
+}
+
+.work-product-list ul {
+    margin-bottom: 0.7rem;
+}
+
+.work-product-list li {
+    margin-bottom: 0.2rem;
+    padding-bottom: 0;
+}
+
+.event-item, .news-item, .project-item {
+    border-bottom: 1px solid #e1e1e1;
+    margin-bottom: 1.5rem;
+}
+
+.event-time, .event-location {
+    font-size: 0.9rem;
+    line-height: 0.9rem;
+    padding: 0.6rem 0.5rem 0.6rem 0.5rem;
+    border-left: 3px solid #e1e1e1;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+.event-location {
+    margin-bottom: 0.6rem;
+    padding-top: 0;
+}
+
+.event-presenter {
+    font-weight: 700;
+}
+
+/* space between name and credentials */
+.event-item-full .credentials-space, .event-item .credentials-space {
+    padding-right: 0.2rem;
+}
+
+.event-presenter-position, .event-presenter-affiliation, .event-presenter-bio {
+    color: #727272;
+    font-size: 0.9rem;
+    font-weight: 300;
+    font-style: italic;
+}
+
+.event-presenter-position, .event-presenter-affiliation {
+    list-style-type: none;
+    margin-left: -40px;
+}
+
+/* match to margin after <p> */
+/* use margin after div instead after last paragraph, because paragraph tags may or may not be entered in database */
+.event-content, .news-content, .project-description {
+    margin-bottom: 0.7rem;
+}
+
+
+.event-subtitle {
+    color: #000;
+    font-size: 1.2rem;
+    font-weight: 400;
+    margin: 1.5rem 0 0.6rem 0;
+}
+
+/* use margin after div instead after last paragraph, because paragraph tags may or may not be entered in database */
+.event-content p:last-child, .news-content p:last-child, .project-description p:last-child{
+    margin-bottom: 0;;
+}
+
+
+/************************************************************************/
+/*** Profile pages ******************************************************/
+
+.person-contact {
+    unicode-bidi: bidi-override;
+    direction: rtl;
+    text-align: left;
+}
+
+.person-profile, .research-area-summary {
+    padding: 1rem 0 0.5rem 0;
+    background-color: #f0f0f0;
+    margin-bottom: 2rem;
+}
+
+.person-profile #person-profile-image {
+    height: 200px;
+}
+
+/* block of name and contact info on profile page */
+.person-profile td:nth-child(2) {
+    padding-left: 1rem;
+}
+
+.person-profile td:nth-child(2) p {
+    margin-bottom: 0.35rem;
+}
+
+.person-profile td:nth-child(2) ul li {
+    margin-bottom: 0.35rem;
+    padding-bottom: 0;
+}
+
+.person-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+/* space between name and credentials */
+.person-name-area .credentials-space {
+    padding-right: 0.7rem;
+}
+
+.person-credentials {
+    font-size: 1.2rem;
+}
+
+@media (max-width: 767px) {
+    #person-profile-image {
+        margin-bottom: 1.5rem;
+    }
+    .person-profile #person-profile-image {
+        height: 150px;
+    }
+}
+
+
+/************************************************************************/
+/*** Directory pages ****************************************************/
+
+.person-directory-entry {
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+/* names with links */
+.person-name-directory  a{
+    color: #000;
+    font-weight: 600;
+    font-size: 1.2rem;
+    text-decoration: none;
+}
+
+/* names without links */
+.person-name-directory  {
+    color: #000;
+    font-weight: 600;
+    font-size: 1.2rem;
+    text-decoration: none;
+}
+
+.person-directory-entry img {
+    height: 150px;
+}
+
+.person-directory-entry td:nth-child(2) {
+    padding-left: 1rem;
+    border-top: 1px solid #e1e1e1;
+}
+
+
+/************************************************************************/
+/*** Table styles (committee table) *************************************/
+
+td {
+    vertical-align: top;
+}
+
+#committee-table tr td {
+    border-top: 1px solid #a5acaf;
+    border-bottom: 1px solid #a5acaf;
+    padding: 0.5rem 1rem 0 0;
+}
+
+
+#committee-table tr th {
+    padding-top: 2.5rem;
+    padding-bottom: 1rem;
+}
+
+#committee-table tr:first-child th{
+    padding-top: 0rem;
+}
+
+
+#committee-table tr td:first-child {
+    font-weight: 700;
+}
+
+
+
+/************************************************************************/
+/*** Footer layout and typography ***************************************/
+
+footer {
+    text-align: center;
+    font-size: 0.8rem;
+    background-color: #0033a0;
+    color: #fff;
+    clear: both;
+}
+
+footer ul {
+    padding: 0.5rem;
+    margin: 0;
+}
+
+footer ul li {
+    list-style: none;
+    display: inline;
+    color: #fff;
+    border-right: 1px solid #fff;
+    padding: 0 0.8rem;
+    line-height: 1.6rem;
+    white-space: nowrap;
+}
+
+footer ul li:last-child {
+    border: none;
+}
+
+footer ul li a {
+    color: #fff;
+}
+
+footer ul li a:hover {
+    color: #a5acaf;
+    text-decoration: none;
+}
+
+.footer-uk-lockup {
+    padding-top: 20px;
+    padding-bottom: 15px;
+}
+
+.footer-contact {
+    background: url("../images/site/checkerboardGrid.png");
+    background-color: #202c5f;
+    border-top: 1px solid #fff;
+    margin-top: 1rem;
+}
+
+
+/************************************************************************/
+/**** General figure styling ********************************************/
+
+.fig-float-right-250px-width {
+    float: right;
+    margin: 1rem 0 1rem 1rem;
+    width: 250px;
+}
+
+.fig-float-right-350px-width {
+    float: right;
+    margin: 1rem 0 1rem 1rem;
+    width: 350px;
+}
+
+.fig-float-right-450px-width {
+    float: right;
+    margin: 1rem 0 1rem 1rem;
+    width: 450px;
+}
+
+.fig-float-left-250px-width {
+    float: left;
+    margin: 1rem 1rem 1rem 0;
+    width: 250px;
+}
+
+.fig-float-left-350px-width {
+    float: left;
+    margin: 1rem 1rem 1rem 0;
+    width: 350px;
+}
+.fig-float-left-450px-width {
+    float: left;
+    margin: 1rem 1rem 1rem 0;
+    width: 450px;
+}
+
+/* targets images set with <figure> tag (not directory and profile images) */
+figure img {
+    max-width: 100%;
+}
+
+figcaption {
+    font-size: 0.9rem;
+    color: #727272;
+    padding-top: 0.5rem;
+}
+
+/* for narrow screen, align image to left edge */
+@media (max-width: 550px) {
+    .fig-float-right-250px-width, .fig-float-left-250px-width  {
+        float: none;
+        margin: 1rem 0 1rem 0;
+        max-width: 100%;
+    }
+}
+
+/* for narrow screen, align image to left edge */
+@media (max-width: 767px) {
+    .fig-float-right-350px-width, .fig-float-right-450px-width, .fig-float-left-350px-width, .fig-float-left-450px-width  {
+        float: none;
+        margin: 1rem 0 1rem 0;
+        max-width: 100%;
+    }
+}
+
+/* push images into margin for wide screen with single column layout */
+@media (min-width: 992px) {
+    .layout-1-column .right-margin-bump{
+        margin-right: -12rem;
+        clear: both;
+    }
+}
+
+
+/************************************************************************/
+/****  Social media *****************************************************/
+
+/* Twitter and Facebook icon buttons */
+.subscribe-btn {
+    color: #a5acaf;
+    padding: 0.5rem 0.5rem 0 0;
+}
+
+.subscribe-btn:hover {
+    color: #0033a0;
+    border-bottom: none;
+}
+
+/* remove border that appears on links with hover from social medial icons */
+.social-media-section a:hover {
+    border-bottom: none;
+}
+
+
+/************************************************************************/
+/*** Static pages *******************************************************/
+
+.referenceBlock p {
+    margin-bottom: 0.2rem;
+}
+
+.referenceBlock {
+    margin-bottom: 1rem;
+}
+
+
+/************************************************************************/
+/*** Button  ************************************************************/
+
+
+.ibi-btn {
+    border-radius: 8px;
+    border: 1px solid #727272;
+    background: linear-gradient(to bottom, #f5f5f5, #c0c0c0);
+    margin: 0.5rem;
+}
+
+.ibi-btn:hover, .ibi-btn:focus, .ibi-btn:active {
+    background: linear-gradient(to bottom, #f5f5f5, #e4e4e4);
+}
+
+
+/************************************************************************/
+/*** Flyer content table ************************************************/
+/*** Used in event content when multiple speaker present                */
+/************************************************************************/
+
+.flyer-table {
+    padding: 1rem;
+}
+
+.flyer-talk-title {
+    font-style: italic;
+    font-weight: 700;
+}
+
+
+
+/************************************************************************/
+/*** Editing menu at top (hidden until login) ***************************/
+
+#edit-menu-wide {
+    margin: auto;
+    height: 40px;
+    border-bottom: 1px solid #fff;
+    /* to center menu */
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* top level links in wide menu */
+#edit-menu-wide  ul li {
+    padding: 0.75rem 0.75rem 0 0.75rem;
+    font-size: 12.5pt;
+}
+
+#edit-menu-wide  ul li a {
+    padding: 0.75rem 0.75rem 0 0.75rem;
+    font-size: 12.5pt;
+}
+
+/* second level of links in wide menu */
+#edit-menu-wide  ul .dropdown-menu a {
+    padding: 0.5rem 1rem 0.5rem 0.75rem;
+    /*    font-size: 1.0rem; */
+}
+
+#edit-menu-wide  ul .dropdown-menu {
+    padding: 0.5rem 1rem 0.5rem 0.75rem;
+    font-size: 1.0rem;
+}
+
+#editingHeaderBar {
+    width: 100%;
+    background: #e9d562;
+    font-size: 12.5pt;
+    padding: 0.75rem;
+    border-top: 2px solid #0033a0;
+}
+
+
+/************************************************************************/
+/****  Modal box for login **********************************************/
+
+/* is used */
+#signin-header {
+    background-color: #0033a0;
+    color: #ffffff;
+    font-size: 1.4rem; }
+
+/* is used */
+#signin-header #signinTitle {
+    color: #ffffff; }
+
+/* font-weight doing nothing, image from class="close", also sets opacity */
+#signin-header button {
+    color: #ffffff;
+    font-size: 1.4rem;
+    font-weight: 700; }
+
+/* only align is doing much */
+#signin-header .modal-title {
+    text-align: center;
+    font-weight: 300;
+    font-family: Muli, sans-serif; }
+
+/**********************/
+/*** test overrides ***/
+
+h3.btn-link {
+    color: #000;
+    font-weight: 500;
+}
+
+/************************************************************************/
+/**** Editing forms **********************************************/
+
+.authoring-annotation:first-child {
+}
+.authoring-annotation {
+    margin-top: 0.5rem;
+    font-weight: 400;
+    font-size:    0.75rem;
+    color:       #a5acaf;
+    margin-bottom:  0.1rem;
+}
+
+.authoring-annotation p {
+    margin-bottom:  0.1rem;
+}
+.form-label {
+    font-weight: 700;
+}
+
+.edit-float-right-350px-width, .edit-float-right-450px-width, .edit-float-left-350px-width, .edit-float-left-450px-width  {
+    float: none;
+    margin: 1rem 0 1rem 0;
+    max-width: 100%;
+}
+
+tr.form-group {
+    padding-top: 1.0rem;
+}
+
+.form-group input {
+    width:   100%;
+}
+
+.form-group td {
+    padding:  0.5rem;
+    vertical-align: top;
+}
+
+.form-group input.new-text-item {
+    width: 25rem;
+}
+
+input[type="checkbox"] {
+    width: 3rem;
+}
+
+textarea#person_bio {
+    height: 15rem;
+}
+
+a.editing-control {
+    float: right;
+    padding-left: 0.2rem;
+}
+
+#ui-datepicker-div {
+    width: auto;
+}
+
+ul.text-item-list {
+    list-style: none;
+}
+
+ul.text-item-list li {
+    margin-left: -1rem;
+}
+
+
+/***** PROCESS BAR ******/
+
+.bs-wizard {margin-top: 40px;}
+.bs-wizard {border-bottom: solid 1px #e0e0e0; padding: 0 0 10px 0;}
+.bs-wizard > .bs-wizard-step {padding: 0; position: relative;}
+.bs-wizard > .bs-wizard-step + .bs-wizard-step {}
+.bs-wizard > .bs-wizard-step .bs-wizard-stepnum {color: #595959; font-size: 16px; margin-bottom: 5px;}
+.bs-wizard > .bs-wizard-step .bs-wizard-info {color: #999; font-size: 14px;}
+.bs-wizard > .bs-wizard-step > .bs-wizard-dot {position: absolute; width: 30px; height: 30px; display: block; background: #2c2a29; top: 45px; left: 50%; margin-top: -15px; margin-left: -15px; border-radius: 50%;}
+.bs-wizard > .bs-wizard-step > .bs-wizard-dot:after {content: ' '; width: 28px; height: 28px; background: #0033a0; border-radius: 50px; position: absolute; top: 1px; left: 1px;
+    border: 1px solid white;
+}
+.bs-wizard > .bs-wizard-step > .progress {position: relative; border-radius: 0px; height: 8px; box-shadow: none; margin: 20px 0;}
+.bs-wizard > .bs-wizard-step > .progress > .progress-bar {width:0px; box-shadow: none; background: #0033a0;}
+.bs-wizard > .bs-wizard-step.complete > .progress > .progress-bar {width:100%;}
+.bs-wizard > .bs-wizard-step.active > .progress > .progress-bar {width:50%;}
+.bs-wizard > .bs-wizard-step:first-child.active > .progress > .progress-bar {width:0%;}
+.bs-wizard > .bs-wizard-step:last-child.active > .progress > .progress-bar {width: 100%;}
+.bs-wizard > .bs-wizard-step.disabled > .bs-wizard-dot {background-color: #f5f5f5;}
+.bs-wizard > .bs-wizard-step.disabled > .bs-wizard-dot:after {opacity: 0;}
+.bs-wizard > .bs-wizard-step:first-child  > .progress {left: 50%; width: 50%;}
+.bs-wizard > .bs-wizard-step:last-child  > .progress {width: 50%;}
+.bs-wizard > .bs-wizard-step.disabled a.bs-wizard-dot{ pointer-events: none; }
+
+
+/***** SUBMIT BUTTON ******/
+.btn-full-width {background: #337ab7}
+.btn-full-width:hover {background: #0033a0}
+.btn-full-width:focus {background: #337ab7}
+.btn-full-width:focus:hover {background: #0033a0}
+
+
+/***** SELECT BUTTON ******/
+/***** SUBMIT BUTTON ******/
+.btn-select {background: #337ab7}
+.btn-select:hover {background: #0033a0}
+.btn-select:focus {background: #0033a0}
+.btn-select:focus:hover {background: #3358b7}
+
+/***** Popup forms ******/
+.form-popup {
+    display: none;
+    position: relative;
+    right: 10px;
+    /*right: 15px;*/
+    border: 3px solid #f1f1f1;
+    z-index: 9;
+}
+
+/* Add styles to the form container */
+.form-container {
+    max-width: 300px;
+    padding: 10px;
+    background-color: white;
+}
+
+/* Full-width input fields */
+.form-container input[type=number], .form-container input[type=number] {
+    width: 100%;
+    padding: 15px;
+    margin: 5px 0 22px 0;
+    border: none;
+    background: #f1f1f1;
+}
+
+.invalid {'border-color': 'red'; 'border-width': '2px'}
+/*.form-group > .valid {'border-color': ''; 'border-width': ''}*/
+
+#team-button {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    font-size: 1.0rem;
+    color: #f1f1f1;
+}
