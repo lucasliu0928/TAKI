@@ -15,6 +15,7 @@ from sklearn.ensemble import RandomForestClassifier
 import scipy.stats as st
 import pickle
 import joblib
+from sklearn.preprocessing import MinMaxScaler
 
 def downsample_func(in_data,out_col,ran_state):
     # data of each class
@@ -183,60 +184,90 @@ UTSW_feature_df = pd.read_csv(UTSW_data_dir + "All_Feature_imputed.csv", index_c
 UTSW_outcome_df = pd.read_csv(UTSW_data_dir + "All_outcome.csv", index_col="STUDY_PATIENT_ID")
 UTSW_outcome_df = UTSW_outcome_df.reindex(UTSW_outcome_df.index) #reorder to match ID
 
-##########################################################
-#Mortality
-##########################################################
-selected_features = ["UrineOutput_D0toD3" , "Vasopressor_ICUD0toD3","FI02_D1_HIGH","Platelets_D1_LOW","AGE",
-                     "BUN_D0toD3_HIGH","HR_D1_HIGH","LAST_KDIGO_ICU_D0toD3","PH_D1_LOW","Bilirubin_D1_HIGH",
-                     "MAX_KDIGO_ICU_D0toD3","ECMO_ICUD0toD3","Hours_inICUD0toD3", 
-                     "Temperature_D1_LOW", "Temperature_D1_HIGH"]
-outcome_col = 'Death_inHOSP'
+#merge 3 and 4 KDIGO
+cond = UK_feature_df['MAX_KDIGO_ICU_D0toD3'] == 4
+UK_feature_df.loc[cond, 'MAX_KDIGO_ICU_D0toD3'] = 3
 
-#UK
-UK_comb_df = UK_feature_df.join(UK_outcome_df[outcome_col])
+cond = UK_feature_df['LAST_KDIGO_ICU_D0toD3'] == 4
+UK_feature_df.loc[cond, 'LAST_KDIGO_ICU_D0toD3'] = 3
 
-#UTSW
-UTSW_comb_df = UTSW_feature_df.join(UTSW_outcome_df[outcome_col])
-test_Y =  UTSW_comb_df[outcome_col]
-test_X =  UTSW_comb_df[selected_features]
+cond = UTSW_feature_df['MAX_KDIGO_ICU_D0toD3'] == 4
+UTSW_feature_df.loc[cond, 'MAX_KDIGO_ICU_D0toD3'] = 3
 
+cond = UTSW_feature_df['LAST_KDIGO_ICU_D0toD3'] == 4
+UTSW_feature_df.loc[cond, 'LAST_KDIGO_ICU_D0toD3'] = 3
 
-#Get train and validtion date from 10 folds CV 
-train_X_list,train_Y_list,valid_X_list,valid_Y_list = generate_CV_folds(UK_comb_df,outcome_col,selected_features,bootstrap_flag = False)
-
-#Train and predction for valdiation and testing data
-#returns list of performance from each fold (one fold for valid, 9 fold for training, and 9 fold used for prediction of test)
-UK_validation_perf,UTSW_test_perf = main(train_X_list,train_Y_list,valid_X_list,valid_Y_list,test_X,test_Y)
-
-#Add CI
-UK_validation_perf = comptute_avg_CI_perf(UK_validation_perf)
-UTSW_test_perf = comptute_avg_CI_perf(UTSW_test_perf)
+# ##########################################################
+# #Mortality
+# ##########################################################
+# selected_features = ["UrineOutput_D0toD3" , "Vasopressor_ICUD0toD3","FI02_D1_HIGH","Platelets_D1_LOW","AGE",
+#                      "BUN_D0toD3_HIGH","HR_D1_HIGH","LAST_KDIGO_ICU_D0toD3","PH_D1_LOW","Bilirubin_D1_HIGH",
+#                      "MAX_KDIGO_ICU_D0toD3","ECMO_ICUD0toD3","Hours_inICUD0toD3", 
+#                      "Temperature_D1_LOW", "Temperature_D1_HIGH"]
+# outcome_col = 'Death_inHOSP'
 
 
-UK_validation_perf.to_csv(outdir + "Py_TAKI_Moratlity_UK_Perf.csv")
-UTSW_test_perf.to_csv(outdir + "Py_TAKI_Moratlity_UTSW_Perf.csv")
+# #UK
+# UK_Mortality_Feature_df = UK_feature_df[selected_features] #mortality feature
+# scaler = MinMaxScaler() ##minmax Scaler 
+# scaler.fit(UK_Mortality_Feature_df)
+# UK_Mortality_Feature_df2 = pd.DataFrame(scaler.transform(UK_Mortality_Feature_df))
+# UK_Mortality_Feature_df2.columns = selected_features
+# UK_Mortality_Feature_df2.index = UK_feature_df.index
+# UK_comb_df = UK_Mortality_Feature_df2.join(UK_outcome_df[outcome_col])
 
-#Training the whole UK set, prediction for UTSW
-train_comb_ds = downsample_func(UK_comb_df,outcome_col,ran_state = 123) #Down sample
-train_X = train_comb_ds[selected_features]
-train_Y = train_comb_ds[outcome_col]
+# #UTSW
+# UTSW_Mortality_Feature_df = UTSW_feature_df[selected_features] #mortality feature
+# UTSW_Mortality_Feature_df2 = pd.DataFrame(scaler.transform(UTSW_Mortality_Feature_df))
+# UTSW_Mortality_Feature_df2.columns = selected_features
+# UTSW_Mortality_Feature_df2.index = UTSW_feature_df.index
+# UTSW_comb_df = UTSW_Mortality_Feature_df2.join(UTSW_outcome_df[outcome_col])
+# test_Y =  UTSW_comb_df[outcome_col]
+# test_X =  UTSW_comb_df[selected_features]
 
-RF_model = RandomForestClassifier(max_depth=6, random_state=0, n_estimators=500)
-RF_model.fit(train_X, train_Y)
 
-#prediction for test
-pred_prob_test = RF_model.predict_proba(test_X)[: ,1] #probabily of prediction class label 1
-pred_classes_test = RF_model.predict(test_X)
-perf_test = compute_performance(test_Y,pred_prob_test,pred_classes_test,"ALLUK")
-perf_test.to_csv(outdir + "Py_TAKI_Moratlity_UTSW_Perf_TrainedWithAllUK.csv")
+# #Get train and validtion date from 10 folds CV 
+# train_X_list,train_Y_list,valid_X_list,valid_Y_list = generate_CV_folds(UK_comb_df,outcome_col,selected_features,bootstrap_flag = False)
 
-# save the full model to disk
-filename = outdir + 'FullModel/TAKI_Mortality_Fullmodel.sav'
-pickle.dump(RF_model, open(filename, 'wb'))
+# #Train and predction for valdiation and testing data
+# #returns list of performance from each fold (one fold for valid, 9 fold for training, and 9 fold used for prediction of test)
+# UK_validation_perf,UTSW_test_perf = main(train_X_list,train_Y_list,valid_X_list,valid_Y_list,test_X,test_Y)
 
-#2nd way of saving model
-filename = outdir + 'FullModel/TAKI_Mortality_Fullmodel.pkl'
-joblib.dump(RF_model, filename)
+# #Add CI
+# UK_validation_perf = comptute_avg_CI_perf(UK_validation_perf)
+# UTSW_test_perf = comptute_avg_CI_perf(UTSW_test_perf)
+
+# UK_validation_perf.to_csv(outdir + "PY_Performances/Py_TAKI_Moratlity_UK_Perf.csv")
+# UTSW_test_perf.to_csv(outdir + "PY_Performances/Py_TAKI_Moratlity_UTSW_Perf.csv")
+
+# #Training the whole UK set, prediction for UTSW
+# train_comb_ds = downsample_func(UK_comb_df,outcome_col,ran_state = 123) #Down sample
+# train_X = train_comb_ds[selected_features]
+# train_Y = train_comb_ds[outcome_col]
+
+# RF_model = RandomForestClassifier(max_depth=6, random_state=0, n_estimators=500)
+# RF_model.fit(train_X, train_Y)
+
+# #prediction for test
+# pred_prob_test = RF_model.predict_proba(test_X)[: ,1] #probabily of prediction class label 1
+# pred_classes_test = RF_model.predict(test_X)
+# perf_test = compute_performance(test_Y,pred_prob_test,pred_classes_test,"ALLUK")
+# perf_test.to_csv(outdir + "PY_Performances/Py_TAKI_Moratlity_UTSW_Perf_TrainedWithAllUK.csv")
+
+# check_df = pd.DataFrame({"pred": pred_prob_test, "y_ture": test_Y})
+# check_df = pd.concat([test_X,check_df], axis = 1)
+
+# # save the full model to disk
+# filename = outdir + 'FullModel/TAKI_Mortality_Fullmodel.sav'
+# pickle.dump(RF_model, open(filename, 'wb'))
+
+# #2nd way of saving model
+# filename = outdir + 'FullModel/TAKI_Mortality_Fullmodel.pkl'
+# joblib.dump(RF_model, filename)
+
+# #save scaler
+# filename = outdir + 'FullModel/TAKI_Mortality_Scaler.pkl'
+# joblib.dump(scaler, filename)
 
 ##########################################################
 #MAKE
@@ -247,15 +278,24 @@ selected_features = ["LAST_KDIGO_ICU_D0toD3","UrineOutput_D0toD3","MAX_KDIGO_ICU
                      "Admit_sCr","Sodium_D1_LOW"]
 
 outcome_col = 'MAKE_HOSP120_Drop50'
-                        
+
 #UK
-UK_comb_df = UK_feature_df.join(UK_outcome_df[outcome_col])
+UK_MAKE_Feature_df = UK_feature_df[selected_features] #MAKE feature
+scaler = MinMaxScaler() ##minmax Scaler 
+scaler.fit(UK_MAKE_Feature_df)
+UK_MAKE_Feature_df2 = pd.DataFrame(scaler.transform(UK_MAKE_Feature_df))
+UK_MAKE_Feature_df2.columns = selected_features
+UK_MAKE_Feature_df2.index = UK_feature_df.index
+UK_comb_df = UK_MAKE_Feature_df2.join(UK_outcome_df[outcome_col])
 
 #UTSW
-UTSW_comb_df = UTSW_feature_df.join(UTSW_outcome_df[outcome_col])
+UTSW_MAKE_Feature_df = UTSW_feature_df[selected_features] #MAKE feature
+UTSW_MAKE_Feature_df2 = pd.DataFrame(scaler.transform(UTSW_MAKE_Feature_df))
+UTSW_MAKE_Feature_df2.columns = selected_features
+UTSW_MAKE_Feature_df2.index = UTSW_feature_df.index
+UTSW_comb_df = UTSW_MAKE_Feature_df2.join(UTSW_outcome_df[outcome_col])
 test_Y =  UTSW_comb_df[outcome_col]
 test_X =  UTSW_comb_df[selected_features]
-
 
 #Get train and validtion date from 10 folds CV 
 train_X_list,train_Y_list,valid_X_list,valid_Y_list = generate_CV_folds(UK_comb_df,outcome_col,selected_features,bootstrap_flag = False)
@@ -269,8 +309,8 @@ UK_validation_perf = comptute_avg_CI_perf(UK_validation_perf)
 UTSW_test_perf = comptute_avg_CI_perf(UTSW_test_perf)
 
 
-UK_validation_perf.to_csv(outdir + "Py_TAKI_MAKE_UK_Perf.csv")
-UTSW_test_perf.to_csv(outdir + "Py_TAKI_MAKE_UTSW_Perf.csv")
+UK_validation_perf.to_csv(outdir + "PY_Performances/Py_TAKI_MAKE_UK_Perf.csv")
+UTSW_test_perf.to_csv(outdir + "PY_Performances/Py_TAKI_MAKE_UTSW_Perf.csv")
 
 
 #Training the whole UK set, prediction for UTSW
@@ -285,7 +325,7 @@ RF_model.fit(train_X, train_Y)
 pred_prob_test = RF_model.predict_proba(test_X)[: ,1] #probabily of prediction class label 1
 pred_classes_test = RF_model.predict(test_X)
 perf_test = compute_performance(test_Y,pred_prob_test,pred_classes_test,"ALLUK")
-perf_test.to_csv(outdir + "Py_TAKI_MAKE_UTSW_Perf_TrainedWithAllUK.csv")
+perf_test.to_csv(outdir + "PY_Performances/Py_TAKI_MAKE_UTSW_Perf_TrainedWithAllUK.csv")
 
 # save the full model to disk
 filename = outdir + 'FullModel/TAKI_MAKE_Fullmodel.sav'
@@ -294,3 +334,7 @@ pickle.dump(RF_model, open(filename, 'wb'))
 #2nd way of saving model
 filename = outdir + 'FullModel/TAKI_MAKE_Fullmodel.pkl'
 joblib.dump(RF_model, filename)
+
+#save scaler
+filename = outdir + 'FullModel/TAKI_MAKE_Scaler.pkl'
+joblib.dump(scaler, filename)
