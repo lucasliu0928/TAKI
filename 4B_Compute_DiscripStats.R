@@ -48,7 +48,6 @@ UK_data <-  recode_KDIGO_func(UK_data,"MAX_KDIGO_ICU_D0toD3")
 UTSW_data <-  recode_KDIGO_func(UTSW_data,"LAST_KDIGO_ICU_D0toD3")
 UTSW_data <-  recode_KDIGO_func(UTSW_data,"MAX_KDIGO_ICU_D0toD3")
 
-
 ####################################################################################
 ###2. Missing table
 ####################################################################################
