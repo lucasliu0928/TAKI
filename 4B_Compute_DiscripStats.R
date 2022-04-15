@@ -1,6 +1,12 @@
 source("TAKI_Ultility.R")
 library(lubridate)
-
+recode_NAto0_func <- function(input_df,col_name){
+  idxes <- which(is.na(input_df[,col_name])==T)
+  if (length(idxes) != 0){
+    input_df[idxes,col_name] <- 0
+  }
+  return(input_df)
+}
 
 
 #Data dir
@@ -21,13 +27,25 @@ out_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/All_AKI_Projects/Other_Proje
 ####################################################################################
 feature_file <- "Model_Feature_Outcome/All_Feature_NOTimputed.csv"
 outcome_file <- "Model_Feature_Outcome/All_outcome.csv"
-outcome_colname_list <- c("Death_inHOSP","MAKE_HOSP120_Drop50")
+make_component_list <- c("Death_HOSPStartTo120","onRRT_Last48hBeforeDischarge","ESRD_120","eGFR_Drop50")
+outcome_colname_list <- c("Death_inHOSP","MAKE_HOSP120_Drop50",make_component_list)
 
 #For UK
 UK_data <- Combine_featureAndoutcomes_func(UK_data_dir,feature_file,outcome_file,outcome_colname_list)
+UK_data <- recode_NAto0_func(UK_data,"onRRT_Last48hBeforeDischarge")
+UK_data <- recode_NAto0_func(UK_data,"ESRD_120")
+UK_data <- recode_NAto0_func(UK_data,"eGFR_Drop50")
 
 #For UTSW
 UTSW_data <- Combine_featureAndoutcomes_func(UTSW_data_dir,feature_file,outcome_file,outcome_colname_list)
+UTSW_data <- recode_NAto0_func(UTSW_data,"onRRT_Last48hBeforeDischarge")
+UTSW_data <- recode_NAto0_func(UTSW_data,"ESRD_120")
+UTSW_data <- recode_NAto0_func(UTSW_data,"eGFR_Drop50")
+
+
+
+
+
 
 ####################################################################################
 ###3.Add some variables
@@ -159,7 +177,11 @@ var_list <- c("AGE","GENDER","RACE","BMI","CHARLSON_SCORE","TOTAL_ELIX","Diabete
               "Admit_sCr","Peak_SCr_inICU_D0_D3","LastSCr_inICU_D0_D3","MAX_KDIGO_ICU_D0toD3","LAST_KDIGO_ICU_D0toD3",
               "onRRT_ICUD0toD3","RRTinfo_ICUD0toD3",
               "CRRT_Days_inICUD0toD3","HD_Days_inICUD0toD3",
-              "Vasopressor_NUMMeds_ICUD0toD3")
+              "Vasopressor_NUMMeds_ICUD0toD3",
+              "Death_inHOSP","Death_HOSPStartTo120",
+              "onRRT_Last48hBeforeDischarge","ESRD_120",
+              "eGFR_Drop50","MAKE_HOSP120_Drop50")
+
 #For UK
 UK_tb4 <- compute_stats_func(UK_data,"UK",var_list)
 
@@ -169,8 +191,6 @@ UTSW_tb4 <- compute_stats_func(UTSW_data,"UTSW",var_list)
 comb_supptb4 <- cbind(UK_tb4,UTSW_tb4)
 
 write.csv(comb_supptb4,paste0(out_dir,"table1.csv"),row.names = F)
-
-table(UK_data$Vasopressor_NUMMeds_ICUD0toD3)
 
 ####################################################################################
 #### 7. Final ID raw ICU time info
