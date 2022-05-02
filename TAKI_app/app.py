@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, url_for
 import pandas as pd
 import joblib
 from sklearn.preprocessing import MinMaxScaler
@@ -13,10 +13,16 @@ def get_feature_values(feature_names):
         cur_val =  request.form.get(f)
         feature_values.append(cur_val)
     return feature_values
-# Main function here
+
 # ------------------
-@app.route('/', methods=['GET', 'POST'])
-def main():
+#Home page (With Disclaimer)
+@app.route('/') 
+def home():
+    return render_template("disclaimer.html")
+
+#AKIPO Predictor page
+@app.route('/predict', methods=['GET', 'POST'])
+def predict():
     # If a form is submitted
     if request.method == "POST":
 
@@ -60,17 +66,12 @@ def main():
         prediction_class = model.predict(X)[0]  #Prediction class
         prediction_prob  = round(model.predict_proba(X)[0][1],2)  #Prediction probability
 
-
-        # Output
-        #Create dictionary to store input data and show output
-
         out = "The Predicted " + model_name + " Risk is: " + str(round(prediction_prob*100,2)) + "%"
-    else:
-        out = ""
-        
-    return render_template("index.html", output = out)
+        return render_template("results.html", output = out, age_keep = X['AGE'].item())
+
+    return render_template("index.html")
 
 # Running the app
 if __name__ == '__main__':
-    app.run(debug=True)
-    #app.run(host="localhost", port=5000, debug=True)
+    app.run()
+    #app.run(debug=True)
