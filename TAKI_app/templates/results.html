@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta http-equiv="cache-control" content="no-cache" />
+        <meta http-equiv="Pragma" content="no-cache" />
+        <meta http-equiv="Expires" content="-1" />
+        <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <title> AKI Predictor of Outcomes (AKIPO) </title>
+        <!-- <link rel="stylesheet" href="/static/css/style.css?version=37" > -->
+
+        <!-- Standard IBI imports -->
+        <link rel="stylesheet" media="screen" href="/static/assets/bootstrap.self-fe5478371e2e655b6552785927324b6e65a4c54c355441e85f97885f3b5af51a.css?version104" />
+        <!--    <link rel="stylesheet" media="screen" href="/static/assets/bootstrap.css?body=1" /> -->
+        <link rel="stylesheet" media="screen" href="/static/assets/font-awesome.self-407fb3615be540a148636cc5d171903af160c86d0eaf12321feadbd280e334c3.css?body=1" />
+        <link rel="stylesheet" media="screen" href="/static/assets/jquery-ui.self-cbfa46288f9e3c30ec6c7f4f5a0ddba02d49f970b653d5ef52d6b42f54e69c52.css?body=1" />
+        <link rel="stylesheet" media="screen" href="/static/assets/custom.self-7a6778ea5769dc3ee7dbff1ca8b432223014d0bd02555c2a7ceee18e3d1f8c5e.css?body=1" />
+        <link rel="stylesheet" media="screen" href="/static/assets/application.self-0e31f1d30f689436ae56e463f6474eb99704af8bbed5fc320a66ac33afb59c2b.css?body=1" />
+        <script src="/static/assets/jquery.self-a714331225dda820228db323939889f149aec0127aeb06255646b616ba1ca419.js?body=1"></script>
+        <script src="/static/assets/jquery.min.self-9cbb80a744e6f37b1ebb737df79c219e087fbfde089b718d2b13d5e5700bc5ca.js?body=1"></script>
+        <script src="/static/assets/jquery-ui.self-e37ba81217f0f621d4f49a02f4970fbf3fb3a71bfc6a01d766fdc32cdab5ad86.js?body=1"></script>
+        <script src="/static/assets/tether/tether.self-99c623f594382910cc70df82521ff60958063fe2e595de94ff39b7edc36e7d89.js?body=1"></script>
+        <script src="/static/assets/tether.self-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.js?body=1"></script>
+        <script src="/static/assets/jquery.Jcrop.self-28692b98864ea8f381f818a5a3f82c8c9f0142417691809077cee319c588d2e9.js?body=1"></script>
+        <script src="/static/assets/jquery.Jcrop.min.self-278ec94f9f886c63c35c74e6ab165b4e241a41d0fffedf740baea2cd8b4c3917.js?body=1"></script>
+        <script src="/static/assets/jquery.scrolly.min.self-f1af745b1866223a1e62a55725f6415f481019e3881137049ba8326884d7ac99.js?body=1"></script>
+        <script src="/static/assets/jquery.scrollex.min.self-982e7192892760d7bc7445ca9aaa432eb5e97413a7f0c2df9b894f0ff7aacb68.js?body=1"></script>
+        <script src="/static/assets/tinymce/rails.self-3613527f3026a4d681f74c6d9489c6835d4b28213c74bf168026b677aa801452.js?body=1"></script>
+        <script src="/static/assets/tinymce/preinit.self-84328a53e798df12f891eb49871773fd9f925439c8630e9e22423a82ef9e6f89.js?body=1"></script>
+        <script src="/static/assets/tinymce/tinymce.self-6295b2aae98bff94846d90d93b0641153f76137c16d6094d4297978cea2109d2.js?body=1"></script>
+        <script src="/static/assets/tinymce.self-6a3cf5192354f71615ac51034b3e97c20eda99643fcaf5bbe6d41ad59bd12167.js?body=1"></script>
+        <script src="/static/assets/skel.min.self-ca64b34d33679f36c6b9be802861cf4186a5d45b433196cc59ab9e998898e6d6.js?body=1"></script>
+        <script src="/static/assets/util.self-11bf665dbb593e213c4477d8d16c26b3a6e1184941b713fd45055712cfc907e3.js?body=1"></script>
+        <script src="/static/assets/jquery_ujs.self-784a997f6726036b1993eb2217c9cb558e1cbb801c6da88105588c56f13b466a.js?body=1"></script>
+        <script src="/static/assets/Sortable.min.self-b50283a7088b782408aa6f7a53ebe53e4f7901a017e1806b883121e03bee2168.js?body=1"></script>
+        <script src="/static/assets/ace/ace.self-91f315b805ad89c13c8b654a33d5064098a95da4852e4f5274b8f01db733fd34.js?body=1"></script>
+        <script src="/static/assets/set_ace_paths.self-d13fd5bcf29138433cc768448266bae5665889945d2d13034cf817e0b9766e3f.js?body=1"></script>
+        <script src="/static/assets/ace-rails-ap.self-75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070.js?body=1"></script>
+        <script src="/static/assets/ace/theme-tomorrow.self-d62ca7879c2e30af46d9c421ba715889a56e5728cf41d52c17f326d198a2500a.js?body=1"></script>
+        <script src="/static/assets/ace/mode-markdown.self-8107b8e09e3c16495c2e41133c765ce2927f81d9057f8802b90b3745f5eaa384.js?body=1"></script>
+        <script src="/static/assets/ace/ext-language_tools.self-043db3e39e32a9bf7ec60cddbce65c3a4546be27c05964ba8d4d8e0e7e97c49a.js?body=1"></script>
+        <script src="/static/assets/bootstrap.self-b38817c3e3a3049abb1fc08dd6ae448b23330f8453226efdb074710209474f75.js?body=1"></script>
+        <script src="/static/assets/action_cable.self-5454023407ffec0d29137c7110917e1e745525ae9afbc05f52104c4cd6597429.js?body=1"></script>
+        <script src="/static/assets/cable.self-6e0514260c1aa76eaf252412ce74e63f68819fd19bf740595f592c5ba4c36537.js?body=1"></script>
+        <script src="/static/assets/classie.self-6977e130d2dc21c0fe794d91a94b6a69eaa2d5bc630e4e39e90844c99c4186d0.js?body=1"></script>
+        <script src="/static/assets/header.self-136b1e438fc8d01d20816ebf36bff3d87e4c386088a147bd4cb90c1c6f9f0444.js?body=1"></script>
+        <script src="/static/assets/jquery.color.self-8054635b2d1c4e35905f636b1c54e31d85f1fb982567a2fafcbe2b2ded3a90ca.js?body=1"></script>
+        <script src="/static/assets/legacy.self-f682531152798074eb3e2a0f9c0895e923b1e1d7e624a05cd3933c7dca8dc9c1.js?body=1"></script>
+        <script src="/static/assets/people.self-d81b9439334754c87ea93c5152f8d7ee3fbbfe35a3a5d3bafba745eace57b610.js?body=1"></script>
+        <script src="/static/assets/person.self-d3feac3f0a2a2625dbb6c5ced0187e660b336e943a4c965056a3a41a4fefe1c3.js?body=1"></script>
+        <script src="/static/assets/placeholdem.min.self-da0e7300cfd934e0f8a72b644d81884ccbc2549e2ea6b844bb2b118840956d78.js?body=1"></script>
+        <script src="/static/assets/projects.self-7e782800615462546aff03d106aeb5a4ff8bdf7c0741be74662c66fd0d1bdf86.js?body=1"></script>
+        <script src="/static/assets/sign_in.self-e12b97595c16f708ac642603c23df0a7e60f4c3161265cc63c0bfe5459ce80a7.js?body=1"></script>
+        <script src="/static/assets/application.self-312702b0e517cee5ce6f16015f98fa326457f2fbd0cb68e0a3c6b617337fe623.js?body=1"></script>
+        <meta name="csrf-param" content="authenticity_token" />
+        <meta name="csrf-token" content="Q7Q7K8FqvUFxpR6+Dz9g7PBXI2Fmg1DKOA0bwL9EuWzCzHEuMyp62N3lhBXjFLIDlICg0ucsU0V2NS+8JO148g==" />
+
+        <link href="https://fonts.googleapis.com/css?family=Muli:300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css?family=Lora:400,400i,700,700i" rel="stylesheet" />
+        <meta id="meta" name="viewport" content="width=device-width,initial-scale=1.0" />
+
+        <!-- Custom imports for this page -->
+        <!-- <script src="/static/assets/predictors.js" ></script>
+        <link href="/static/assets/predictor-styles.css?version=1" rel="stylesheet"> -->
+
+        <!-- Extra -->
+        <script>
+            function showDivMort() {
+                document.getElementById('Vars_Mortality').style.display = "block";
+            }
+            function hideDivMort() {
+              document.getElementById('Vars_Mortality').style.display = "none";
+            }
+
+            function showDivMAKE() {
+              document.getElementById('Vars_MAKE').style.display = "block";
+            }
+
+            function hideDivMAKE() {
+              document.getElementById('Vars_MAKE').style.display = "none";
+            }
+
+            function uncheck_Mort() {
+                document.getElementById("mort_button").checked = false;
+            }
+
+            function uncheck_MAKE() {
+                document.getElementById("make_button").checked = false;
+            }
+
+            function showUserInput() {
+                document.getElementById('Vars_User_Inputs').style.display = "block";
+            }
+            
+            function showPredictor() {
+                document.getElementById('Predictors').style.display = "block";
+            }
+
+            function showDisclaimer() {
+                document.getElementById('disclaimer').style.display = "block";
+            }
+
+            function hideDisclaimer() {
+                document.getElementById('disclaimer').style.display = "none";
+            }
+
+            function showRejectPg() {
+                document.getElementById('Reject_pg').style.display = "block";
+            }
+
+            function hideRejectPg() {
+                document.getElementById('Reject_pg').style.display = "none";
+            }
+
+            function showProjDiscrip(){
+                document.getElementById('proj_discrip').style.display = "block"; 
+            }
+
+            function hideProjDiscrip() {
+                document.getElementById('proj_discrip').style.display = "none";
+            }
+
+        </script>
+
+        <style>
+            .target_selection {
+                 border:0.5px solid #ccc;
+                 color:white;
+                 background-image:linear-gradient(#34568b, #5780c1);
+                 margin:0 0 10px;
+                 display:block; 
+                 transform: scale(1.2);
+            }
+
+            .target_selection:hover {
+                 background:#34568b;
+                 color:white;
+                 cursor:pointer;
+            }
+
+          
+            .scroll {
+                /* enable div scrolling */
+                overflow-y: auto;
+                overflow-x: hidden;
+                height: 400px;
+                background-color: white;
+                border: 1px black solid;
+                padding: 0.5%;
+                width: 100%;
+                margin: 0 auto;
+                font-size: medium;
+            }
+
+        </style>
+
+    </head>
+    
+
+
+<body>
+
+<!--Top navigation bar-->
+<header class="navbar-fixed-top">
+    <nav id="nav-uk-branding">
+        <div class="navbar-header">
+            <a href="/">
+                <img id="ibi-logo" src="/static/assets/images/site/IBI_lockup_white.svg"
+                     alt="UK Institute for Biomedical Informatics"/>
+            </a>
+            <button type="button"
+                    class="btn navbar-toggle"
+                    data-toggle="collapse"
+                    data-target="#nav-menu-narrow"
+            >
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+        <div id="nav-myuk-search">
+            <div>
+                <form class="search-box" action="http://ukcc.uky.edu/cse/" role="search">
+                    <input type="text" name="q" placeholder="search UK &hellip;" />
+                </form>
+            </div>
+            <div>
+                <a href="http://www.uky.edu">
+                    <img id="myuk-logo" src="/static/assets/images/site/myUK_logo_white.svg" alt="My UK" />
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <nav id="nav-menu-narrow" class="collapse">
+        <ul class="nav navbar-nav">
+            <li>
+                <a href="http://ibi.uky.edu/homepage#index">
+                    Home
+                </a>          </li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    About IBI
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/static_pages/overview">
+                            Overview of IBI
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/static_pages/biomedical_informatics">
+                            What is Biomedical Informatics?
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/people/committees">
+                            Leadership committees
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/static_pages/membership">
+                            Membership
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/static_pages/contact">
+                            Contact
+                        </a>                </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    Research
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/">
+                            Research overview
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/4">
+                            Knowledge representation and Data integration
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/5">
+                            Data mining and Statistical analysis
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/6">
+                            Natural language processing and Information retrieval
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/7">
+                            Human-information interaction
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/1">
+                            Bioinformatics and Computational biology
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/2">
+                            Clinical informatics and Clinical research informatics
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/3">
+                            Public health informatics
+                        </a>                </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    People
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/people/faculty">
+                            Faculty
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/people/staff">
+                            Staff
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/people/students">
+                            Trainees
+                        </a>                </li>
+                </ul>
+            </li>
+            <li>
+                <a href="/newsevents">
+                    News and Events
+                </a>          </li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    Programs
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/static_pages/research_consult">
+                            Research Consultations
+                        </a>                </li>
+                    <li class="submenulist">
+                        <a href="http://www.engr.uky.edu/data-science">
+                            Data Science Masters Degree
+                        </a>                </li>
+                </ul>
+            </li>
+            <li>
+                <a href="http://www.uky.edu">
+                    MyUK
+                </a>
+            </li>
+            <li>
+                <form class="search-box" action="http://ukcc.uky.edu/cse/" role="search">
+                    <input type="text" name="q" placeholder="search UK &hellip;" />
+                </form>
+            </li>
+        </ul>
+    </nav>
+    <nav id="nav-menu-wide" class="collapse">
+        <ul class="nav navbar-nav">
+            <li>
+                <a href="http://ibi.uky.edu/homepage#index">
+                    Home
+                </a>            </li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    About IBI
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/static_pages/overview">
+                            Overview of IBI
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/static_pages/biomedical_informatics">
+                            What is Biomedical Informatics?
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/people/committees">
+                            Leadership committees
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/static_pages/membership">
+                            Membership
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/static_pages/contact">
+                            Contact
+                        </a>                  </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    Research
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/">
+                            Research overview
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/4">
+                            Knowledge representation and Data integration
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/5">
+                            Data mining and Statistical analysis
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/6">
+                            Natural language processing and Information retrieval
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/7">
+                            Human-information interaction
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/1">
+                            Bioinformatics and Computational biology
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/2">
+                            Clinical informatics and Clinical research informatics
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/research_areas/3">
+                            Public health informatics
+                        </a>                  </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    People
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/people/faculty">
+                            Faculty
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/people/staff">
+                            Staff
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/people/students">
+                            Trainees
+                        </a>                  </li>
+                </ul>
+            </li>
+            <li>
+                <a href="http://ibi.uky.edu/newsevents">
+                    News and Events
+                </a>            </li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    Programs
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li class="submenulist">
+                        <a href="http://ibi.uky.edu/static_pages/research_consult">
+                            Research Consultations
+                        </a>                  </li>
+                    <li class="submenulist">
+                        <a href="http://www.engr.uky.edu/data-science">
+                            Data Science Masters Degree
+                        </a>                  </li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+</header>
+
+
+
+<div class="container-fluid">
+
+
+    <!-- Main -->
+    <div class="row" style="margin-top: 0px;">
+        <div class="container">
+            <!-- IBI Banner Image -->
+            <div class="banner-homepage">
+                <h1><span class="h1-med-larger">Institute for</span><br/>
+                    <span class="h1-larger">Biomedical Informatics</span>
+                </h1>
+            </div>
+
+            <div id = "Predictors">
+                <!-- Predictor Descriptions -->
+                <div class = "row">
+                    <div class="col-sm-9">
+                        <h2 style = "font-weight: bold; color:black; font-size: 23px; margin-bottom: 5px; margin-top: 15px"> The AKI Predictor of Outcomes (AKIPO) </h2>
+                    </div>
+
+                    <div class="col-sm-3">
+                        <!-- Go to Disclaimer Page -->
+                        <a href="/"><button class="form-control float-right" style= "background-image:linear-gradient(#147B72, #147B72); color:white; font-weight: bold; font-size: 13px; margin-top: 9px; height: 25px; padding-top: 2.5px;">LICENSE AGREEMENT</button></a>
+                    </div>
+                </div>
+
+                <div class="col-sm-12">
+                    <p>
+                        In order to have the most accurate prediction, please select a prediction target and enter all available information of the patient below. All features correspond to the first 3 days (D0 - D3) in the ICU.
+                    </p>
+                </div>
+
+                <!-- Risk Prediction Target -->
+                <div class="row" style= "margin-top: 15px">
+                    <div class="col-md-3">
+                        <h1 style = "font-weight: bold; font-size:22px;">Risk Prediction Target:</h1>
+                     </div>
+                     <div class="col-md-2">
+                        <label class = "target_selection" style = "font-weight: bold; font-size: 18px"><input type="checkbox" id = "mort_button" onclick="showDivMort(); hideDivMAKE(); uncheck_MAKE(); showUserInput();"/>Mortality </label>
+                    </div>  
+                     <div class="col-md-2">
+                        <label class = "target_selection" style = "font-weight: bold; font-size: 18px"><input type="checkbox" id = "make_button" name="target_select" onclick="showDivMAKE(); hideDivMort(); uncheck_Mort(); showUserInput();"/>MAKE</label>
+                    </div>
+                    <div class="col-md-5">
+                    </div> 
+                </div>
+
+                <!-- Display Results -->
+                <div class = "row" style="margin-top: 25px; margin-bottom: 25px;">
+                    <div class="col-sm-12">
+                        <p style="text-align: center; background-image:linear-gradient(to right,#edf2f7, #edf2f7); color:#164980; font-size: 40px; padding: 0em;">{{output}}</p>
+                    </div>
+                </div>
+
+                <!-- Display User Input -->
+                <div class="form-group " id="Vars_User_Inputs">
+         			<!-- Info title -->
+                    <div class = "row">
+                        <div class="col-sm-12">
+                            <h1 style = "font-weight: bold; font-size: 22px;"> Patient Information (First 3 days in ICU): </h1>
+                        </div>
+                    </div>
+
+         			<!-- Feature catogory -->
+                    <div class = "row">
+                        <div class="feature_cato">
+                            <div class="col-xs-3">
+                                <p style="text-align: center; background-image:linear-gradient(#0b5596, #4ba1db); color:white; font-size: 17px;"> Demographics/Vitals</p>
+                            </div>
+                            <div class="col-xs-3">
+                                <p style="text-align: center; background-image:linear-gradient(#0b5596, #4ba1db); color:white; font-size: 17px;"> Extra-Corporal Organ Support</p>
+                            </div>
+                            <div class="col-xs-3">
+                                <p style="text-align: center; background-image:linear-gradient(#0b5596, #4ba1db); color:white; font-size: 17px;"> Laboratory Data</p>
+                            </div>
+                            <div class="col-xs-3">
+                                <p style="text-align: center; background-image:linear-gradient(#0b5596, #4ba1db); color:white; font-size: 17px;"> AKI Specific Information</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mortality User Input -->
+                    <form name="form" method="POST" id="Vars_Mortality">
+                        <div class="row">
+                            <!-- demographics/vitals -->
+                            <div class="col-sm-3" class="form-group ">
+                                <label for="id_age">Age</label>
+                                <input class="form-control" id="id_age" max="104.0" min="18.0" name="AGE" step="any" type="number" required/>
+                                <!-- <span id="helpBlock" class="help-block">18-104 years</span> -->
+
+                                <label for="id_heartrate"> Highest heart rate</label> 
+                                <input class="form-control" id="id_heartrate" max="286.0" min="50.0" name="HR_D1_HIGH" step="any" type="number" required/>
+                                <!-- <span id="helpBlock" class="help-block">50-286 BPM</span> -->
+
+                                <label for="id_temp_high"> Highest body temperature</label> (&#8451;)
+                                <input class="form-control" id="id_temp_high" max="45.0" min="33.0" name="Temperature_D1_HIGH" step="any" type="number" required/>
+         
+                                <label for="id_temp_low">Lowest body temperature</label> (&#8451;)
+                                <input class="form-control" id="id_temp_low" max="38.5" min="30.0" name="Temperature_D1_LOW" step="any" type="number" required/>
+                            </div> <!-- End of demographics -->
+                            
+                            <!-- ECOS -->
+                            <div class="col-sm-3" class="form-group ">
+                                <label for="id_got_ecmo">Received ECMO</label>
+                                <select class="form-control" id="id_got_ecmo" name="ECMO_ICUD0toD3" required/>
+                                    <option value="" selected="selected">[Select]</option>
+                                    <option value=1>Yes</option>
+                                    <option value=0>No</option>
+                                </select> 
+
+                                <label for="id_vasopress_exp">Received pressor/inotrope</label>
+                                <select class="form-control" id="id_vasopress_exp" name="Vasopressor_ICUD0toD3" required/>
+                                    <option value="" selected="selected">[Select]</option>
+                                    <option value=1>Yes</option>
+                                    <option value=0>No</option>
+                                </select>
+                            </div> <!-- End of ECOS -->
+
+
+                            <!--LABS-->
+                            <div class="col-sm-3" class="form-group ">
+                                <label for="id_bili_high">Highest bilirubin</label> (mg/dL)
+                                <input class="form-control" id="id_bili_high" max="53.2" min="0.1" name="Bilirubin_D1_HIGH" step="any" type="number" required/>
+
+                                <label for="id_bun_high">Highest BUN</label> (mg/dL)
+                                <input class="form-control" id="id_bun_high" max="271.0" min="5.0" name="BUN_D0toD3_HIGH" step="any" type="number" required/>
+
+                                <label for="id_fio_high">Highest FiO<sub>2</sub></label> (%)
+                                <input class="form-control" id="id_fio_high" max="100.0" min="21.0" name="FI02_D1_HIGH" step="any" type="number" required/>
+
+                                <label for="id_ph_low">Lowest pH</label>
+                                <input class="form-control" id="id_ph_low" max="7.60" min="6.51" name="PH_D1_LOW" step="any" type="number" required/>
+
+                                <label for="id_platelets_low">Lowest Platelets</label> (k/uL)
+                                <input class="form-control" id="id_platelets_low" max="1403.0" min="5.0" name="Platelets_D1_LOW" step="any" type="number" required/>
+                            </div> <!-- End of labs -->
+
+                            <!--AKI Specific-->
+                            <div class="col-sm-3" class="form-group ">
+
+                                    <label for="id_hoursInICU">Hours in ICU</label> (h)
+                                    <input class="form-control" id="id_hoursInICU" max="96" min="24" name="Hours_inICUD0toD3" step="any" type="number" required/>
+
+                                    <label for="id_maxKDIGO_3day">Maximum KDIGO score</label>
+                                    <select class="form-control" id="id_maxKDIGO_3day" name="MAX_KDIGO_ICU_D0toD3" required>
+                                        <option value="" selected="selected">[Select]</option>
+                                        <option value=0>0</option>
+                                        <option value=1>1</option>
+                                        <option value=2>2</option>
+                                        <option value=3>3</option>
+                                    </select>
+
+                                    <label for="id_lastKDIGO">Last KDIGO score</label>
+                                    <select class="form-control" id="id_lastKDIGO" name="LAST_KDIGO_ICU_D0toD3" required>
+                                        <option value="" selected="selected">[Select]</option>
+                                        <option value=0>0</option>
+                                        <option value=1>1</option>
+                                        <option value=2>2</option>
+                                        <option value=3>3</option>
+                                    </select>
+
+                                    <label for="id_uo">Urine output</label> (mL/h)
+                                    <input class="form-control" id="id_uo" max="256.31" min="0.01" name="UrineOutput_D0toD3" step="any" type="number" required/>
+                            </div> <!-- End of AKI Specific -->
+                        </div>
+
+                        <!-- Prediction Button -->
+                        <div class="row" style="margin-top: 20px;">
+                            <div class="col-sm-4"></div>
+                            <div class="col-sm-4">
+                                <button class="form-control" value="Submit" style= "background-image:linear-gradient(#34568b, #5780c1); color:white; font-size: 25px; padding: 0px;"><span class="glyphicon glyphicon-play" style="margin-right: 10px;"></span>Compute Prediction</button>
+
+                            </div>
+                            <div class="col-sm-4"></div>
+                        </div>
+                    </form>
+                    
+
+                    <!-- MAKE User Input -->
+                    <form name="form" method="POST" id="Vars_MAKE" style="display: none;">
+                        <div class="row">
+                            <!-- demographics/vitals -->
+                            <div class="col-sm-3" class="form-group ">
+                                <label for="id_age">Age</label>
+                                <input class="form-control" id="id_age" max="104.0" min="18.0" name="AGE" step="any" type="number" required/>
+                                <!-- <span id="helpBlock" class="help-block">18-104 years</span> -->
+
+                                <label for="id_heartrate"> Highest heart rate</label> 
+                                <input class="form-control" id="id_heartrate" max="286.0" min="50.0" name="HR_D1_HIGH" step="any" type="number" required/>
+                                <!-- <span id="helpBlock" class="help-block">50-286 BPM</span> -->
+
+                            </div> <!-- End of demographics -->
+                            
+                            <!-- ECOS -->
+                            <div class="col-sm-3" class="form-group ">
+                                <label for="id_vasopress_exp">Received pressor/inotrope</label>
+                                <select class="form-control" id="id_vasopress_exp" name="Vasopressor_ICUD0toD3" required/>
+                                    <option value="" selected="selected">[Select]</option>
+                                    <option value=1>Yes</option>
+                                    <option value=0>No</option>
+                                </select>
+                            </div> <!-- End of ECOS -->
+
+
+                            <!--LABS-->
+                            <div class="col-sm-3" class="form-group ">
+                                <label for="id_bili_high">Highest bilirubin</label> (mg/dL)
+                                <input class="form-control" id="id_bili_high" max="53.2" min="0.1" name="Bilirubin_D1_HIGH" step="any" type="number" required/>
+
+                                <label for="id_bun_high">Highest BUN</label> (mg/dL)
+                                <input class="form-control" id="id_bun_high" max="271.0" min="5.0" name="BUN_D0toD3_HIGH" step="any" type="number" required/>
+
+                                <label for="id_fio_high">Highest FiO<sub>2</sub></label> (%)
+                                <input class="form-control" id="id_fio_high" max="100.0" min="21.0" name="FI02_D1_HIGH" step="any" type="number" required/>
+
+                                <label for="id_ph_low">Lowest pH</label>
+                                <input class="form-control" id="id_ph_low" max="7.60" min="6.51" name="PH_D1_LOW" step="any" type="number" required/>
+
+                                <label for="id_platelets_low">Lowest Platelets</label> (k/uL)
+                                <input class="form-control" id="id_platelets_low" max="1403.0" min="5.0" name="Platelets_D1_LOW" step="any" type="number" required/>
+
+                                <label for="id_hemoglobin">Lowest hemoglobin</label> (g/dL)
+                                <input class="form-control" id="id_hemoglobin" max="19.5" min="2.1" name="Hemoglobin_D1_LOW" step="any" type="number" required/>
+
+                                <label for="id_sodium">Lowest serum sodium</label> (mmol/L)
+                                <input class="form-control" id="id_sodium" max="182.0" min="102.0" name="Sodium_D1_LOW" step="any" type="number" required/>
+                            </div> <!-- End of labs -->
+
+                            <!--AKI Specific-->
+                            <div class="col-sm-3" class="form-group ">
+                                    <label for="id_admitScr">Admission sCr </label> (mg/dL)
+                                    <input class="form-control" id="id_admitScr" max="23.84" min="0.14" name="Admit_sCr" step="any" type="number" required/>
+                                    <!-- <span id="helpBlock" class="help-block" style="display: none">Warning: Range of values in training set was 0.2 - 3,0.</span> -->
+
+                                    <label for="id_maxKDIGO_3day">Maximum KDIGO score</label>
+                                    <select class="form-control" id="id_maxKDIGO_3day" name="MAX_KDIGO_ICU_D0toD3" required>
+                                        <option value="" selected="selected">[Select]</option>
+                                        <option value=0>0</option>
+                                        <option value=1>1</option>
+                                        <option value=2>2</option>
+                                        <option value=3>3</option>
+                                    </select>
+
+                                    <label for="id_lastKDIGO">Last KDIGO score</label>
+                                    <select class="form-control" id="id_lastKDIGO" name="LAST_KDIGO_ICU_D0toD3" required>
+                                        <option value="" selected="selected">[Select]</option>
+                                        <option value=0>0</option>
+                                        <option value=1>1</option>
+                                        <option value=2>2</option>
+                                        <option value=3>3</option>
+                                    </select>
+
+                                    <label for="id_uo">Urine output</label> (mL/h)
+                                    <input class="form-control" id="id_uo" max="256.31" min="0.01" name="UrineOutput_D0toD3" step="any" type="number" required/>
+                            </div> <!-- End of AKI Specific -->
+                        </div>
+
+                        <!-- Prediction Button -->
+                        <div class="row" style="margin-top: 20px;">
+                            <div class="col-sm-4"></div>
+                            <div class="col-sm-4">
+                                <button class="form-control" value="Submit" style= "background-image:linear-gradient(#34568b, #5780c1); color:white; font-size: 25px; padding: 0px;"><span class="glyphicon glyphicon-play" style="margin-right: 10px;"></span>Compute Prediction</button>
+                            </div>
+                            <div class="col-sm-4"></div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Variable Discrption -->
+                <div class="row">
+                    <div class="col-sm-12">
+                        <hr>
+                        <h1 style = "font-weight: bold; font-size: 24px;"> Variables description </h1>
+                        <h2 style = "font-size: 22px;">Prediction Outcomes</h2>
+                        <ul>
+                            <li> <strong> Hospital mortality </strong> </li>
+                            <li> <strong> Major adverse kidney events (MAKE) </strong>: the composite of death, dependence on renal replacement therapy and a drop in eGFR ≥50% from baseline up to 120 days from hospital discharge. See reference below for details. </li>
+                        </ul>
+
+                        <h2 style = "font-size: 22px;">Demographics/Vitals</h2>
+                        <ul>
+                            <li> <strong> Age </strong>: Age of patient (years)  </li>
+                            <li> <strong> Body temperature </strong>: Highest or Lowest recorded body temperature (&#8451;) in ICU D0-D3 </li>
+                            <li> <strong> Heart Rate </strong>: Highest recorded heart rate (bpm) in ICU D0-D3 </li>
+                        </ul>
+
+                        <h2 style = "font-size: 22px;">Extracorporeal Organ Support</h2>
+                        <ul>
+                            <li> <strong> Received pressor/inotrope </strong>: IV administration of pressors or inotropes for stabilazation of blood pressure in ICU D0-D3  </li>
+                            <li> <strong> ECMO </strong>: Extracorporeal membrane oxygenation </li>
+                        </ul>
+
+                        <h2 style = "font-size: 22px;">Laboratory Data</h2>
+                        <ul>
+                            <li> <strong> Bilirubin </strong>: Highest recorded value (mg/dL) in ICU D0-D3 </li>
+                            <li> <strong> BUN </strong>: Highest recorded value (mg/dL) in ICU D0-D3 </li>
+                            <li> <strong> FiO<sub>2</sub> </strong>: Highest recorded value (%) in ICU D0-D3 </li>                       
+                            <li> <strong> pH </strong>: Lowest recorded value in ICU D0-D3 </li>
+                            <li> <strong> Platelets </strong>: Lowest recorded value (k/uL ✕️ 1000) in ICU D0-D3 </li>
+                            <li> <strong> Hemoglobin </strong>: Lowest recorded value (g/dL) in ICU D0-D3 </li>
+                            <li> <strong> Serum Sodium </strong>: Lowest recorded value (mmol/L) in ICU D0-D3 </li>
+
+                        </ul>
+
+                        <h2 style = "font-size: 22px;">AKI Specific Information</h2>
+                        <ul>
+                            
+                            <li> <strong> Admission sCr  </strong>: Admission creatinine value in ICU D0-D3 </li>
+                            <li> <strong> Hours in ICU  </strong>: Total hours in ICU D0-D3 </li>
+                            <li> <strong> Maximum KDIGO score </strong>: Highest score using the maximum creatinine value in ICU D0-D3 </li>
+                            <li> <strong> Last KDIGO score </strong>: Last score using the latest available creatinine in ICU D0-D3  </li>
+                            <li> <strong> Urine Output </strong>: Cumulative urine output divided by total number of hours observed in ICU D0-D3 </li>
+                        </ul>
+
+                        </p>
+                    </div>
+                </div>
+                <!-- References -->
+                <div class="row">
+                    <div class="col-sm-10 reference">
+                        <hr>
+                        <h1> Reference</h1>
+                        <div class="col-sm-1">
+                            <a type="button" class="btn btn-default" href="#"><span class="glyphicon glyphicon-open-file"></span></a>
+                        </div>
+
+                        <div class="col-sm-10">
+                        <p><b>Prediction of mortality and kidney recovery in critically ill patients with acute kidney injury</b></p>
+                        <p style="padding-left: 5px; padding-bottom: 10px">Javier A. Neyra, Victor Ortiz-Soriano, Lucas J. Liu, Taylor D. Smith, Xilong Li,  Donglu Xie, Beverley Adams-Huet, Orson W. Moe, Robert D. Toto, Jin Chen. <em>"Prediction of mortality and kidney recovery in critically ill patients with acute kidney injury </em>. JOURNAL. DATE. VOLUME." </p>
+                        </div>
+
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>  
+
+    <div class="row">
+        <div class="container">
+            <!-- Footer -->
+            <div class="footer">
+                <hr>
+                <div style="font-size: 15px; margin-top: 10px;">
+                    <p align="center"> &copy; University of Kentucky - Developed by Department of Internal Medicine and Institute for Biomedical Informatics, All rights reserved. </p>
+                    <p align="center">Model and online application developed and implemented by Lucas J, Liu and Taylor D. Smith.</p>
+                </div>
+            </div>
+        </div>
+    </div>  
+
+
+</div>
+        
+
+</body>
+</html>
