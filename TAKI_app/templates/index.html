@@ -96,22 +96,64 @@
                 document.getElementById('Vars_User_Inputs').style.display = "block";
             }
             
+            function showPredictor() {
+                document.getElementById('Predictors').style.display = "block";
+            }
+
+            function showDisclaimer() {
+                document.getElementById('disclaimer').style.display = "block";
+            }
+
+            function hideDisclaimer() {
+                document.getElementById('disclaimer').style.display = "none";
+            }
+
+            function showRejectPg() {
+                document.getElementById('Reject_pg').style.display = "block";
+            }
+
+            function hideRejectPg() {
+                document.getElementById('Reject_pg').style.display = "none";
+            }
+
+            function showProjDiscrip(){
+                document.getElementById('proj_discrip').style.display = "block"; 
+            }
+
+            function hideProjDiscrip() {
+                document.getElementById('proj_discrip').style.display = "none";
+            }
+
         </script>
 
         <style>
             .target_selection {
-             border:0.5px solid #ccc;
-             color:white;
-             background-image:linear-gradient(#34568b, #5780c1);
-             margin:0 0 10px;
-             display:block; 
-             transform: scale(1.2);
+                 border:0.5px solid #ccc;
+                 color:white;
+                 background-image:linear-gradient(#34568b, #5780c1);
+                 margin:0 0 10px;
+                 display:block; 
+                 transform: scale(1.2);
             }
 
             .target_selection:hover {
-             background:#34568b;
-             color:white;
-             cursor:pointer;
+                 background:#34568b;
+                 color:white;
+                 cursor:pointer;
+            }
+
+          
+            .scroll {
+                /* enable div scrolling */
+                overflow-y: auto;
+                overflow-x: hidden;
+                height: 400px;
+                background-color: white;
+                border: 1px black solid;
+                padding: 0.5%;
+                width: 100%;
+                margin: 0 auto;
+                font-size: medium;
             }
 
         </style>
@@ -401,389 +443,353 @@
 
 
 <div class="container-fluid">
-    <!-- IBI Banner Image -->
-    <div class="banner-homepage">
-        <h1><span class="h1-med-larger">Institute for</span><br/>
-            <span class="h1-larger">Biomedical Informatics</span>
-        </h1>
-    </div>
+
 
     <!-- Main -->
-    <div class="row" style="margin-top: 20px;">
+    <div class="row" style="margin-top: 0px;">
         <div class="container">
-            <!-- Project Descriptions -->
-            <div class = "row" style="margin-top: 10px;">
-                <div class="col-sm-12">
-                    <h2 style = "font-weight: bold; color:black; font-size: 23px; margin-bottom: 5px;"> Project Description </h2>
-
-                    <p>
-                        <strong> The AKI Predictor of Outcomes (AKIPO)</strong> is based on statistical and machine learning analysis of data from a large number of adult ICU patients.  The AKIPO provides the estimated risk for the outcomes of hospital mortality and experiencing a Major Adverse Kidney Event (MAKE) in the 120 days following discharge from the hospital. 
-
-                        The model was trained using random forest model on a total of 7,354 patients who were admitted to the University of Kentucky Chandler Hospital ICU from 2009-2017. The model was additionally validated on an external cohort of 2,233 patients admitted to the University of Texas Southwestern hospital ICU from 2009-2015. For details on model development and validation, see reference below.
-                    </p>
-
-                    <p>
-                         AKIPO is only appropriate for patients admitted to an intensive care unit (ICU) and who experience AKI during/within the first 3 days admitted to the ICU. After individual patient characteristics have been provided, AKIPO will evaluate a predicted risk for the outcomes of hospital mortality and MAKE.  
-                    </p>
-                </div>
+            <!-- IBI Banner Image -->
+            <div class="banner-homepage">
+                <h1><span class="h1-med-larger">Institute for</span><br/>
+                    <span class="h1-larger">Biomedical Informatics</span>
+                </h1>
             </div>
 
+            <div id = "Predictors">
+                <!-- Predictor Descriptions -->
+                <div class = "row">
+                    <div class="col-sm-9">
+                        <h2 style = "font-weight: bold; color:black; font-size: 23px; margin-bottom: 5px; margin-top: 15px"> The AKI Predictor of Outcomes (AKIPO) </h2>
+                    </div>
 
-            <!-- Disclaimer -->
-<!--             <div class = "row">
-                <div class="col-sm-12">
-                    <h2 style = "font-weight: bold; color:black; font-size: 23px; margin-bottom: 5px; margin-top: 15px"> Disclaimer/License Agreement </h2>
-
-                    <p>
-                        AKIPO web application is developed by Department of Internal Medicine and Institute for Biomedical Informatics of University of Kentucky (hereinafter referred to as “UK DIMandIBI"). The AKIPO web application is copyrighted, and UK DIMandIBI retains all title and ownership to the AKIPO web application.
-                    </p>
-
-
-                    <p>
-                        The AKIPO web application is the result of academic research. It is not intended to be used as directly management of patients. It may not be used as a substitute for medical diagnosis, prevention, monitoring, or treatment. When using AKIPO web application, you acknowledge and agree that the AKIPO web application has not been release for clinical use. You hereby explicitly agree that the results of the AKIPO web application cannot be used for clinical services. 
-                    </p>
-
-                    <p>
-                        UK DIMandIBI shall not be liable for any loss or any direct, indirect, special, incidental, liquidated or consequential damages or other liability incurred by you in connection with the AKIPO Web Application under this Agreement.
-                    </p>   
-
+                    <div class="col-sm-3">
+                        <!-- Go to Disclaimer Page -->
+                        <a href="/"><button class="form-control float-right" style= "background-image:linear-gradient(#147B72, #147B72); color:white; font-weight: bold; font-size: 13px; margin-top: 9px; height: 25px; padding-top: 2.5px;">LICENSE AGREEMENT</button></a>
+                    </div>
                 </div>
-            </div> -->
 
-            <!-- Predictor Descriptions -->
-            <div class = "row">
                 <div class="col-sm-12">
-                    <h2 style = "font-weight: bold; color:black; font-size: 23px; margin-bottom: 5px; margin-top: 15px"> The AKI Predictor of Outcomes (AKIPO) </h2>
                     <p>
                         In order to have the most accurate prediction, please select a prediction target and enter all available information of the patient below. All features correspond to the first 3 days (D0 - D3) in the ICU.
                     </p>
                 </div>
-            </div>
 
-            <!-- Risk Prediction Target -->
-            <div class="row" style= "margin-top: 15px">
-                <div class="col-md-3">
-                    <h1 style = "font-weight: bold; font-size:22px;">Risk Prediction Target:</h1>
-                 </div>
-                 <div class="col-md-2">
-                    <label class = "target_selection" style = "font-weight: bold; font-size: 18px"><input type="checkbox" id = "mort_button" onclick="showDivMort(); hideDivMAKE(); uncheck_MAKE(); showUserInput();"/>Mortality </label>
-                </div>  
-                 <div class="col-md-2">
-                    <label class = "target_selection" style = "font-weight: bold; font-size: 18px"><input type="checkbox" id = "make_button" name="target_select" onclick="showDivMAKE(); hideDivMort(); uncheck_Mort(); showUserInput();"/>MAKE</label>
-                </div>
-                <div class="col-md-5">
-                </div> 
-            </div>
 
-            <!-- Display Results -->
-            <div class = "row" style="margin-top: 25px; margin-bottom: 25px;">
-                <div class="col-sm-12">
-                    <p style="text-align: center; background-image:linear-gradient(to right,#edf2f7, #edf2f7); color:#164980; font-size: 40px; padding: 0em;">{{output}}</p>
-                </div>
-            </div>
-
-            <!-- Display User Input -->
-            <div class="form-group " id="Vars_User_Inputs">
-     			<!-- Info title -->
-                <div class = "row">
-                    <div class="col-sm-12">
-                        <h1 style = "font-weight: bold; font-size: 22px;"> Patient Information (First 3 days in ICU): </h1>
+                <!-- Risk Prediction Target -->
+                <div class="row" style= "margin-top: 15px">
+                    <div class="col-md-3">
+                        <h1 style = "font-weight: bold; font-size:22px;">Risk Prediction Target:</h1>
+                     </div>
+                     <div class="col-md-2">
+                        <label class = "target_selection" style = "font-weight: bold; font-size: 18px"><input type="checkbox" id = "mort_button" onclick="showDivMort(); hideDivMAKE(); uncheck_MAKE(); showUserInput();" checked/>Mortality </label>
+                    </div>  
+                     <div class="col-md-2">
+                        <label class = "target_selection" style = "font-weight: bold; font-size: 18px"><input type="checkbox" id = "make_button" name="target_select" onclick="showDivMAKE(); hideDivMort(); uncheck_Mort(); showUserInput();"/>MAKE</label>
                     </div>
+                    <div class="col-md-5">
+                    </div> 
                 </div>
 
-     			<!-- Feature catogory -->
-                <div class = "row">
-                    <div class="feature_cato">
-                        <div class="col-xs-3">
-                            <p style="text-align: center; background-image:linear-gradient(#0b5596, #4ba1db); color:white; font-size: 17px;"> Demographics/Vitals</p>
-                        </div>
-                        <div class="col-xs-3">
-                            <p style="text-align: center; background-image:linear-gradient(#0b5596, #4ba1db); color:white; font-size: 17px;"> Extra-Corporal Organ Support</p>
-                        </div>
-                        <div class="col-xs-3">
-                            <p style="text-align: center; background-image:linear-gradient(#0b5596, #4ba1db); color:white; font-size: 17px;"> Laboratory Data</p>
-                        </div>
-                        <div class="col-xs-3">
-                            <p style="text-align: center; background-image:linear-gradient(#0b5596, #4ba1db); color:white; font-size: 17px;"> AKI Specific Information</p>
+                <!-- Display User Input -->
+                <div class="form-group " id="Vars_User_Inputs">
+         			<!-- Info title -->
+                    <div class = "row">
+                        <div class="col-sm-12">
+                            <h1 style = "font-weight: bold; font-size: 22px;"> Patient Information (First 3 days in ICU): </h1>
                         </div>
                     </div>
-                </div>
 
-                <!-- Mortality User Input -->
-                <form name="form" method="POST" id="Vars_Mortality">
-                    <div class="row">
-                        <!-- demographics/vitals -->
-                        <div class="col-sm-3" class="form-group ">
-                            <label for="id_age">Age</label>
-                            <input class="form-control" id="id_age" max="104.0" min="18.0" name="AGE" step="any" type="number" required/>
-                            <!-- <span id="helpBlock" class="help-block">18-104 years</span> -->
+         			<!-- Feature catogory -->
+                    <div class = "row">
+                        <div class="feature_cato">
+                            <div class="col-xs-3">
+                                <p style="text-align: center; background-image:linear-gradient(#0b5596, #4ba1db); color:white; font-size: 17px;"> Demographics/Vitals</p>
+                            </div>
+                            <div class="col-xs-3">
+                                <p style="text-align: center; background-image:linear-gradient(#0b5596, #4ba1db); color:white; font-size: 17px;"> Extra-Corporal Organ Support</p>
+                            </div>
+                            <div class="col-xs-3">
+                                <p style="text-align: center; background-image:linear-gradient(#0b5596, #4ba1db); color:white; font-size: 17px;"> Laboratory Data</p>
+                            </div>
+                            <div class="col-xs-3">
+                                <p style="text-align: center; background-image:linear-gradient(#0b5596, #4ba1db); color:white; font-size: 17px;"> AKI Specific Information</p>
+                            </div>
+                        </div>
+                    </div>
 
-                            <label for="id_heartrate"> Highest heart rate</label> 
-                            <input class="form-control" id="id_heartrate" max="286.0" min="50.0" name="HR_D1_HIGH" step="any" type="number" required/>
-                            <!-- <span id="helpBlock" class="help-block">50-286 BPM</span> -->
+                    <!-- Mortality User Input -->
+                    <form name="form" method="POST" id="Vars_Mortality">
+                        <div class="row">
+                            <!-- demographics/vitals -->
+                            <div class="col-sm-3" class="form-group ">
+                                <label for="id_age">Age</label>
+                                <input class="form-control" id="id_age" max="104.0" min="18.0" name="AGE" step="any" type="number" required/>
+                                <!-- <span id="helpBlock" class="help-block">18-104 years</span> -->
 
-                            <label for="id_temp_high"> Highest body temperature</label> (&#8451;)
-                            <input class="form-control" id="id_temp_high" max="45.0" min="33.0" name="Temperature_D1_HIGH" step="any" type="number" required/>
-     
-                            <label for="id_temp_low">Lowest body temperature</label> (&#8451;)
-                            <input class="form-control" id="id_temp_low" max="38.5" min="30.0" name="Temperature_D1_LOW" step="any" type="number" required/>
-                        </div> <!-- End of demographics -->
-                        
-                        <!-- ECOS -->
-                        <div class="col-sm-3" class="form-group ">
-                            <label for="id_got_ecmo">Received ECMO</label>
-                            <select class="form-control" id="id_got_ecmo" name="ECMO_ICUD0toD3" required/>
-                                <option value="" selected="selected">[Select]</option>
-                                <option value=1>Yes</option>
-                                <option value=0>No</option>
-                            </select> 
+                                <label for="id_heartrate"> Highest heart rate</label> 
+                                <input class="form-control" id="id_heartrate" max="286.0" min="50.0" name="HR_D1_HIGH" step="any" type="number" required/>
+                                <!-- <span id="helpBlock" class="help-block">50-286 BPM</span> -->
 
-                            <label for="id_vasopress_exp">Received pressor/inotrope</label>
-                            <select class="form-control" id="id_vasopress_exp" name="Vasopressor_ICUD0toD3" required/>
-                                <option value="" selected="selected">[Select]</option>
-                                <option value=1>Yes</option>
-                                <option value=0>No</option>
-                            </select>
-                        </div> <!-- End of ECOS -->
-
-
-                        <!--LABS-->
-                        <div class="col-sm-3" class="form-group ">
-                            <label for="id_bili_high">Highest bilirubin</label> (mg/dL)
-                            <input class="form-control" id="id_bili_high" max="53.2" min="0.1" name="Bilirubin_D1_HIGH" step="any" type="number" required/>
-
-                            <label for="id_bun_high">Highest BUN</label> (mg/dL)
-                            <input class="form-control" id="id_bun_high" max="271.0" min="5.0" name="BUN_D0toD3_HIGH" step="any" type="number" required/>
-
-                            <label for="id_fio_high">Highest FiO<sub>2</sub></label> (%)
-                            <input class="form-control" id="id_fio_high" max="100.0" min="21.0" name="FI02_D1_HIGH" step="any" type="number" required/>
-
-                            <label for="id_ph_low">Lowest pH</label>
-                            <input class="form-control" id="id_ph_low" max="7.60" min="6.51" name="PH_D1_LOW" step="any" type="number" required/>
-
-                            <label for="id_platelets_low">Lowest Platelets</label> (k/uL)
-                            <input class="form-control" id="id_platelets_low" max="1403.0" min="5.0" name="Platelets_D1_LOW" step="any" type="number" required/>
-                        </div> <!-- End of labs -->
-
-                        <!--AKI Specific-->
-                        <div class="col-sm-3" class="form-group ">
-
-                                <label for="id_hoursInICU">Hours in ICU</label> (h)
-                                <input class="form-control" id="id_hoursInICU" max="96" min="24" name="Hours_inICUD0toD3" step="any" type="number" required/>
-
-                                <label for="id_maxKDIGO_3day">Maximum KDIGO score</label>
-                                <select class="form-control" id="id_maxKDIGO_3day" name="MAX_KDIGO_ICU_D0toD3" required>
+                                <label for="id_temp_high"> Highest body temperature</label> (&#8451;)
+                                <input class="form-control" id="id_temp_high" max="45.0" min="33.0" name="Temperature_D1_HIGH" step="any" type="number" required/>
+         
+                                <label for="id_temp_low">Lowest body temperature</label> (&#8451;)
+                                <input class="form-control" id="id_temp_low" max="38.5" min="30.0" name="Temperature_D1_LOW" step="any" type="number" required/>
+                            </div> <!-- End of demographics -->
+                            
+                            <!-- ECOS -->
+                            <div class="col-sm-3" class="form-group ">
+                                <label for="id_got_ecmo">Received ECMO</label>
+                                <select class="form-control" id="id_got_ecmo" name="ECMO_ICUD0toD3" required/>
                                     <option value="" selected="selected">[Select]</option>
-                                    <option value=0>0</option>
-                                    <option value=1>1</option>
-                                    <option value=2>2</option>
-                                    <option value=3>3</option>
-                                </select>
+                                    <option value=1>Yes</option>
+                                    <option value=0>No</option>
+                                </select> 
 
-                                <label for="id_lastKDIGO">Last KDIGO score</label>
-                                <select class="form-control" id="id_lastKDIGO" name="LAST_KDIGO_ICU_D0toD3" required>
+                                <label for="id_vasopress_exp">Received pressor/inotrope</label>
+                                <select class="form-control" id="id_vasopress_exp" name="Vasopressor_ICUD0toD3" required/>
                                     <option value="" selected="selected">[Select]</option>
-                                    <option value=0>0</option>
-                                    <option value=1>1</option>
-                                    <option value=2>2</option>
-                                    <option value=3>3</option>
+                                    <option value=1>Yes</option>
+                                    <option value=0>No</option>
                                 </select>
+                            </div> <!-- End of ECOS -->
 
-                                <label for="id_uo">Urine output</label> (mL/h)
-                                <input class="form-control" id="id_uo" max="256.31" min="0.01" name="UrineOutput_D0toD3" step="any" type="number" required/>
-                        </div> <!-- End of AKI Specific -->
-                    </div>
 
-                    <!-- Prediction Button -->
-                    <div class="row" style="margin-top: 20px;">
-                        <div class="col-sm-4"></div>
-                        <div class="col-sm-4">
-                            <button class="form-control" value="Submit" style= "background-image:linear-gradient(#34568b, #5780c1); color:white; font-size: 25px; padding: 0px;"><span class="glyphicon glyphicon-play" style="margin-right: 10px;"></span>Compute Prediction</button>
+                            <!--LABS-->
+                            <div class="col-sm-3" class="form-group ">
+                                <label for="id_bili_high">Highest bilirubin</label> (mg/dL)
+                                <input class="form-control" id="id_bili_high" max="53.2" min="0.1" name="Bilirubin_D1_HIGH" step="any" type="number" required/>
 
+                                <label for="id_bun_high">Highest BUN</label> (mg/dL)
+                                <input class="form-control" id="id_bun_high" max="271.0" min="5.0" name="BUN_D0toD3_HIGH" step="any" type="number" required/>
+
+                                <label for="id_fio_high">Highest FiO<sub>2</sub></label> (%)
+                                <input class="form-control" id="id_fio_high" max="100.0" min="21.0" name="FI02_D1_HIGH" step="any" type="number" required/>
+
+                                <label for="id_ph_low">Lowest pH</label>
+                                <input class="form-control" id="id_ph_low" max="7.60" min="6.51" name="PH_D1_LOW" step="any" type="number" required/>
+
+                                <label for="id_platelets_low">Lowest Platelets</label> (k/uL)
+                                <input class="form-control" id="id_platelets_low" max="1403.0" min="5.0" name="Platelets_D1_LOW" step="any" type="number" required/>
+                            </div> <!-- End of labs -->
+
+                            <!--AKI Specific-->
+                            <div class="col-sm-3" class="form-group ">
+
+                                    <label for="id_hoursInICU">Hours in ICU</label> (h)
+                                    <input class="form-control" id="id_hoursInICU" max="96" min="24" name="Hours_inICUD0toD3" step="any" type="number" required/>
+
+                                    <label for="id_maxKDIGO_3day">Maximum KDIGO score</label>
+                                    <select class="form-control" id="id_maxKDIGO_3day" name="MAX_KDIGO_ICU_D0toD3" required>
+                                        <option value="" selected="selected">[Select]</option>
+                                        <option value=0>0</option>
+                                        <option value=1>1</option>
+                                        <option value=2>2</option>
+                                        <option value=3>3</option>
+                                    </select>
+
+                                    <label for="id_lastKDIGO">Last KDIGO score</label>
+                                    <select class="form-control" id="id_lastKDIGO" name="LAST_KDIGO_ICU_D0toD3" required>
+                                        <option value="" selected="selected">[Select]</option>
+                                        <option value=0>0</option>
+                                        <option value=1>1</option>
+                                        <option value=2>2</option>
+                                        <option value=3>3</option>
+                                    </select>
+
+                                    <label for="id_uo">Urine output</label> (mL/h)
+                                    <input class="form-control" id="id_uo" max="256.31" min="0.01" name="UrineOutput_D0toD3" step="any" type="number" required/>
+                            </div> <!-- End of AKI Specific -->
                         </div>
-                        <div class="col-sm-4"></div>
-                    </div>
-                </form>
-                
 
-                <!-- MAKE User Input -->
-                <form name="form" method="POST" id="Vars_MAKE" style="display: none;">
-                    <div class="row">
-                        <!-- demographics/vitals -->
-                        <div class="col-sm-3" class="form-group ">
-                            <label for="id_age">Age</label>
-                            <input class="form-control" id="id_age" max="104.0" min="18.0" name="AGE" step="any" type="number" required/>
-                            <!-- <span id="helpBlock" class="help-block">18-104 years</span> -->
+                        <!-- Prediction Button -->
+                        <div class="row" style="margin-top: 20px;">
+                            <div class="col-sm-4"></div>
+                            <div class="col-sm-4">
+                                <button class="form-control" value="Submit" style= "background-image:linear-gradient(#34568b, #5780c1); color:white; font-size: 25px; padding: 0px;" onClick = "hideDisclaimer()" ><span class="glyphicon glyphicon-play" style="margin-right: 10px;"></span>Compute Prediction</button>
 
-                            <label for="id_heartrate"> Highest heart rate</label> 
-                            <input class="form-control" id="id_heartrate" max="286.0" min="50.0" name="HR_D1_HIGH" step="any" type="number" required/>
-                            <!-- <span id="helpBlock" class="help-block">50-286 BPM</span> -->
-
-                        </div> <!-- End of demographics -->
-                        
-                        <!-- ECOS -->
-                        <div class="col-sm-3" class="form-group ">
-                            <label for="id_vasopress_exp">Received pressor/inotrope</label>
-                            <select class="form-control" id="id_vasopress_exp" name="Vasopressor_ICUD0toD3" required/>
-                                <option value="" selected="selected">[Select]</option>
-                                <option value=1>Yes</option>
-                                <option value=0>No</option>
-                            </select>
-                        </div> <!-- End of ECOS -->
-
-
-                        <!--LABS-->
-                        <div class="col-sm-3" class="form-group ">
-                            <label for="id_bili_high">Highest bilirubin</label> (mg/dL)
-                            <input class="form-control" id="id_bili_high" max="53.2" min="0.1" name="Bilirubin_D1_HIGH" step="any" type="number" required/>
-
-                            <label for="id_bun_high">Highest BUN</label> (mg/dL)
-                            <input class="form-control" id="id_bun_high" max="271.0" min="5.0" name="BUN_D0toD3_HIGH" step="any" type="number" required/>
-
-                            <label for="id_fio_high">Highest FiO<sub>2</sub></label> (%)
-                            <input class="form-control" id="id_fio_high" max="100.0" min="21.0" name="FI02_D1_HIGH" step="any" type="number" required/>
-
-                            <label for="id_ph_low">Lowest pH</label>
-                            <input class="form-control" id="id_ph_low" max="7.60" min="6.51" name="PH_D1_LOW" step="any" type="number" required/>
-
-                            <label for="id_platelets_low">Lowest Platelets</label> (k/uL)
-                            <input class="form-control" id="id_platelets_low" max="1403.0" min="5.0" name="Platelets_D1_LOW" step="any" type="number" required/>
-
-                            <label for="id_hemoglobin">Lowest hemoglobin</label> (g/dL)
-                            <input class="form-control" id="id_hemoglobin" max="19.5" min="2.1" name="Hemoglobin_D1_LOW" step="any" type="number" required/>
-
-                            <label for="id_sodium">Lowest serum sodium</label> (mmol/L)
-                            <input class="form-control" id="id_sodium" max="182.0" min="102.0" name="Sodium_D1_LOW" step="any" type="number" required/>
-                        </div> <!-- End of labs -->
-
-                        <!--AKI Specific-->
-                        <div class="col-sm-3" class="form-group ">
-                                <label for="id_admitScr">Admission sCr </label> (mg/dL)
-                                <input class="form-control" id="id_admitScr" max="23.84" min="0.14" name="Admit_sCr" step="any" type="number" required/>
-                                <!-- <span id="helpBlock" class="help-block" style="display: none">Warning: Range of values in training set was 0.2 - 3,0.</span> -->
-
-                                <label for="id_maxKDIGO_3day">Maximum KDIGO score</label>
-                                <select class="form-control" id="id_maxKDIGO_3day" name="MAX_KDIGO_ICU_D0toD3" required>
-                                    <option value="" selected="selected">[Select]</option>
-                                    <option value=0>0</option>
-                                    <option value=1>1</option>
-                                    <option value=2>2</option>
-                                    <option value=3>3</option>
-                                </select>
-
-                                <label for="id_lastKDIGO">Last KDIGO score</label>
-                                <select class="form-control" id="id_lastKDIGO" name="LAST_KDIGO_ICU_D0toD3" required>
-                                    <option value="" selected="selected">[Select]</option>
-                                    <option value=0>0</option>
-                                    <option value=1>1</option>
-                                    <option value=2>2</option>
-                                    <option value=3>3</option>
-                                </select>
-
-                                <label for="id_uo">Urine output</label> (mL/h)
-                                <input class="form-control" id="id_uo" max="256.31" min="0.01" name="UrineOutput_D0toD3" step="any" type="number" required/>
-                        </div> <!-- End of AKI Specific -->
-                    </div>
-
-                    <!-- Prediction Button -->
-                    <div class="row" style="margin-top: 20px;">
-                        <div class="col-sm-4"></div>
-                        <div class="col-sm-4">
-                            <button class="form-control" value="Submit" style= "background-image:linear-gradient(#34568b, #5780c1); color:white; font-size: 25px; padding: 0px;"><span class="glyphicon glyphicon-play" style="margin-right: 10px;"></span>Compute Prediction</button>
+                            </div>
+                            <div class="col-sm-4"></div>
                         </div>
-                        <div class="col-sm-4"></div>
-                    </div>
-                </form>
-            </div>
-
-        </div>
-    </div>    
-
-    <!-- Variable Discrption -->
-    <div class="container">
-        <div class="row">
-            <div class="col-sm-12">
-                <hr>
-                <h1 style = "font-weight: bold; font-size: 24px;"> Variables description </h1>
-                <h2 style = "font-size: 22px;">Prediction Outcomes</h2>
-                <ul>
-                    <li> <strong> Hospital mortality </strong> </li>
-                    <li> <strong> Major adverse kidney events (MAKE) </strong>: the composite of death, dependence on renal replacement therapy and a drop in eGFR ≥50% from baseline up to 120 days from hospital discharge. See reference below for details. </li>
-                </ul>
-
-                <h2 style = "font-size: 22px;">Demographics/Vitals</h2>
-                <ul>
-                    <li> <strong> Age </strong>: Age of patient (years)  </li>
-                    <li> <strong> Body temperature </strong>: Highest or Lowest recorded body temperature (&#8451;) in ICU D0-D3 </li>
-                    <li> <strong> Heart Rate </strong>: Highest recorded heart rate (bpm) in ICU D0-D3 </li>
-                </ul>
-
-                <h2 style = "font-size: 22px;">Extracorporeal Organ Support</h2>
-                <ul>
-                    <li> <strong> Received pressor/inotrope </strong>: IV administration of pressors or inotropes for stabilazation of blood pressure in ICU D0-D3  </li>
-                    <li> <strong> ECMO </strong>: Extracorporeal membrane oxygenation </li>
-                </ul>
-
-                <h2 style = "font-size: 22px;">Laboratory Data</h2>
-                <ul>
-                    <li> <strong> Bilirubin </strong>: Highest recorded value (mg/dL) in ICU D0-D3 </li>
-                    <li> <strong> BUN </strong>: Highest recorded value (mg/dL) in ICU D0-D3 </li>
-                    <li> <strong> FiO<sub>2</sub> </strong>: Highest recorded value (%) in ICU D0-D3 </li>                       
-                    <li> <strong> pH </strong>: Lowest recorded value in ICU D0-D3 </li>
-                    <li> <strong> Platelets </strong>: Lowest recorded value (k/uL ✕️ 1000) in ICU D0-D3 </li>
-                    <li> <strong> Hemoglobin </strong>: Lowest recorded value (g/dL) in ICU D0-D3 </li>
-                    <li> <strong> Serum Sodium </strong>: Lowest recorded value (mmol/L) in ICU D0-D3 </li>
-
-                </ul>
-
-                <h2 style = "font-size: 22px;">AKI Specific Information</h2>
-                <ul>
+                    </form>
                     
-                    <li> <strong> Admission sCr  </strong>: Admission creatinine value in ICU D0-D3 </li>
-                    <li> <strong> Hours in ICU  </strong>: Total hours in ICU D0-D3 </li>
-                    <li> <strong> Maximum KDIGO score </strong>: Highest score using the maximum creatinine value in ICU D0-D3 </li>
-                    <li> <strong> Last KDIGO score </strong>: Last score using the latest available creatinine in ICU D0-D3  </li>
-                    <li> <strong> Urine Output </strong>: Cumulative urine output divided by total number of hours observed in ICU D0-D3 </li>
-                </ul>
 
-                </p>
+                    <!-- MAKE User Input -->
+                    <form name="form" method="POST" id="Vars_MAKE" style="display: none;">
+                        <div class="row">
+                            <!-- demographics/vitals -->
+                            <div class="col-sm-3" class="form-group ">
+                                <label for="id_age">Age</label>
+                                <input class="form-control" id="id_age" max="104.0" min="18.0" name="AGE" step="any" type="number" required/>
+                                <!-- <span id="helpBlock" class="help-block">18-104 years</span> -->
+
+                                <label for="id_heartrate"> Highest heart rate</label> 
+                                <input class="form-control" id="id_heartrate" max="286.0" min="50.0" name="HR_D1_HIGH" step="any" type="number" required/>
+                                <!-- <span id="helpBlock" class="help-block">50-286 BPM</span> -->
+
+                            </div> <!-- End of demographics -->
+                            
+                            <!-- ECOS -->
+                            <div class="col-sm-3" class="form-group ">
+                                <label for="id_vasopress_exp">Received pressor/inotrope</label>
+                                <select class="form-control" id="id_vasopress_exp" name="Vasopressor_ICUD0toD3" required/>
+                                    <option value="" selected="selected">[Select]</option>
+                                    <option value=1>Yes</option>
+                                    <option value=0>No</option>
+                                </select>
+                            </div> <!-- End of ECOS -->
+
+
+                            <!--LABS-->
+                            <div class="col-sm-3" class="form-group ">
+                                <label for="id_bili_high">Highest bilirubin</label> (mg/dL)
+                                <input class="form-control" id="id_bili_high" max="53.2" min="0.1" name="Bilirubin_D1_HIGH" step="any" type="number" required/>
+
+                                <label for="id_bun_high">Highest BUN</label> (mg/dL)
+                                <input class="form-control" id="id_bun_high" max="271.0" min="5.0" name="BUN_D0toD3_HIGH" step="any" type="number" required/>
+
+                                <label for="id_fio_high">Highest FiO<sub>2</sub></label> (%)
+                                <input class="form-control" id="id_fio_high" max="100.0" min="21.0" name="FI02_D1_HIGH" step="any" type="number" required/>
+
+                                <label for="id_ph_low">Lowest pH</label>
+                                <input class="form-control" id="id_ph_low" max="7.60" min="6.51" name="PH_D1_LOW" step="any" type="number" required/>
+
+                                <label for="id_platelets_low">Lowest Platelets</label> (k/uL)
+                                <input class="form-control" id="id_platelets_low" max="1403.0" min="5.0" name="Platelets_D1_LOW" step="any" type="number" required/>
+
+                                <label for="id_hemoglobin">Lowest hemoglobin</label> (g/dL)
+                                <input class="form-control" id="id_hemoglobin" max="19.5" min="2.1" name="Hemoglobin_D1_LOW" step="any" type="number" required/>
+
+                                <label for="id_sodium">Lowest serum sodium</label> (mmol/L)
+                                <input class="form-control" id="id_sodium" max="182.0" min="102.0" name="Sodium_D1_LOW" step="any" type="number" required/>
+                            </div> <!-- End of labs -->
+
+                            <!--AKI Specific-->
+                            <div class="col-sm-3" class="form-group ">
+                                    <label for="id_admitScr">Admission sCr </label> (mg/dL)
+                                    <input class="form-control" id="id_admitScr" max="23.84" min="0.14" name="Admit_sCr" step="any" type="number" required/>
+                                    <!-- <span id="helpBlock" class="help-block" style="display: none">Warning: Range of values in training set was 0.2 - 3,0.</span> -->
+
+                                    <label for="id_maxKDIGO_3day">Maximum KDIGO score</label>
+                                    <select class="form-control" id="id_maxKDIGO_3day" name="MAX_KDIGO_ICU_D0toD3" required>
+                                        <option value="" selected="selected">[Select]</option>
+                                        <option value=0>0</option>
+                                        <option value=1>1</option>
+                                        <option value=2>2</option>
+                                        <option value=3>3</option>
+                                    </select>
+
+                                    <label for="id_lastKDIGO">Last KDIGO score</label>
+                                    <select class="form-control" id="id_lastKDIGO" name="LAST_KDIGO_ICU_D0toD3" required>
+                                        <option value="" selected="selected">[Select]</option>
+                                        <option value=0>0</option>
+                                        <option value=1>1</option>
+                                        <option value=2>2</option>
+                                        <option value=3>3</option>
+                                    </select>
+
+                                    <label for="id_uo">Urine output</label> (mL/h)
+                                    <input class="form-control" id="id_uo" max="256.31" min="0.01" name="UrineOutput_D0toD3" step="any" type="number" required/>
+                            </div> <!-- End of AKI Specific -->
+                        </div>
+
+                        <!-- Prediction Button -->
+                        <div class="row" style="margin-top: 20px;">
+                            <div class="col-sm-4"></div>
+                            <div class="col-sm-4">
+                                <button class="form-control" value="Submit" style= "background-image:linear-gradient(#34568b, #5780c1); color:white; font-size: 25px; padding: 0px;"><span class="glyphicon glyphicon-play" style="margin-right: 10px;"></span>Compute Prediction</button>
+                            </div>
+                            <div class="col-sm-4"></div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Variable Discrption -->
+                <div class="row">
+                    <div class="col-sm-12">
+                        <hr>
+                        <h1 style = "font-weight: bold; font-size: 24px;"> Variables description </h1>
+                        <h2 style = "font-size: 22px;">Prediction Outcomes</h2>
+                        <ul>
+                            <li> <strong> Hospital mortality </strong> </li>
+                            <li> <strong> Major adverse kidney events (MAKE) </strong>: the composite of death, dependence on renal replacement therapy and a drop in eGFR ≥50% from baseline up to 120 days from hospital discharge. See reference below for details. </li>
+                        </ul>
+
+                        <h2 style = "font-size: 22px;">Demographics/Vitals</h2>
+                        <ul>
+                            <li> <strong> Age </strong>: Age of patient (years)  </li>
+                            <li> <strong> Body temperature </strong>: Highest or Lowest recorded body temperature (&#8451;) in ICU D0-D3 </li>
+                            <li> <strong> Heart Rate </strong>: Highest recorded heart rate (bpm) in ICU D0-D3 </li>
+                        </ul>
+
+                        <h2 style = "font-size: 22px;">Extracorporeal Organ Support</h2>
+                        <ul>
+                            <li> <strong> Received pressor/inotrope </strong>: IV administration of pressors or inotropes for stabilazation of blood pressure in ICU D0-D3  </li>
+                            <li> <strong> ECMO </strong>: Extracorporeal membrane oxygenation </li>
+                        </ul>
+
+                        <h2 style = "font-size: 22px;">Laboratory Data</h2>
+                        <ul>
+                            <li> <strong> Bilirubin </strong>: Highest recorded value (mg/dL) in ICU D0-D3 </li>
+                            <li> <strong> BUN </strong>: Highest recorded value (mg/dL) in ICU D0-D3 </li>
+                            <li> <strong> FiO<sub>2</sub> </strong>: Highest recorded value (%) in ICU D0-D3 </li>                       
+                            <li> <strong> pH </strong>: Lowest recorded value in ICU D0-D3 </li>
+                            <li> <strong> Platelets </strong>: Lowest recorded value (k/uL ✕️ 1000) in ICU D0-D3 </li>
+                            <li> <strong> Hemoglobin </strong>: Lowest recorded value (g/dL) in ICU D0-D3 </li>
+                            <li> <strong> Serum Sodium </strong>: Lowest recorded value (mmol/L) in ICU D0-D3 </li>
+
+                        </ul>
+
+                        <h2 style = "font-size: 22px;">AKI Specific Information</h2>
+                        <ul>
+                            
+                            <li> <strong> Admission sCr  </strong>: Admission creatinine value in ICU D0-D3 </li>
+                            <li> <strong> Hours in ICU  </strong>: Total hours in ICU D0-D3 </li>
+                            <li> <strong> Maximum KDIGO score </strong>: Highest score using the maximum creatinine value in ICU D0-D3 </li>
+                            <li> <strong> Last KDIGO score </strong>: Last score using the latest available creatinine in ICU D0-D3  </li>
+                            <li> <strong> Urine Output </strong>: Cumulative urine output divided by total number of hours observed in ICU D0-D3 </li>
+                        </ul>
+
+                        </p>
+                    </div>
+                </div>
+
+                <!-- References -->
+                <div class="row">
+                    <div class="col-sm-10 reference">
+                        <hr>
+                        <h1> Reference</h1>
+                        <div class="col-sm-1">
+                            <a type="button" class="btn btn-default" href="#"><span class="glyphicon glyphicon-open-file"></span></a>
+                        </div>
+
+                        <div class="col-sm-10">
+                        <p><b>Prediction of mortality and kidney recovery in critically ill patients with acute kidney injury</b></p>
+                        <p style="padding-left: 5px; padding-bottom: 10px">Javier A. Neyra, Victor Ortiz-Soriano, Lucas J. Liu, Taylor D. Smith, Xilong Li,  Donglu Xie, Beverley Adams-Huet, Orson W. Moe, Robert D. Toto, Jin Chen. <em>"Prediction of mortality and kidney recovery in critically ill patients with acute kidney injury </em>. JOURNAL. DATE. VOLUME." </p>
+                        </div>
+
+                    </div>
+                </div>
             </div>
+            
         </div>
-    </div>
+    </div>  
 
-    <!-- References -->
-    <div class="container">
-        <div class="row">
-            <div class="col-sm-9 reference">
-                <hr>
-                <h1> Reference</h1>
-
-                <div class="col-sm-1 vcenter">
-                    <a type="button" class="btn btn-default" href="#">
-                        <span class="glyphicon glyphicon-open-file"></span>
-                    </a>
-                </div><div class="col-sm-11 vcenter">
-                <p>
-                <span class="title">
-                    <b>Prediction of mortality and kidney recovery in critically ill patients with acute kidney injury</b>
-                </span> <br/>
-                <p style="padding-left: 20px">Javier A. Neyra, Victor Ortiz-Soriano, Lucas J. Liu, Taylor D. Smith, Xilong Li,  Donglu Xie, Beverley Adams-Huet, Orson W. Moe, Robert D. Toto, Jin Chen <em>Prediction of mortality and kidney recovery in critically ill patients with acute kidney injury </em>. JOURNAL. DATE. VOLUME.</p>
-
-                </p>
-            </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Footer -->
-    <div class="footer">
-        <hr>
+    <div class="row">
         <div class="container">
-            <p align="left"> &copy; University of Kentucky - Developed by Department of Internal Medicine and Institute for Biomedical Informatics, All rights reserved.
-            <span style="float:left">Model and online application developed and implemented by Lucas J, Liu and Taylor D. Smith.</span>
-            </p>
+            
+            <div class="footer">
+                <hr>
+                <div style="font-size: 15px; margin-top: 10px;">
+                    <p align="center"> &copy; University of Kentucky - Developed by Department of Internal Medicine and Institute for Biomedical Informatics, All rights reserved. </p>
+                    <p align="center">Model and online application developed and implemented by Lucas J, Liu and Taylor D. Smith.</p>
+                </div>
+            </div>
         </div>
-    </div>
+    </div>  
+
 
 </div>
         
