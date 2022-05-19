@@ -3063,7 +3063,7 @@ reclassification_manually_cutoff05_func <- function(model_comp_df){
                             model_comp_df0[,"pred_prob_Compared"] >=0 & model_comp_df0[,"pred_prob_Compared"] < 0.5 ) )
   p_up0 <- n_up0/length(index0)
   p_down0 <- n_down0/length(index0)
-  
+
   #NRI
   NRI_Categorical <-  round(p_up1 - p_down1 +  p_down0 - p_up0,2)
   
